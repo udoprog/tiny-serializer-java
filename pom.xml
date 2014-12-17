@@ -11,6 +11,10 @@
 
   <name>A tiny serialization framework for Java (Parent)</name>
 
+  <description>
+    A tiny serialization framework for Java.
+  </description>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
