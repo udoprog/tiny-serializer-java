@@ -13,10 +13,6 @@
 
   <name>A tiny serialization framework for Java (Core)</name>
 
-  <properties>
-    <skip.findbugs>true</skip.findbugs>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>eu.toolchain.serializer</groupId>

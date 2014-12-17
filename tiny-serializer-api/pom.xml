@@ -16,8 +16,4 @@
   <description>
     A tiny serializer framework for Java (Parent)
   </description>
-
-  <properties>
-    <skip.findbugs>true</skip.findbugs>
-  </properties>
 </project>
