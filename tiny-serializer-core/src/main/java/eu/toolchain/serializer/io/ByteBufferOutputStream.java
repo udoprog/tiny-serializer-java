@@ -41,7 +41,7 @@ public class ByteBufferOutputStream {
 
     public ByteBuffer buffer() {
         final ByteBuffer result = buffer.asReadOnlyBuffer();
-        result.rewind();
+        result.flip();
         return result;
     }
 
@@ -56,7 +56,7 @@ public class ByteBufferOutputStream {
             capacity = (int) Math.ceil(capacity * growthFactor);
 
         final ByteBuffer original = this.buffer;
-        original.rewind();
+        original.flip();
 
         this.buffer = ByteBuffer.allocate(capacity);
         this.buffer.put(original);
