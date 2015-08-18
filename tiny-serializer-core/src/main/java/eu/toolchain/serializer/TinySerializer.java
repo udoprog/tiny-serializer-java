@@ -11,6 +11,7 @@ import java.util.UUID;
 import eu.toolchain.serializer.io.ByteArraySerializer;
 import eu.toolchain.serializer.io.ByteBufferSerialReader;
 import eu.toolchain.serializer.io.ByteBufferSerialWriter;
+import eu.toolchain.serializer.io.CharArraySerializer;
 
 public class TinySerializer implements SerializerFramework {
     /**
@@ -24,6 +25,7 @@ public class TinySerializer implements SerializerFramework {
     private final Serializer<Integer> subTypeId;
     private final Serializer<Integer> enumOrdinal;
     private final ByteArraySerializer byteArray;
+    private final CharArraySerializer charArray;
     private final Serializer<String> string;
 
     private final Serializer<Boolean> bool;
@@ -55,6 +57,7 @@ public class TinySerializer implements SerializerFramework {
         this.enumOrdinal = enumOrdinal;
 
         this.byteArray = new ByteArraySerializer(collectionSize);
+        this.charArray = new CharArraySerializer(collectionSize);
         this.string = new StringSerializer(stringSize);
 
         this.bool = new BooleanSerializer();
@@ -153,6 +156,11 @@ public class TinySerializer implements SerializerFramework {
     }
 
     @Override
+    public Serializer<char[]> charArray() {
+        return charArray;
+    }
+
+    @Override
     public Serializer<UUID> uuid() {
         return uuid;
     }
@@ -169,25 +177,26 @@ public class TinySerializer implements SerializerFramework {
     }
 
     @Override
-    public <T, K extends T> TypeMapping<K> type(int id, Class<K> key, Serializer<K> serializer) {
+    public <T extends S, S> TypeMapping<T, S> type(int id, Class<T> key, Serializer<T> serializer) {
         if (id >= 0xffff || id < 0)
             throw new IllegalArgumentException("id must be a positive number smaller than 0xffff");
 
-        return new TypeMapping<K>(id, key, serializer);
+        return new TypeMapping<T, S>(id, key, serializer);
     }
 
     @Override
-    public final <T> Serializer<T> subtypes(List<TypeMapping<? extends T>> mappings) {
-        final Map<Integer, TypeMapping<? extends T>> ids = buildIdMapping(mappings);
-        final Map<Class<? extends T>, TypeMapping<? extends T>> keys = buildTypeMapping(mappings);
+    public final <T> Serializer<T> subtypes(Iterable<? extends TypeMapping<? extends T, T>> mappings) {
+        final Map<Integer, TypeMapping<? extends T, T>> ids = buildIdMapping(mappings);
+        final Map<Class<? extends T>, TypeMapping<? extends T, T>> keys = buildTypeMapping(mappings);
 
         return new Serializer<T>() {
             @Override
             public void serialize(SerialWriter buffer, T value) throws IOException {
-                final TypeMapping<? extends T> m = keys.get(value.getClass());
+                final TypeMapping<? extends T, T> m = keys.get(value.getClass());
 
-                if (m == null)
+                if (m == null) {
                     throw new IllegalArgumentException("Type not supported: " + value.getClass());
+                }
 
                 subTypeId.serialize(buffer, m.id());
                 @SuppressWarnings("unchecked")
@@ -198,20 +207,22 @@ public class TinySerializer implements SerializerFramework {
             @Override
             public T deserialize(SerialReader buffer) throws IOException {
                 final int id = subTypeId.deserialize(buffer);
-                final TypeMapping<? extends T> m = ids.get(id);
+                final TypeMapping<? extends T, T> m = ids.get(id);
 
-                if (m == null)
+                if (m == null) {
                     throw new IllegalArgumentException("Type id not supported: " + id);
+                }
 
                 return m.serializer().deserialize(buffer);
             }
         };
     }
 
-    private <T> Map<Integer, TypeMapping<? extends T>> buildIdMapping(List<TypeMapping<? extends T>> mappings) {
-        final Map<Integer, TypeMapping<? extends T>> mapping = new HashMap<>();
+    private <T> Map<Integer, TypeMapping<? extends T, T>> buildIdMapping(
+            Iterable<? extends TypeMapping<? extends T, T>> mappings) {
+        final Map<Integer, TypeMapping<? extends T, T>> mapping = new HashMap<>();
 
-        for (TypeMapping<? extends T> m : mappings) {
+        for (TypeMapping<? extends T, T> m : mappings) {
             if (mapping.put(m.id(), m) == null)
                 continue;
 
@@ -221,11 +232,11 @@ public class TinySerializer implements SerializerFramework {
         return mapping;
     }
 
-    private <T> Map<Class<? extends T>, TypeMapping<? extends T>> buildTypeMapping(
-            List<TypeMapping<? extends T>> mappings) {
-        final Map<Class<? extends T>, TypeMapping<? extends T>> mapping = new HashMap<>();
+    private <T> Map<Class<? extends T>, TypeMapping<? extends T, T>> buildTypeMapping(
+            Iterable<? extends TypeMapping<? extends T, T>> mappings) {
+        final Map<Class<? extends T>, TypeMapping<? extends T, T>> mapping = new HashMap<>();
 
-        for (final TypeMapping<? extends T> m : mappings) {
+        for (final TypeMapping<? extends T, T> m : mappings) {
             if (mapping.put(m.key(), m) == null)
                 continue;
 
@@ -304,12 +315,18 @@ public class TinySerializer implements SerializerFramework {
         }
     }
 
+    @Override
+    public <T> Serializer<T> singleton(T value) {
+        return new SingletonSerializer<T>(value);
+    }
+
     /* utility functions */
 
     @Override
     public <T> ByteBuffer serialize(Serializer<T> serializer, T value) throws IOException {
         final ByteBufferSerialWriter buffer = new ByteBufferSerialWriter();
         serializer.serialize(buffer, value);
+        buffer.flush();
         return buffer.buffer();
     }
 

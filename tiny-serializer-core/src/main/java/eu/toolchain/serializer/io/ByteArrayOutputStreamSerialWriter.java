@@ -1,10 +1,10 @@
 package eu.toolchain.serializer.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
-public class ByteBufferSerialWriter extends AbstractSerialWriter {
-    private final ByteBufferOutputStream output = new ByteBufferOutputStream();
+public class ByteArrayOutputStreamSerialWriter extends AbstractSerialWriter {
+    private final ByteArrayOutputStream output = new ByteArrayOutputStream();
 
     @Override
     public void write(int b) throws IOException {
@@ -18,9 +18,10 @@ public class ByteBufferSerialWriter extends AbstractSerialWriter {
 
     @Override
     public void flush() throws IOException {
+        output.flush();
     }
 
-    public ByteBuffer buffer() {
-        return output.buffer();
+    public byte[] toByteArray() {
+        return output.toByteArray();
     }
 }

@@ -115,6 +115,11 @@ public interface SerializerFramework {
     public Serializer<byte[]> byteArray();
 
     /**
+     * A {@code Serializer} that can serialize a char array.
+     */
+    public Serializer<char[]> charArray();
+
+    /**
      * A {@code Serializer} that can serializer UUIDs.
      */
     public Serializer<UUID> uuid();
@@ -147,14 +152,14 @@ public interface SerializerFramework {
     /**
      * Maps a specific ordinal id to a type (key), and a serializer for that type.
      *
-     * @param <V> The mapped type.
+     * @param <T> The mapped type.
      */
-    public static final class TypeMapping<V> {
+    public static class TypeMapping<T extends S, S> {
         final int id;
-        final Class<V> key;
-        final Serializer<V> serializer;
+        final Class<T> key;
+        final Serializer<T> serializer;
 
-        public TypeMapping(int id, Class<V> key, Serializer<V> serializer) {
+        public TypeMapping(int id, Class<T> key, Serializer<T> serializer) {
             this.id = id;
             this.key = key;
             this.serializer = serializer;
@@ -164,11 +169,11 @@ public interface SerializerFramework {
             return id;
         }
 
-        public Class<V> key() {
+        public Class<T> key() {
             return key;
         }
 
-        public Serializer<V> serializer() {
+        public Serializer<T> serializer() {
             return serializer;
         }
     }
@@ -183,7 +188,7 @@ public interface SerializerFramework {
      * @param serializer The serializer for the mapped type.
      * @return A new typemapping.
      */
-    public <T, K extends T> TypeMapping<K> type(int id, Class<K> key, Serializer<K> serializer);
+    public <T extends S, S> TypeMapping<T, S> type(int id, Class<T> type, Serializer<T> serializer);
 
     /**
      * Create a {@code Serializer} for the given type mappings.
@@ -192,7 +197,15 @@ public interface SerializerFramework {
      * @param mappings Type mappings.
      * @return A new serializer for the given type mappings.
      */
-    public <T> Serializer<T> subtypes(List<TypeMapping<? extends T>> mappings);
+    public <T> Serializer<T> subtypes(Iterable<? extends TypeMapping<? extends T, T>> mappings);
+
+    /**
+     * Create a singleton serializer that always deserializes to the same reference.
+     *
+     * @param value Reference to serialize.
+     * @return The singleton reference.
+     */
+    public <T> Serializer<T> singleton(T value);
 
     /**
      * Serialize a value.

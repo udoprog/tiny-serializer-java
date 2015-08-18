@@ -16,13 +16,18 @@ public class SerializeCustomWriterExample {
 
         final SerialWriter writer = new AbstractSerialWriter() {
             @Override
-            public void write(byte[] bytes) throws IOException {
-                outputStream.write(bytes);
+            public void write(byte[] bytes, int offset, int length) throws IOException {
+                outputStream.write(bytes, offset, length);
             }
 
             @Override
             public void write(int b) throws IOException {
                 outputStream.write(b);
+            }
+
+            @Override
+            public void flush() throws IOException {
+                outputStream.flush();
             }
         };
 

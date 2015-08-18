@@ -39,6 +39,11 @@ public class ByteBufferOutputStream {
         buffer.put(bytes);
     }
 
+    public void write(byte[] bytes, int offset, int length) {
+        accomodate(bytes.length);
+        buffer.put(bytes, offset, length);
+    }
+
     public ByteBuffer buffer() {
         final ByteBuffer result = buffer.asReadOnlyBuffer();
         result.flip();

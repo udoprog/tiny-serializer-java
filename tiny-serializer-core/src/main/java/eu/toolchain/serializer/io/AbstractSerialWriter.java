@@ -5,10 +5,14 @@ import java.io.IOException;
 
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.VarIntSerializer;
-import eu.toolchain.serializer.SerialWriter.Scope;
 
 public abstract class AbstractSerialWriter implements SerialWriter {
     private static final VarIntSerializer varint = new VarIntSerializer();
+
+    @Override
+    public void write(byte[] bytes) throws IOException {
+        write(bytes, 0, bytes.length);
+    }
 
     @Override
     public SerialWriter.Scope scope() {
@@ -30,8 +34,13 @@ public abstract class AbstractSerialWriter implements SerialWriter {
         }
 
         @Override
-        public void write(byte[] bytes) throws IOException {
-            output.write(bytes);
+        public void write(byte[] bytes, int offset, int length) throws IOException {
+            output.write(bytes, offset, length);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            output.flush();
         }
 
         @Override
