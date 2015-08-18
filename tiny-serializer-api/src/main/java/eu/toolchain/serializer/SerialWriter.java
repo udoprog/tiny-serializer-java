@@ -3,7 +3,7 @@ package eu.toolchain.serializer;
 import java.io.IOException;
 
 public interface SerialWriter {
-    public interface Scope extends SerialWriter {
+    public interface Scope extends SerialWriter, AutoCloseable {
         /**
          * Close the current scoped section.
          *

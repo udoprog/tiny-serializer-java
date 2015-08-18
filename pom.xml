@@ -21,6 +21,7 @@
   <modules>
     <module>tiny-serializer-api</module>
     <module>tiny-serializer-core</module>
+    <module>tiny-serializer-processor</module>
   </modules>
 
   <licenses>
