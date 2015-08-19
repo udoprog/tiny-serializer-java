@@ -551,69 +551,18 @@ public class AutoSerializerProcessor extends AbstractProcessor {
     static CreatorConstructor findCreatorConstructor(final Element root, final AutoSerialize autoSerialize) {
         final TypeName elementType = TypeName.get(root.asType());
 
-        final List<CreatorConstructor> creators = new ArrayList<>();
-
-        final List<CreatorConstructor> all = new ArrayList<>();
+        final List<SerializedField> parameters = new ArrayList<>();
 
         for (final Element e : root.getEnclosedElements()) {
-            if (e.getKind() == ElementKind.CONSTRUCTOR) {
-                final AutoSerialize.Creator creator = e.getAnnotation(AutoSerialize.Creator.class);
-
-                final CreatorConstructor c = processCreator(root, autoSerialize, elementType, e);
-
-                all.add(c);
-
-                if (creator == null) {
-                    continue;
-                }
-
-                creators.add(c);
+            if (e.getKind() != ElementKind.FIELD) {
+                continue;
             }
-        }
+            // skip static fields.
 
-        if (creators.isEmpty()) {
-            if (all.size() == 1) {
-                return all.iterator().next().verify();
-            }
-
-            if (!hasEmptyConstructor(root)) {
-                throw new IllegalStateException(String.format("Type (%s) does not have empty constructor", root));
-            }
-
-            return new CreatorConstructor(root, elementType);
-        }
-
-        if (creators.size() > 1) {
-            throw new IllegalStateException(String.format("More than one @SerializeCreator method present on type %s",
-                    root));
-        }
-
-        return creators.iterator().next().verify();
-    }
-
-    private static boolean hasEmptyConstructor(final Element root) {
-        for (final Element enclosed : root.getEnclosedElements()) {
-            if (enclosed.getKind() != ElementKind.CONSTRUCTOR) {
+            if (e.getModifiers().contains(Modifier.STATIC)) {
                 continue;
             }
 
-            final ExecutableElement executable = (ExecutableElement) enclosed;
-
-            if (executable.getParameters().isEmpty()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    static CreatorConstructor processCreator(final Element root, final AutoSerialize autoSerialize,
-            final TypeName elementType, final Element element) {
-        final ExecutableElement executable = (ExecutableElement) element;
-
-        final List<SerializedField> parameters = new ArrayList<>();
-
-        for (final VariableElement e : executable.getParameters()) {
             final TypeName fieldType = TypeName.get(e.asType());
             final TypeName serializedFieldType = getSerializedType(fieldType);
             final boolean optional = isParameterOptional(fieldType);
@@ -626,7 +575,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return new CreatorConstructor(root, elementType, parameters);
     }
 
-    static boolean isParameterUsingGetter(VariableElement e, AutoSerialize autoSerialize) {
+    static boolean isParameterUsingGetter(Element e, AutoSerialize autoSerialize) {
         final AutoSerialize.Field field;
 
         if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null) {
@@ -660,7 +609,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return false;
     }
 
-    static String accessorForField(VariableElement e, final boolean useGetter) {
+    static String accessorForField(Element e, final boolean useGetter) {
         final String accessor;
 
         final AutoSerialize.Field field;

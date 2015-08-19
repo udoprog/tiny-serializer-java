@@ -4,10 +4,11 @@ import eu.toolchain.serializer.AutoSerialize;
 
 @AutoSerialize
 public class CustomAccessor {
+    @AutoSerialize.Field(accessor = "foo")
     final String string;
 
     @AutoSerialize.Creator
-    public CustomAccessor(@AutoSerialize.Field(accessor = "foo") String string) {
+    public CustomAccessor(String string) {
         this.string = string;
     }
 

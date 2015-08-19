@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.SOURCE)
 public @interface AutoSerialize {
     String name() default "";
 
@@ -18,13 +18,13 @@ public @interface AutoSerialize {
     boolean useGetter() default true;
 
     @Target(ElementType.TYPE)
-    @Retention(RetentionPolicy.RUNTIME)
+    @Retention(RetentionPolicy.SOURCE)
     public @interface SubTypes {
         SubType[] value() default {};
     }
 
     @Target(ElementType.TYPE)
-    @Retention(RetentionPolicy.RUNTIME)
+    @Retention(RetentionPolicy.SOURCE)
     public @interface SubType {
         Class<?> value();
 
@@ -32,18 +32,23 @@ public @interface AutoSerialize {
     }
 
     @Target(ElementType.CONSTRUCTOR)
-    @Retention(RetentionPolicy.RUNTIME)
+    @Retention(RetentionPolicy.SOURCE)
     public @interface Creator {
         String value() default "";
 
         boolean optional() default false;
     }
 
-    @Target(ElementType.PARAMETER)
-    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.PARAMETER, ElementType.FIELD })
+    @Retention(RetentionPolicy.SOURCE)
     public @interface Field {
         String accessor() default "";
 
         boolean useGetter() default false;
+    }
+
+    @Target({ ElementType.FIELD })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Ignore {
     }
 }

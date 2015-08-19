@@ -28,7 +28,6 @@ public class Fields {
     private final byte[] byteArray;
     private final char[] charArray;
 
-    @AutoSerialize.Creator
     public Fields(String string, Interface requiredCustom, OptionalProperty<Interface> optionalCustom,
             List<Interface> nestedCustom, Map<String, Interface> mappedCustom, Set<Interface> customSet,
             short shortNumber, int integer, long longNumber, float floatNumber, double doubleNumber, boolean bool,

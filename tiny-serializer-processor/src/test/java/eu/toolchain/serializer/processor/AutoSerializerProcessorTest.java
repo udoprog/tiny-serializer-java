@@ -44,11 +44,6 @@ public class AutoSerializerProcessorTest {
         verifySerializer("ImplicitConstructor");
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testMissingEmptyConstructor() {
-        verifyFailingSerializer("MissingEmptyConstructor");
-    }
-
     @Test
     public void testSerialization() {
         final List<JavaFileObject> files = new ArrayList<>();
