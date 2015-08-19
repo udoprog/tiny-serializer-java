@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.UUID;
 
 import eu.toolchain.serializer.io.ByteArraySerializer;
@@ -146,8 +148,18 @@ public class TinySerializer implements SerializerFramework {
     }
 
     @Override
+    public <K, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value) {
+        return new SortedMapSerializer<K, V>(collectionSize, key, value);
+    }
+
+    @Override
     public <T> Serializer<Set<T>> set(Serializer<T> serializer) {
         return new SetSerializer<T>(collectionSize, serializer);
+    }
+
+    @Override
+    public <T> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer) {
+        return new SortedSetSerializer<T>(collectionSize, serializer);
     }
 
     @Override

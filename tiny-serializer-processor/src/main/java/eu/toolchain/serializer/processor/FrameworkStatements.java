@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.UUID;
 
 import com.google.common.base.Joiner;
@@ -30,9 +32,15 @@ public class FrameworkStatements {
         frameworkSupported.put(TypeName.get(char[].class), "$N.charArray()");
     }
 
-    static ClassName listClass = ClassName.get(List.class);
-    static ClassName mapClass = ClassName.get(Map.class);
-    static ClassName setClass = ClassName.get(Set.class);
+    static final List<ParameterizedTypeStatement> parameterized = new ArrayList<>();
+
+    static {
+        parameterized.add(new ParameterizedTypeStatement(ClassName.get(List.class), "$N.list", 1));
+        parameterized.add(new ParameterizedTypeStatement(ClassName.get(Map.class), "$N.map", 2));
+        parameterized.add(new ParameterizedTypeStatement(ClassName.get(SortedMap.class), "$N.sortedMap", 2));
+        parameterized.add(new ParameterizedTypeStatement(ClassName.get(Set.class), "$N.set", 1));
+        parameterized.add(new ParameterizedTypeStatement(ClassName.get(SortedSet.class), "$N.sortedSet", 1));
+    }
 
     public static FrameworkStatement resolveStatement(final TypeName type, final Object framework) {
         final String statement = frameworkSupported.get(type);
@@ -116,28 +124,31 @@ public class FrameworkStatements {
     }
 
     static FrameworkStatement resolveParameterizedType(ParameterizedTypeName type, Object framework) {
-        if (type.rawType.equals(listClass)) {
-            final Iterator<TypeName> types = type.typeArguments.iterator();
-            final ImmutableList.Builder<FrameworkStatement> statements = ImmutableList.builder();
-            statements.add(resolveStatement(types.next(), framework));
-            return resolveGeneric("$N.list", ImmutableList.of(framework), statements.build());
-        }
+        for (final ParameterizedTypeStatement p : parameterized) {
+            if (p.rawType.equals(type.rawType)) {
+                final Iterator<TypeName> types = type.typeArguments.iterator();
+                final ImmutableList.Builder<FrameworkStatement> statements = ImmutableList.builder();
 
-        if (type.rawType.equals(mapClass)) {
-            final Iterator<TypeName> types = type.typeArguments.iterator();
-            final ImmutableList.Builder<FrameworkStatement> statements = ImmutableList.builder();
-            statements.add(resolveStatement(types.next(), framework));
-            statements.add(resolveStatement(types.next(), framework));
-            return resolveGeneric("$N.map", ImmutableList.of(framework), statements.build());
-        }
+                for (int i = 0; i < p.parameterCount; i++) {
+                    statements.add(resolveStatement(types.next(), framework));
+                }
 
-        if (type.rawType.equals(setClass)) {
-            final Iterator<TypeName> types = type.typeArguments.iterator();
-            final ImmutableList.Builder<FrameworkStatement> statements = ImmutableList.builder();
-            statements.add(resolveStatement(types.next(), framework));
-            return resolveGeneric("$N.set", ImmutableList.of(framework), statements.build());
+                return resolveGeneric(p.statement, ImmutableList.of(framework), statements.build());
+            }
         }
 
         throw new IllegalArgumentException("Unsupported type: " + type.toString());
+    }
+
+    static class ParameterizedTypeStatement {
+        final ClassName rawType;
+        final String statement;
+        final int parameterCount;
+
+        public ParameterizedTypeStatement(ClassName rawType, String statement, int parameterCount) {
+            this.rawType = rawType;
+            this.statement = statement;
+            this.parameterCount = parameterCount;
+        }
     }
 }

@@ -45,6 +45,21 @@ public class AutoSerializerProcessorTest {
     }
 
     @Test
+    public void testCollections() {
+        verifySerializer("Collections");
+    }
+
+    @Test
+    public void testIgnore() {
+        verifySerializer("Ignore");
+    }
+
+    @Test
+    public void testProvided() {
+        verifySerializer("Provided");
+    }
+
+    @Test
     public void testSerialization() {
         final List<JavaFileObject> files = new ArrayList<>();
 

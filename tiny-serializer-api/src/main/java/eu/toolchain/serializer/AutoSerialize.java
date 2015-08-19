@@ -31,20 +31,19 @@ public @interface AutoSerialize {
         short id() default -1;
     }
 
-    @Target(ElementType.CONSTRUCTOR)
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface Creator {
-        String value() default "";
-
-        boolean optional() default false;
-    }
-
     @Target({ ElementType.PARAMETER, ElementType.FIELD })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Field {
         String accessor() default "";
 
-        boolean useGetter() default false;
+        boolean useGetter() default true;
+
+        /**
+         * Indicate that the annotated field should be provided in the construction of the serializer.
+         *
+         * @return
+         */
+        boolean provided() default false;
     }
 
     @Target({ ElementType.FIELD })

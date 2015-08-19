@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.UUID;
 
 public interface SerializerFramework {
@@ -99,6 +101,19 @@ public interface SerializerFramework {
     public <K, V> Serializer<Map<K, V>> map(Serializer<K> key, Serializer<V> value);
 
     /**
+     * Build a {@code Serializer} that can serialize a sorted map.
+     *
+     * How the map is encoded is implementation specific.
+     *
+     * @param <T> Type of map keys.
+     * @param <V> Type of map values.
+     * @param key The {@code Serializer} to use for map keys.
+     * @param value The {@code Serializer} to use for map values.
+     * @return A new map {@code Serializer}.
+     */
+    public <K, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value);
+
+    /**
      * Build a {@code Serializer} that can serialize a set.
      *
      * How the ser is encoded is implementation specific.
@@ -108,6 +123,17 @@ public interface SerializerFramework {
      * @return A new set {@code Serializer}.
      */
     public <T> Serializer<Set<T>> set(Serializer<T> serializer);
+
+    /**
+     * Build a {@code Serializer} that can serialize a sorted set.
+     *
+     * How the ser is encoded is implementation specific.
+     *
+     * @param <T> Type of the set items.
+     * @param serializer The {@code Serializer} to use for each set item.
+     * @return A new set {@code Serializer}.
+     */
+    public <T> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer);
 
     /**
      * A {@code Serializer} that can serialize a byte array.

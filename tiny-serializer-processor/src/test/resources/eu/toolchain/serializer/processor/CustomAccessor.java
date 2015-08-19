@@ -7,7 +7,6 @@ public class CustomAccessor {
     @AutoSerialize.Field(accessor = "foo")
     final String string;
 
-    @AutoSerialize.Creator
     public CustomAccessor(String string) {
         this.string = string;
     }

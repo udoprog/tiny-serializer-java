@@ -14,10 +14,6 @@ public class Fields {
 
     private final String string;
     private final Interface requiredCustom;
-    private final OptionalProperty<Interface> optionalCustom;
-    private final List<Interface> nestedCustom;
-    private final Map<String, Interface> mappedCustom;
-    private final Set<Interface> customSet;
     private final short shortNumber;
     private final int integer;
     private final long longNumber;
@@ -28,16 +24,11 @@ public class Fields {
     private final byte[] byteArray;
     private final char[] charArray;
 
-    public Fields(String string, Interface requiredCustom, OptionalProperty<Interface> optionalCustom,
-            List<Interface> nestedCustom, Map<String, Interface> mappedCustom, Set<Interface> customSet,
+    public Fields(String string, Interface requiredCustom,
             short shortNumber, int integer, long longNumber, float floatNumber, double doubleNumber, boolean bool,
             UUID uuid, byte[] byteArray, char[] charArray) {
         this.string = string;
         this.requiredCustom = requiredCustom;
-        this.optionalCustom = optionalCustom;
-        this.nestedCustom = nestedCustom;
-        this.mappedCustom = mappedCustom;
-        this.customSet = customSet;
         this.shortNumber = shortNumber;
         this.integer = integer;
         this.longNumber = longNumber;
@@ -55,22 +46,6 @@ public class Fields {
 
     public Interface requiredCustom() {
         return requiredCustom;
-    }
-
-    public OptionalProperty<Interface> optionalCustom() {
-        return optionalCustom;
-    }
-
-    public List<Interface> nestedCustom() {
-        return nestedCustom;
-    }
-
-    public Map<String, Interface> mappedCustom() {
-        return mappedCustom;
-    }
-
-    public Set<Interface> customSet() {
-        return customSet;
     }
 
     public short shortNumber() {
