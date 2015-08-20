@@ -1,8 +1,12 @@
 package eu.toolchain.serializer.processor;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +58,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
 
     static final Joiner parameterJoiner = Joiner.on(", ");
 
+    private boolean disabled = false;
     private Filer filer;
     private Elements elements;
     private Messager messager;
@@ -65,10 +70,22 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         filer = env.getFiler();
         elements = env.getElementUtils();
         messager = env.getMessager();
+
+        /**
+         * Eclipse JDT does not preserve the original order of type fields, causing some Processor assumptions to fail.
+         */
+        if (env.getClass().getPackage().getName().startsWith("org.eclipse.jdt.")) {
+            messager.printMessage(Diagnostic.Kind.WARNING, "@AutoSerialize processor cannot run in the given environment");
+            disabled = true;
+        }
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> typeElements, RoundEnvironment env) {
+        if (disabled) {
+            return false;
+        }
+
         final Collection<ProcessedSerializer> processed;
 
         try {
@@ -98,7 +115,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
             }
         }
 
-        return false;
+        return true;
     }
 
     Set<JavaFile> processSerialization(Collection<ProcessedSerializer> processed) {
@@ -348,7 +365,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return b.build();
     }
 
-    ProcessedSerializer processClass(Element element) {
+    ProcessedSerializer processClass(final Element element) {
         final AutoSerialize annotation = element.getAnnotation(AutoSerialize.class);
 
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();

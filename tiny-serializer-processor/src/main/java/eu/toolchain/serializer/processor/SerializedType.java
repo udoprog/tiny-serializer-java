@@ -1,7 +1,10 @@
 package eu.toolchain.serializer.processor;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,7 +58,7 @@ class SerializedType {
 
         final List<SerializedField> fields = new ArrayList<>();
 
-        final LinkedHashMap<SerializedFieldTypeKey, SerializedFieldType> types = new LinkedHashMap<>();
+        final List<SerializedFieldType> types = new ArrayList<>();
 
         final Naming fieldNaming = new Naming("s_");
         final Naming providerNaming = new Naming("p_");
@@ -79,13 +82,14 @@ class SerializedType {
             final boolean provided = isParameterProvided(e);
 
             final Optional<String> providerName = getProviderName(e);
-            final SerializedFieldTypeKey key = new SerializedFieldTypeKey(fieldType, provided, providerName);
+            final SerializedFieldTypeIdentifier identifier = new SerializedFieldTypeIdentifier(fieldType, provided,
+                    providerName);
 
             final SerializedFieldType type;
-            final SerializedFieldType found;
+            final Optional<SerializedFieldType> found;
 
-            if ((found = types.get(key)) != null) {
-                type = found;
+            if ((found = types.stream().filter((t) -> t.getIdentifier().equals(identifier)).findFirst()).isPresent()) {
+                type = found.get();
             } else {
                 final String typeFieldName = fieldNaming.forType(fieldType, provided);
 
@@ -111,8 +115,8 @@ class SerializedType {
                     providedParameterSpec = Optional.empty();
                 }
 
-                type = new SerializedFieldType(fieldType, fieldSpec, providedParameterSpec);
-                types.put(key, type);
+                type = new SerializedFieldType(identifier, fieldType, fieldSpec, providedParameterSpec);
+                types.add(type);
             }
 
             final String fieldName = e.getSimpleName().toString();
@@ -122,7 +126,7 @@ class SerializedType {
             fields.add(new SerializedField(type, fieldName, accessor));
         }
 
-        return new SerializedType(root, elementType, ImmutableList.copyOf(fields), ImmutableList.copyOf(types.values()));
+        return new SerializedType(root, elementType, ImmutableList.copyOf(fields), ImmutableList.copyOf(types));
     }
 
     static boolean accessorMethodExists(final Element root, final String accessor, final TypeName serializedType) {
@@ -193,12 +197,5 @@ class SerializedType {
         }
 
         return "get" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, accessor);
-    }
-
-    @Data
-    static class SerializedFieldTypeKey {
-        private final TypeName fieldType;
-        private final boolean provided;
-        private final Optional<String> providerName;
     }
 }

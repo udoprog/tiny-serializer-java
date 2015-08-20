@@ -10,6 +10,7 @@ import com.squareup.javapoet.TypeName;
 
 @Data
 class SerializedFieldType {
+    private final SerializedFieldTypeIdentifier identifier;
     private final TypeName fieldType;
     private final FieldSpec fieldSpec;
     private final Optional<ParameterSpec> providedParameterSpec;
