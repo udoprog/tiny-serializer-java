@@ -83,7 +83,7 @@ class SerializedTypeFields {
         return valid;
     }
 
-    public static SerializedTypeFields build(final Element root, final AutoSerialize autoSerialize) {
+    public static SerializedTypeFields build(final FrameworkStatements statements, final Element root, final AutoSerialize autoSerialize) {
         final List<SerializedField> fields = new ArrayList<>();
 
         final List<SerializedFieldType> types = new ArrayList<>();
@@ -106,6 +106,7 @@ class SerializedTypeFields {
             }
 
             final TypeName fieldType = TypeName.get(e.asType());
+            final TypeName serializerType = TypeName.get(statements.serializerFor(e.asType()));
 
             final boolean provided = isParameterProvided(e);
 
@@ -123,7 +124,7 @@ class SerializedTypeFields {
                 final String typeFieldName = fieldNaming.forType(fieldType, provided);
 
                 final FieldSpec fieldSpec = FieldSpec
-                        .builder(AutoSerializerProcessor.serializerFor(fieldType), typeFieldName)
+                        .builder(serializerType, typeFieldName)
                         .addModifiers(Modifier.FINAL).build();
 
                 final Optional<ParameterSpec> providedParameterSpec;
@@ -137,14 +138,13 @@ class SerializedTypeFields {
                         uniqueProviderName = providerNaming.forType(fieldType, false);
                     }
 
-                    providedParameterSpec = Optional.of(ParameterSpec.builder(
-                            AutoSerializerProcessor.serializerFor(fieldType), uniqueProviderName,
+                    providedParameterSpec = Optional.of(ParameterSpec.builder(serializerType, uniqueProviderName,
                             Modifier.FINAL).build());
                 } else {
                     providedParameterSpec = Optional.empty();
                 }
 
-                type = new SerializedFieldType(identifier, fieldType, fieldSpec, providedParameterSpec, id);
+                type = new SerializedFieldType(identifier, e, fieldType, fieldSpec, providedParameterSpec, id);
                 types.add(type);
             }
 

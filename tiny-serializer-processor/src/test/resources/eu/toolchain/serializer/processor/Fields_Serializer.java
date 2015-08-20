@@ -19,6 +19,7 @@ public final class Fields_Serializer implements Serializer<Fields> {
     final Serializer<UUID> s_UUID;
     final Serializer<byte[]> s_ByteArray;
     final Serializer<char[]> s_CharacterArray;
+    final Serializer<Fields.Values> s_Values;
 
     public Fields_Serializer(final SerializerFramework framework) {
         s_String = framework.string();
@@ -32,6 +33,7 @@ public final class Fields_Serializer implements Serializer<Fields> {
         s_UUID = framework.uuid();
         s_ByteArray = framework.byteArray();
         s_CharacterArray = framework.charArray();
+        s_Values = framework.forEnum(Fields.Values.values());
     }
 
     @Override
@@ -47,6 +49,7 @@ public final class Fields_Serializer implements Serializer<Fields> {
         s_UUID.serialize(buffer, value.uuid());
         s_ByteArray.serialize(buffer, value.byteArray());
         s_CharacterArray.serialize(buffer, value.charArray());
+        s_Values.serialize(buffer, value.enumValue());
     }
 
     @Override
@@ -62,7 +65,8 @@ public final class Fields_Serializer implements Serializer<Fields> {
         final UUID v_uuid = s_UUID.deserialize(buffer);
         final byte[] v_byteArray = s_ByteArray.deserialize(buffer);
         final char[] v_charArray= s_CharacterArray.deserialize(buffer);
+        final Fields.Values v_enumValue = s_Values.deserialize(buffer);
 
-        return new Fields(v_string, v_requiredCustom, v_shortNumber, v_integer, v_longNumber, v_floatNumber, v_doubleNumber, v_bool, v_uuid, v_byteArray, v_charArray);
+        return new Fields(v_string, v_requiredCustom, v_shortNumber, v_integer, v_longNumber, v_floatNumber, v_doubleNumber, v_bool, v_uuid, v_byteArray, v_charArray, v_enumValue);
     }
 }

@@ -81,7 +81,7 @@ public class AutoSerializerProcessorTest {
 
     static void verifySerializer(String name) {
         final JavaFileObject source = resourcePathFor(name);
-        final JavaFileObject serializer = resourcePathFor(String.format(AutoSerializerProcessor.SERIALIZER_NAME_FORMAT,
+        final JavaFileObject serializer = resourcePathFor(String.format(FrameworkStatements.SERIALIZER_NAME_FORMAT,
                 name));
 
         assert_().about(javaSource()).that(source).processedWith(new AutoSerializerProcessor()).compilesWithoutError()

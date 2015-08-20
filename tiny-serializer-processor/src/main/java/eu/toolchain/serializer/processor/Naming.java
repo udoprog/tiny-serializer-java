@@ -62,17 +62,45 @@ public class Naming {
         }
 
         if (fieldType.isPrimitive()) {
-            return composeName(AutoSerializerProcessor.primitiveType(fieldType));
+            return composePrimitive(fieldType);
         }
 
-        throw new IllegalArgumentException("Cannot get raw type for " + fieldType.toString());
+        throw new IllegalArgumentException("Cannot compose name from " + fieldType.toString());
     }
 
-    private boolean isOptional(TypeName fieldType) {
-        if (fieldType instanceof ParameterizedTypeName) {
-            return ((ParameterizedTypeName) fieldType).rawType.equals(optionalType);
+    private String composePrimitive(TypeName fieldType) {
+        if (fieldType.equals(TypeName.BOOLEAN)) {
+            return "Boolean";
         }
 
-        return false;
+        if (fieldType.equals(TypeName.BYTE)) {
+            return "Byte";
+        }
+
+        if (fieldType.equals(TypeName.SHORT)) {
+            return "Short";
+        }
+
+        if (fieldType.equals(TypeName.INT)) {
+            return "Integer";
+        }
+
+        if (fieldType.equals(TypeName.LONG)) {
+            return "Long";
+        }
+
+        if (fieldType.equals(TypeName.CHAR)) {
+            return "Character";
+        }
+
+        if (fieldType.equals(TypeName.FLOAT)) {
+            return "Float";
+        }
+
+        if (fieldType.equals(TypeName.DOUBLE)) {
+            return "Double";
+        }
+
+        throw new IllegalArgumentException("Unsupported primitive type: " + fieldType);
     }
 }

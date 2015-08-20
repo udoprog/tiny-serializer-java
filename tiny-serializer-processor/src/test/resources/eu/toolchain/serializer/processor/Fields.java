@@ -23,10 +23,11 @@ public class Fields {
     private final UUID uuid;
     private final byte[] byteArray;
     private final char[] charArray;
+    private final Values enumValue;
 
     public Fields(String string, Interface requiredCustom,
             short shortNumber, int integer, long longNumber, float floatNumber, double doubleNumber, boolean bool,
-            UUID uuid, byte[] byteArray, char[] charArray) {
+            UUID uuid, byte[] byteArray, char[] charArray, Values enumValue) {
         this.string = string;
         this.requiredCustom = requiredCustom;
         this.shortNumber = shortNumber;
@@ -38,6 +39,7 @@ public class Fields {
         this.uuid = uuid;
         this.byteArray = byteArray;
         this.charArray = charArray;
+        this.enumValue = enumValue;
     }
 
     public String string() {
@@ -82,5 +84,14 @@ public class Fields {
 
     public char[] charArray() {
         return charArray;
+    }
+
+    public Values enumValue() {
+        return enumValue;
+    }
+
+    static enum Values {
+        value1,
+        value2
     }
 }
