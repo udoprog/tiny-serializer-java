@@ -14,4 +14,5 @@ class SerializedFieldType {
     private final TypeName fieldType;
     private final FieldSpec fieldSpec;
     private final Optional<ParameterSpec> providedParameterSpec;
+    private final Optional<Integer> id;
 }

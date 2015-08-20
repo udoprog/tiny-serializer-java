@@ -1,8 +1,10 @@
 package eu.toolchain.serializer.processor;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Ordering;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
@@ -25,11 +28,40 @@ import eu.toolchain.serializer.AutoSerialize;
 @Data
 @RequiredArgsConstructor
 class SerializedTypeFields {
+    final static Ordering<Optional<Integer>> integerOrdering = Ordering.from(new Comparator<Optional<Integer>>() {
+        @Override
+        public int compare(Optional<Integer> a, Optional<Integer> b) {
+            if (a.isPresent() && !b.isPresent()) {
+                return -1;
+            }
+
+            if (!a.isPresent() && b.isPresent()) {
+                return 1;
+            }
+
+            if (!a.isPresent() && !b.isPresent()) {
+                return 0;
+            }
+
+            return Integer.compare(a.get(), b.get());
+        }
+    });
+
+    final static Ordering<SerializedField> orderingById = integerOrdering.onResultOf((SerializedField f) -> f.getId());
+
+    final static Ordering<SerializedField> orderingByCtorOrder = integerOrdering
+            .onResultOf((SerializedField f) -> f.getConstructorOrder());
+
+    final static Ordering<SerializedFieldType> orderingTypesById = integerOrdering
+            .onResultOf((SerializedFieldType f) -> f.getId());
+
+    private final boolean orderById;
+    private final boolean orderConstructorById;
     private final List<SerializedField> fields;
     private final List<SerializedFieldType> fieldTypes;
 
-    public SerializedTypeFields() {
-        this(ImmutableList.of(), ImmutableList.of());
+    public SerializedTypeFields(final boolean orderById, final boolean orderConstructorById) {
+        this(orderById, orderConstructorById, ImmutableList.of(), ImmutableList.of());
     }
 
     /**
@@ -40,7 +72,7 @@ class SerializedTypeFields {
      */
     boolean isValid(final Element root, final Messager messager) {
         boolean valid = true;
-        
+
         for (final SerializedField field : fields) {
             if (!accessorMethodExists(root, field.getAccessor(), field.getFieldType().getFieldType())) {
                 messager.printMessage(Diagnostic.Kind.WARNING, String.format("No accessor found for field: %s", field));
@@ -80,6 +112,7 @@ class SerializedTypeFields {
             final Optional<String> providerName = getProviderName(e);
             final SerializedFieldTypeIdentifier identifier = new SerializedFieldTypeIdentifier(fieldType, provided,
                     providerName);
+            final Optional<Integer> id = getId(e);
 
             final SerializedFieldType type;
             final Optional<SerializedFieldType> found;
@@ -111,7 +144,7 @@ class SerializedTypeFields {
                     providedParameterSpec = Optional.empty();
                 }
 
-                type = new SerializedFieldType(identifier, fieldType, fieldSpec, providedParameterSpec);
+                type = new SerializedFieldType(identifier, fieldType, fieldSpec, providedParameterSpec, id);
                 types.add(type);
             }
 
@@ -119,10 +152,36 @@ class SerializedTypeFields {
             final boolean useGetter = isParameterUsingGetter(e, autoSerialize);
             final String accessor = accessorForField(e, useGetter);
 
-            fields.add(new SerializedField(type, fieldName, accessor));
+            fields.add(new SerializedField(type, fieldName, accessor, variableName(fieldName), id,
+                    getConstructorOrder(e)));
         }
 
-        return new SerializedTypeFields(ImmutableList.copyOf(fields), ImmutableList.copyOf(types));
+        return new SerializedTypeFields(autoSerialize.orderById(), autoSerialize.orderConstructorById(),
+                ImmutableList.copyOf(fields), ImmutableList.copyOf(types));
+    }
+
+    static Optional<Integer> getId(Element e) {
+        final AutoSerialize.Field field;
+
+        if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null) {
+            if (field.id() >= 0) {
+                return Optional.of(field.id());
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    static Optional<Integer> getConstructorOrder(Element e) {
+        final AutoSerialize.Field field;
+
+        if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null) {
+            if (field.constructorOrder() >= 0) {
+                return Optional.of(field.constructorOrder());
+            }
+        }
+
+        return Optional.empty();
     }
 
     static boolean accessorMethodExists(final Element root, final String accessor, final TypeName serializedType) {
@@ -179,6 +238,10 @@ class SerializedTypeFields {
         return autoSerialize.useGetter();
     }
 
+    static String variableName(String fieldName) {
+        return String.format("v_%s", fieldName);
+    }
+
     static String accessorForField(Element e, final boolean useGetter) {
         final AutoSerialize.Field field;
 
@@ -193,5 +256,34 @@ class SerializedTypeFields {
         }
 
         return "get" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, accessor);
+    }
+
+    public Iterable<SerializedFieldType> getOrderedFieldTypes() {
+        if (orderById) {
+            return orderingTypesById.sortedCopy(fieldTypes);
+        }
+
+        return fieldTypes;
+    }
+
+    public Iterable<SerializedField> getOrderedFields() {
+        if (orderById) {
+            return orderingById.sortedCopy(fields);
+        }
+
+        return fields;
+    }
+
+    public Iterable<String> getConstructorVariables() {
+        final Ordering<SerializedField> ordering;
+
+        if (orderById) {
+            ordering = orderingByCtorOrder.compound(orderingById);
+        } else {
+            ordering = orderingByCtorOrder;
+        }
+
+        return ImmutableList.copyOf(ordering.sortedCopy(fields).stream().map((f) -> f.getVariableName())
+                .collect(Collectors.toList()));
     }
 }

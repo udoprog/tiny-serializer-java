@@ -70,16 +70,13 @@ public class AutoSerializerProcessorTest {
     }
 
     @Test
-    public void testSerialization() {
-        final List<JavaFileObject> files = new ArrayList<>();
+    public void testUseBuilder() {
+        verifySerializer("UseBuilder");
+    }
 
-        files.add(resourcePathFor("Empty"));
-        files.add(resourcePathFor("Interface"));
-        files.add(resourcePathFor("ImplA"));
-        files.add(resourcePathFor("ImplB"));
-
-        assert_().about(javaSources()).that(files).processedWith(new AutoSerializerProcessor()).compilesWithoutError()
-                .and().generatesSources(resourcePathFor("Serialization"));
+    @Test
+    public void testOrdering() {
+        verifySerializer("Ordering");
     }
 
     static void verifySerializer(String name) {
