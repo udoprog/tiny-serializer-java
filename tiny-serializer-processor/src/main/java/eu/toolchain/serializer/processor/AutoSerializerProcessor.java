@@ -1,17 +1,12 @@
 package eu.toolchain.serializer.processor;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -33,7 +28,6 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -62,6 +56,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
     private Filer filer;
     private Elements elements;
     private Messager messager;
+    private int round = 0;
 
     @Override
     public void init(final ProcessingEnvironment env) {
@@ -82,31 +77,40 @@ public class AutoSerializerProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> typeElements, RoundEnvironment env) {
+        messager.printMessage(Diagnostic.Kind.NOTE,
+                String.format("processing round %d", round++));
+
         if (disabled) {
             return false;
         }
+        
+        final Collection<SerializedType> processed = processElements(env.getElementsAnnotatedWith(AutoSerialize.class));
 
-        final Collection<ProcessedSerializer> processed;
+        for (final SerializedType p : processed) {
+            if (!p.isValid(messager)) {
+                messager.printMessage(Diagnostic.Kind.WARNING, String.format("Might not be valid: %s", p.getElementType()));
+            }
+            
+            final JavaFile output = p.asJavaFile();
 
-        try {
-            processed = processElements(env.getElementsAnnotatedWith(AutoSerialize.class));
-        } catch (IOException e) {
-            messager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
-            return false;
-        }
+            messager.printMessage(Diagnostic.Kind.NOTE,
+                    String.format("Writing %s.%s", output.packageName, output.typeSpec.name));
 
-        final Set<JavaFile> serialization = processSerialization(processed);
-
-        for (final ProcessedSerializer p : processed) {
             try {
-                p.asJavaFile().writeTo(filer);
+                output.writeTo(filer);
             } catch (IOException e) {
                 messager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
                 return false;
             }
         }
 
+        final Set<JavaFile> serialization = processSerialization(processed);
+
         for (final JavaFile file : serialization) {
+            messager.printMessage(Diagnostic.Kind.NOTE, String.format(
+                    "Writing %s.%s (%d serializer(s))", file.packageName, file.typeSpec.name,
+                    processed.size()));
+
             try {
                 file.writeTo(filer);
             } catch (IOException e) {
@@ -115,20 +119,20 @@ public class AutoSerializerProcessor extends AbstractProcessor {
             }
         }
 
-        return true;
+        return false;
     }
 
-    Set<JavaFile> processSerialization(Collection<ProcessedSerializer> processed) {
+    Set<JavaFile> processSerialization(Collection<SerializedType> processed) {
         final Set<JavaFile> serialization = new HashSet<>();
 
-        for (final Map.Entry<String, Collection<ProcessedSerializer>> e : byPackage(processed).entrySet()) {
+        for (final Map.Entry<String, Collection<SerializedType>> e : byPackage(processed).entrySet()) {
             serialization.add(processPackageSerialization(e.getKey(), e.getValue()));
         }
 
         return serialization;
     }
 
-    JavaFile processPackageSerialization(final String packageName, final Collection<ProcessedSerializer> processed) {
+    JavaFile processPackageSerialization(final String packageName, final Collection<SerializedType> processed) {
         final TypeSpec.Builder serialization = TypeSpec.classBuilder(SERIALIZATION_NAME);
 
         serialization.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
@@ -140,7 +144,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
 
         serialization.addMethod(serializationConstructor(frameworkField));
 
-        for (final ProcessedSerializer p : processed) {
+        for (final SerializedType p : processed) {
             serialization.addMethod(builderMethod(p, frameworkField));
         }
 
@@ -160,7 +164,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return b.build();
     }
 
-    MethodSpec builderMethod(final ProcessedSerializer p, final FieldSpec framework) {
+    MethodSpec builderMethod(final SerializedType p, final FieldSpec framework) {
         final MethodSpec.Builder b = MethodSpec.methodBuilder(String.format("get%s", p.name));
 
         final List<String> statements = new ArrayList<>();
@@ -173,7 +177,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         parameters.add(framework);
         statements.add("$N");
 
-        for (final SerializedFieldType t : p.getFieldTypes()) {
+        for (final SerializedFieldType t : p.getFields().getFieldTypes()) {
             if (!t.getProvidedParameterSpec().isPresent()) {
                 continue;
             }
@@ -192,11 +196,11 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return b.build();
     }
 
-    Map<String, Collection<ProcessedSerializer>> byPackage(Collection<ProcessedSerializer> processed) {
-        final Map<String, Collection<ProcessedSerializer>> byPackage = new HashMap<>();
+    Map<String, Collection<SerializedType>> byPackage(Collection<SerializedType> processed) {
+        final Map<String, Collection<SerializedType>> byPackage = new HashMap<>();
 
-        for (final ProcessedSerializer p : processed) {
-            Collection<ProcessedSerializer> group = byPackage.get(p.packageName);
+        for (final SerializedType p : processed) {
+            Collection<SerializedType> group = byPackage.get(p.packageName);
 
             if (group == null) {
                 group = new ArrayList<>();
@@ -219,17 +223,18 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return SourceVersion.latestSupported();
     }
 
-    Collection<ProcessedSerializer> processElements(Set<? extends Element> elements) throws IOException {
-        final List<ProcessedSerializer> processed = new ArrayList<>();
+    Collection<SerializedType> processElements(Set<? extends Element> elements) {
+        final List<SerializedType> processed = new ArrayList<>();
 
         for (final Element element : elements) {
+            messager.printMessage(Diagnostic.Kind.NOTE, String.format("Processing %s", element));
             processed.add(processElement(element));
         }
 
         return processed;
     }
 
-    ProcessedSerializer processElement(Element element) throws IOException {
+    SerializedType processElement(Element element) {
         if (element.getKind() == ElementKind.INTERFACE) {
             return processInterface(element);
         }
@@ -237,7 +242,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return processClass(element);
     }
 
-    ProcessedSerializer processInterface(Element element) {
+    SerializedType processInterface(Element element) {
         final AutoSerialize annotation = element.getAnnotation(AutoSerialize.class);
 
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
@@ -259,11 +264,10 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         generated.addField(serializer);
 
         generated.addMethod(interfaceSerializeConstructor(elementType, serializer, subtypes));
-        generated.addMethod(interfaceSerializeMethod(element, serializer));
-        generated.addMethod(interfaceDeserializeMethod(element, serializer));
+        generated.addMethod(interfaceSerializeMethod(elementType, serializer));
+        generated.addMethod(interfaceDeserializeMethod(elementType, serializer));
 
-        return new ProcessedSerializer(packageName, name, generated.build(), elementType, supertype,
-                ImmutableList.<SerializedFieldType> of());
+        return new SerializedType(element, packageName, name, generated.build(), elementType, supertype, new SerializedTypeFields());
     }
 
     static List<SubType> getSubtypes(Element element) {
@@ -340,11 +344,11 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return b.build();
     }
 
-    static MethodSpec interfaceSerializeMethod(Element element, FieldSpec serializer) {
+    static MethodSpec interfaceSerializeMethod(TypeName valueType, FieldSpec serializer) {
         final ParameterSpec buffer = ParameterSpec.builder(SerialWriter.class, "buffer").addModifiers(Modifier.FINAL)
                 .build();
 
-        final ParameterSpec value = ParameterSpec.builder(TypeName.get(element.asType()), "value")
+        final ParameterSpec value = ParameterSpec.builder(valueType, "value")
                 .addModifiers(Modifier.FINAL).build();
 
         final MethodSpec.Builder b = buildSerializeMethod(buffer, value);
@@ -354,47 +358,45 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return b.build();
     }
 
-    static MethodSpec interfaceDeserializeMethod(Element element, FieldSpec serializer) {
+    static MethodSpec interfaceDeserializeMethod(TypeName returnType, FieldSpec serializer) {
         final ParameterSpec buffer = ParameterSpec.builder(SerialReader.class, "buffer").addModifiers(Modifier.FINAL)
                 .build();
 
-        final MethodSpec.Builder b = buildDeserializeMethod(element, buffer);
+        final MethodSpec.Builder b = buildDeserializeMethod(returnType, buffer);
 
         b.addStatement("return $N.deserialize($N)", serializer, buffer);
 
         return b.build();
     }
 
-    ProcessedSerializer processClass(final Element element) {
+    SerializedType processClass(final Element element) {
         final AutoSerialize annotation = element.getAnnotation(AutoSerialize.class);
 
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
-        final String serializerName = serializerName(element, annotation);
         final String name = name(element, annotation);
 
-        final SerializedType serialized = SerializedType.build(element, annotation);
+        final SerializedTypeFields serializedType = SerializedTypeFields.build(element, annotation);
 
         final TypeName elementType = TypeName.get(element.asType());
         final TypeName supertype = serializerFor(elementType);
 
-        final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
+        final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName(element, annotation));
 
-        for (final SerializedFieldType t : serialized.getFieldTypes()) {
+        for (final SerializedFieldType t : serializedType.getFieldTypes()) {
             generated.addField(t.getFieldSpec());
         }
 
         generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
         generated.addSuperinterface(supertype);
 
-        generated.addMethod(classSerializeConstructor(serialized));
-        generated.addMethod(classSerializeMethod(element, serialized));
-        generated.addMethod(classDeserializeMethod(element, serialized));
+        generated.addMethod(classSerializeConstructor(serializedType));
+        generated.addMethod(classSerializeMethod(elementType, serializedType));
+        generated.addMethod(classDeserializeMethod(elementType, serializedType));
 
-        return new ProcessedSerializer(packageName, name, generated.build(), elementType, supertype,
-                serialized.getFieldTypes());
+        return new SerializedType(element, packageName, name, generated.build(), elementType, supertype, serializedType);
     }
 
-    static MethodSpec classSerializeConstructor(final SerializedType serialized) {
+    static MethodSpec classSerializeConstructor(final SerializedTypeFields serialized) {
         final ParameterSpec framework = ParameterSpec.builder(SerializerFramework.class, FRAMEWORK_NAME)
                 .addModifiers(Modifier.FINAL).build();
 
@@ -428,11 +430,11 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return b.build();
     }
 
-    static MethodSpec classSerializeMethod(final Element element, final SerializedType serialized) {
+    static MethodSpec classSerializeMethod(final TypeName valueType, final SerializedTypeFields serialized) {
         final ParameterSpec buffer = ParameterSpec.builder(SerialWriter.class, "buffer").addModifiers(Modifier.FINAL)
                 .build();
 
-        final ParameterSpec value = ParameterSpec.builder(TypeName.get(element.asType()), "value")
+        final ParameterSpec value = ParameterSpec.builder(valueType, "value")
                 .addModifiers(Modifier.FINAL).build();
 
         final MethodSpec.Builder b = buildSerializeMethod(buffer, value);
@@ -445,15 +447,15 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         return b.build();
     }
 
-    static MethodSpec classDeserializeMethod(Element element, SerializedType serialized) {
+    static MethodSpec classDeserializeMethod(TypeName returnType, SerializedTypeFields serializedType) {
         final ParameterSpec buffer = ParameterSpec.builder(SerialReader.class, "buffer").addModifiers(Modifier.FINAL)
                 .build();
 
-        final MethodSpec.Builder b = buildDeserializeMethod(element, buffer);
+        final MethodSpec.Builder b = buildDeserializeMethod(returnType, buffer);
 
         final List<String> variables = new ArrayList<>();
 
-        for (final SerializedField field : serialized.getFields()) {
+        for (final SerializedField field : serializedType.getFields()) {
             final String name = String.format("v_%s", field.getFieldName());
             variables.add(name);
             final TypeName fieldType = field.getFieldType().getFieldType();
@@ -461,15 +463,15 @@ public class AutoSerializerProcessor extends AbstractProcessor {
             b.addStatement("final $T $L = $N.deserialize($N)", fieldType, name, fieldSpec, buffer);
         }
 
-        b.addStatement("return new $T($L)", serialized.getType(), parameterJoiner.join(variables));
+        b.addStatement("return new $T($L)", returnType, parameterJoiner.join(variables));
         return b.build();
     }
 
-    static MethodSpec.Builder buildDeserializeMethod(final Element element, final ParameterSpec buffer) {
+    static MethodSpec.Builder buildDeserializeMethod(final TypeName elementType, final ParameterSpec buffer) {
         final MethodSpec.Builder b = MethodSpec.methodBuilder("deserialize");
 
         b.addModifiers(Modifier.PUBLIC);
-        b.returns(TypeName.get(element.asType()));
+        b.returns(elementType);
         b.addAnnotation(Override.class);
         b.addParameter(buffer);
         b.addException(IOException.class);
