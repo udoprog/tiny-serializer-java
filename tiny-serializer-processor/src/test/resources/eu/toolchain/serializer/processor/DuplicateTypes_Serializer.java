@@ -10,9 +10,9 @@ public final class DuplicateTypes_Serializer implements Serializer<DuplicateType
     final Serializer<String> s_String;
     final Serializer<String> s_ProvidedString;
 
-    public DuplicateTypes_Serializer(final SerializerFramework framework, final Serializer<String> p0) {
+    public DuplicateTypes_Serializer(final SerializerFramework framework, final Serializer<String> p_String) {
         s_String = framework.string();
-        s_ProvidedString = p0;
+        s_ProvidedString = p_String;
     }
 
     @Override

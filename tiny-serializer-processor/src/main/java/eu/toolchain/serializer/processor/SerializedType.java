@@ -1,11 +1,9 @@
 package eu.toolchain.serializer.processor;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -17,11 +15,8 @@ import lombok.RequiredArgsConstructor;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableList;
-import com.squareup.javapoet.ArrayTypeName;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
@@ -60,10 +55,10 @@ class SerializedType {
 
         final List<SerializedField> fields = new ArrayList<>();
 
-        final Set<String> seenNames = new HashSet<>();
         final LinkedHashMap<SerializedFieldTypeKey, SerializedFieldType> types = new LinkedHashMap<>();
 
-        int providedIndex = 0;
+        final Naming fieldNaming = new Naming("s_");
+        final Naming providerNaming = new Naming("p_");
 
         for (final Element e : root.getEnclosedElements()) {
             if (e.getKind() != ElementKind.FIELD) {
@@ -83,7 +78,8 @@ class SerializedType {
 
             final boolean provided = isParameterProvided(e);
 
-            final SerializedFieldTypeKey key = new SerializedFieldTypeKey(fieldType, provided);
+            final Optional<String> providerName = getProviderName(e);
+            final SerializedFieldTypeKey key = new SerializedFieldTypeKey(fieldType, provided, providerName);
 
             final SerializedFieldType type;
             final SerializedFieldType found;
@@ -91,7 +87,7 @@ class SerializedType {
             if ((found = types.get(key)) != null) {
                 type = found;
             } else {
-                final String typeFieldName = uniqueName(seenNames, fieldType, provided);
+                final String typeFieldName = fieldNaming.forType(fieldType, provided);
 
                 final FieldSpec fieldSpec = FieldSpec
                         .builder(AutoSerializerProcessor.serializerFor(fieldType), typeFieldName)
@@ -100,8 +96,16 @@ class SerializedType {
                 final Optional<ParameterSpec> providedParameterSpec;
 
                 if (provided) {
+                    final String uniqueProviderName;
+
+                    if (providerName.isPresent()) {
+                        uniqueProviderName = providerNaming.forName(providerName.get());
+                    } else {
+                        uniqueProviderName = providerNaming.forType(fieldType, false);
+                    }
+
                     providedParameterSpec = Optional.of(ParameterSpec.builder(
-                            AutoSerializerProcessor.serializerFor(fieldType), String.format("p%d", providedIndex++),
+                            AutoSerializerProcessor.serializerFor(fieldType), uniqueProviderName,
                             Modifier.FINAL).build());
                 } else {
                     providedParameterSpec = Optional.empty();
@@ -119,59 +123,6 @@ class SerializedType {
         }
 
         return new SerializedType(root, elementType, ImmutableList.copyOf(fields), ImmutableList.copyOf(types.values()));
-    }
-
-    static String uniqueName(Set<String> seenNames, TypeName fieldType, boolean provided) {
-        final String base = String.format(provided ? "s_Provided%s" : "s_%s", composeName(fieldType));
-
-        int index = 1;
-
-        String candidate = base;
-
-        while (seenNames.contains(candidate)) {
-            candidate = String.format("%s%d", base, index++);
-        }
-
-        seenNames.add(candidate);
-        return candidate;
-    }
-
-    final static ClassName optionalType = ClassName.get(Optional.class);
-
-    static String composeName(TypeName fieldType) {
-        if (fieldType instanceof ClassName) {
-            final ClassName c = (ClassName) fieldType;
-            return c.simpleName();
-        }
-
-        if (fieldType instanceof ParameterizedTypeName) {
-            final ParameterizedTypeName p = (ParameterizedTypeName) fieldType;
-
-            if (p.rawType.equals(optionalType)) {
-                return "Optional" + composeName(p.typeArguments.iterator().next());
-            }
-
-            return p.rawType.simpleName();
-        }
-
-        if (fieldType instanceof ArrayTypeName) {
-            final ArrayTypeName a = (ArrayTypeName) fieldType;
-            return composeName(a.componentType) + "Array";
-        }
-
-        if (fieldType.isPrimitive()) {
-            return composeName(AutoSerializerProcessor.primitiveType(fieldType));
-        }
-
-        throw new IllegalArgumentException("Cannot get raw type for " + fieldType.toString());
-    }
-
-    static boolean isOptional(TypeName fieldType) {
-        if (fieldType instanceof ParameterizedTypeName) {
-            return ((ParameterizedTypeName) fieldType).rawType.equals(optionalType);
-        }
-
-        return false;
     }
 
     static boolean accessorMethodExists(final Element root, final String accessor, final TypeName serializedType) {
@@ -208,6 +159,16 @@ class SerializedType {
         return false;
     }
 
+    static Optional<String> getProviderName(Element e) {
+        final AutoSerialize.Field field;
+
+        if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null && !"".equals(field.providerName())) {
+            return Optional.of(field.providerName());
+        }
+
+        return Optional.empty();
+    }
+
     static boolean isParameterUsingGetter(Element e, AutoSerialize autoSerialize) {
         final AutoSerialize.Field field;
 
@@ -238,5 +199,6 @@ class SerializedType {
     static class SerializedFieldTypeKey {
         private final TypeName fieldType;
         private final boolean provided;
+        private final Optional<String> providerName;
     }
 }

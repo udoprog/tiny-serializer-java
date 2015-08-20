@@ -40,10 +40,13 @@ public @interface AutoSerialize {
 
         /**
          * Indicate that the annotated field should be provided in the construction of the serializer.
-         *
-         * @return
          */
         boolean provided() default false;
+
+        /**
+         * Specify a specific provider name.
+         */
+        String providerName() default "";
     }
 
     @Target({ ElementType.FIELD })
