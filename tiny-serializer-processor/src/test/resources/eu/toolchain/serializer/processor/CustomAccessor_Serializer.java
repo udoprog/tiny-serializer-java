@@ -7,20 +7,20 @@ import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
 
 public final class CustomAccessor_Serializer implements Serializer<CustomAccessor> {
-    final Serializer<String> s0;
+    final Serializer<String> s_String;
 
     public CustomAccessor_Serializer(final SerializerFramework framework) {
-        s0 = framework.string();
+        s_String = framework.string();
     }
 
     @Override
     public void serialize(final SerialWriter buffer, final CustomAccessor value) throws IOException {
-        s0.serialize(buffer, value.foo());
+        s_String.serialize(buffer, value.foo());
     }
 
     @Override
     public CustomAccessor deserialize(final SerialReader buffer) throws IOException {
-        final String v0 = s0.deserialize(buffer);
-        return new CustomAccessor(v0);
+        final String v_string = s_String.deserialize(buffer);
+        return new CustomAccessor(v_string);
     }
 }

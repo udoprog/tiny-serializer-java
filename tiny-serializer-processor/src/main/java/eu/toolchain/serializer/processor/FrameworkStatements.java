@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -40,6 +41,7 @@ public class FrameworkStatements {
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(SortedMap.class), "$N.sortedMap", 2));
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(Set.class), "$N.set", 1));
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(SortedSet.class), "$N.sortedSet", 1));
+        parameterized.add(new ParameterizedTypeStatement(ClassName.get(Optional.class), "$N.optional", 1));
     }
 
     public static FrameworkStatement resolveStatement(final TypeName type, final Object framework) {

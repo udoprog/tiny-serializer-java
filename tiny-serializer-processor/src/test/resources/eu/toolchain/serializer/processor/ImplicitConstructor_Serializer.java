@@ -7,20 +7,20 @@ import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
 
 public final class ImplicitConstructor_Serializer implements Serializer<ImplicitConstructor> {
-    final Serializer<String> s0;
+    final Serializer<String> s_String;
 
     public ImplicitConstructor$Serializer(final SerializerFramework framework) {
-        s0 = framework.string();
+        s_String = framework.string();
     }
 
     @Override
     public void serialize(final SerialWriter buffer, final ImplicitConstructor value) throws IOException {
-        s0.serialize(buffer, value.getString());
+        s_String.serialize(buffer, value.getString());
     }
 
     @Override
     public ImplicitConstructor deserialize(final SerialReader buffer) throws IOException {
-        final String v0 = s0.deserialize(buffer);
-        return new ImplicitConstructor(v0);
+        final String v_string = s_String.deserialize(buffer);
+        return new ImplicitConstructor(v_string);
     }
 }

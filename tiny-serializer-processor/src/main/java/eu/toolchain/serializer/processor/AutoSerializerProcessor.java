@@ -18,7 +18,6 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
@@ -26,7 +25,6 @@ import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 import com.google.auto.service.AutoService;
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -38,12 +36,8 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.sun.tools.javac.util.Pair;
 
-import eu.toolchain.serializer.AbsentProperty;
 import eu.toolchain.serializer.AutoSerialize;
-import eu.toolchain.serializer.OptionalProperty;
-import eu.toolchain.serializer.PresentProperty;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
@@ -55,10 +49,6 @@ public class AutoSerializerProcessor extends AbstractProcessor {
     public static final String FRAMEWORK_NAME = "framework";
     public static final String SERIALIZER_NAME_FORMAT = "%s_Serializer";
     public static final String SERIALIZATION_NAME = "Serialization";
-
-    static final ClassName optionalPropertyType = ClassName.get(OptionalProperty.class);
-    static final ClassName presentPropertytType = ClassName.get(PresentProperty.class);
-    static final ClassName absentPropertyType = ClassName.get(AbsentProperty.class);
 
     static final Joiner parameterJoiner = Joiner.on(", ");
 
@@ -164,13 +154,16 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         parameters.add(framework);
         statements.add("$N");
 
-        for (final SerializedField f : p.fields) {
-            if (f.type.provided) {
-                final ParameterSpec spec = ParameterSpec.builder(serializerFor(f.type.serializedFieldType), String.format("p%d", index++), Modifier.FINAL).build();
-                b.addParameter(spec);
-                parameters.add(spec);
-                statements.add("$N");
+        for (final SerializedFieldType t : p.getFieldTypes()) {
+            if (!t.getProvidedParameterSpec().isPresent()) {
+                continue;
             }
+
+            final ParameterSpec spec = ParameterSpec.builder(serializerFor(t.getFieldType()),
+                    String.format("p%d", index++), Modifier.FINAL).build();
+            b.addParameter(spec);
+            parameters.add(spec);
+            statements.add("$N");
         }
 
         b.returns(p.supertype);
@@ -251,7 +244,7 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         generated.addMethod(interfaceDeserializeMethod(element, serializer));
 
         return new ProcessedSerializer(packageName, name, generated.build(), elementType, supertype,
-                ImmutableList.<SerializedField> of());
+                ImmutableList.<SerializedFieldType> of());
     }
 
     static List<SubType> getSubtypes(Element element) {
@@ -360,36 +353,29 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         final String serializerName = serializerName(element, annotation);
         final String name = name(element, annotation);
 
-        final SerializedType creator = findCreatorConstructor(element, annotation);
+        final SerializedType serialized = SerializedType.build(element, annotation);
 
         final TypeName elementType = TypeName.get(element.asType());
         final TypeName supertype = serializerFor(elementType);
 
-        final FieldSpec optional = FieldSpec.builder(serializerFor(Boolean.class), "optional")
-                .addModifiers(Modifier.FINAL).build();
-
         final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
 
-        if (creator.anyOptional) {
-            generated.addField(optional);
-        }
-
-        for (final SerializedField serializedType : creator.fields) {
-            generated.addField(serializedType.fieldSpec);
+        for (final SerializedFieldType t : serialized.getFieldTypes()) {
+            generated.addField(t.getFieldSpec());
         }
 
         generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
         generated.addSuperinterface(supertype);
 
-        generated.addMethod(classSerializeConstructor(creator, optional));
-        generated.addMethod(classSerializeMethod(element, creator, optional));
-        generated.addMethod(classDeserializeMethod(element, creator, optional));
+        generated.addMethod(classSerializeConstructor(serialized));
+        generated.addMethod(classSerializeMethod(element, serialized));
+        generated.addMethod(classDeserializeMethod(element, serialized));
 
         return new ProcessedSerializer(packageName, name, generated.build(), elementType, supertype,
-                creator.fields);
+                serialized.getFieldTypes());
     }
 
-    static MethodSpec classSerializeConstructor(final SerializedType creator, final FieldSpec optional) {
+    static MethodSpec classSerializeConstructor(final SerializedType serialized) {
         final ParameterSpec framework = ParameterSpec.builder(SerializerFramework.class, FRAMEWORK_NAME)
                 .addModifiers(Modifier.FINAL).build();
 
@@ -397,38 +383,33 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         b.addModifiers(Modifier.PUBLIC);
         b.addParameter(framework);
 
-        if (creator.anyOptional) {
-            b.addStatement("$N = $N.bool()", optional, framework);
+        for (final SerializedFieldType t : serialized.getFieldTypes()) {
+            if (t.getProvidedParameterSpec().isPresent()) {
+                b.addParameter(t.getProvidedParameterSpec().get());
+            }
         }
 
-        int providedIndex = 0;
-
-        for (final SerializedField s : creator.fields) {
-            if (s.type.provided) {
-                final ParameterSpec spec = ParameterSpec.builder(serializerFor(s.type.serializedFieldType),
-                        String.format("p%d", providedIndex++), Modifier.FINAL).build();
-
-                b.addParameter(spec);
-                b.addStatement("$N = $N", s.fieldSpec, spec);
+        for (final SerializedFieldType fieldType : serialized.getFieldTypes()) {
+            if (fieldType.getProvidedParameterSpec().isPresent()) {
+                b.addStatement("$N = $N", fieldType.getFieldSpec(), fieldType.getProvidedParameterSpec().get());
                 continue;
             }
 
             final FrameworkMethodBuilder builder = new FrameworkMethodBuilder() {
                 @Override
                 public void assign(final String statement, final List<Object> arguments) {
-                    b.addStatement(String.format("$N = %s", statement),
-                            ImmutableList.builder().add(s.fieldSpec).addAll(arguments).build().toArray());
+                    b.addStatement(String.format("$N = %s", statement), ImmutableList.builder().add(fieldType.getFieldSpec())
+                            .addAll(arguments).build().toArray());
                 }
             };
 
-            FrameworkStatements.resolveStatement(boxedType(s.type.serializedFieldType), framework).writeTo(builder);
+            FrameworkStatements.resolveStatement(boxedType(fieldType.getFieldType()), framework).writeTo(builder);
         }
 
         return b.build();
     }
 
-    static MethodSpec classSerializeMethod(final Element element, final SerializedType creator,
-            final FieldSpec optional) {
+    static MethodSpec classSerializeMethod(final Element element, final SerializedType serialized) {
         final ParameterSpec buffer = ParameterSpec.builder(SerialWriter.class, "buffer").addModifiers(Modifier.FINAL)
                 .build();
 
@@ -437,19 +418,15 @@ public class AutoSerializerProcessor extends AbstractProcessor {
 
         final MethodSpec.Builder b = buildSerializeMethod(buffer, value);
 
-        for (final SerializedField field : creator.fields) {
-            if (field.type.optional) {
-                serializeOptionalParameter(b, field, buffer, value, optional);
-                continue;
-            }
-
-            b.addStatement("$N.serialize($N, $N.$L())", field.fieldSpec, buffer, value, field.type.accessor);
+        for (final SerializedField field : serialized.getFields()) {
+            b.addStatement("$N.serialize($N, $N.$L())", field.getFieldType().getFieldSpec(), buffer, value,
+                    field.getAccessor());
         }
 
         return b.build();
     }
 
-    static MethodSpec classDeserializeMethod(Element element, SerializedType creator, FieldSpec optional) {
+    static MethodSpec classDeserializeMethod(Element element, SerializedType serialized) {
         final ParameterSpec buffer = ParameterSpec.builder(SerialReader.class, "buffer").addModifiers(Modifier.FINAL)
                 .build();
 
@@ -457,22 +434,15 @@ public class AutoSerializerProcessor extends AbstractProcessor {
 
         final List<String> variables = new ArrayList<>();
 
-        int index = 0;
-
-        for (final SerializedField field : creator.fields) {
-            final String name = String.format("v%d", index++);
-
+        for (final SerializedField field : serialized.getFields()) {
+            final String name = String.format("v_%s", field.getFieldName());
             variables.add(name);
-
-            if (field.type.optional) {
-                deserializeOptionalParameter(b, field, buffer, optional, name);
-                continue;
-            }
-
-            b.addStatement("final $T $L = $N.deserialize($N)", field.type.fieldType, name, field.fieldSpec, buffer);
+            final TypeName fieldType = field.getFieldType().getFieldType();
+            final FieldSpec fieldSpec = field.getFieldType().getFieldSpec();
+            b.addStatement("final $T $L = $N.deserialize($N)", fieldType, name, fieldSpec, buffer);
         }
 
-        b.addStatement("return new $T($L)", creator.type, parameterJoiner.join(variables));
+        b.addStatement("return new $T($L)", serialized.getType(), parameterJoiner.join(variables));
         return b.build();
     }
 
@@ -502,12 +472,12 @@ public class AutoSerializerProcessor extends AbstractProcessor {
     }
 
     static TypeName serializerFor(Class<?> type) {
-        return serializerFor(TypeName.get(type));
+        return serializerFor(ClassName.get(type));
     }
 
     static TypeName boxedType(TypeName type) {
         if (type.isPrimitive()) {
-            return primtiveType(type);
+            return primitiveType(type);
         }
 
         return type;
@@ -515,13 +485,13 @@ public class AutoSerializerProcessor extends AbstractProcessor {
 
     static TypeName serializerFor(TypeName type) {
         if (type.isPrimitive()) {
-            return serializerFor(primtiveType(type));
+            return serializerFor(primitiveType(type));
         }
 
         return ParameterizedTypeName.get(ClassName.get(Serializer.class), type);
     }
 
-    static ClassName primtiveType(TypeName type) {
+    static ClassName primitiveType(TypeName type) {
         if (type == TypeName.BOOLEAN) {
             return ClassName.get(Boolean.class);
         }
@@ -557,119 +527,6 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         throw new IllegalArgumentException("Invalid type: " + type.toString());
     }
 
-    static SerializedType findCreatorConstructor(final Element root, final AutoSerialize autoSerialize) {
-        final TypeName elementType = TypeName.get(root.asType());
-
-        final List<SerializedFieldType> fieldTypes = new ArrayList<>();
-
-        for (final Element e : root.getEnclosedElements()) {
-            if (e.getKind() != ElementKind.FIELD) {
-                continue;
-            }
-            // skip static fields.
-
-            if (e.getModifiers().contains(Modifier.STATIC)) {
-                continue;
-            }
-
-            if (e.getAnnotation(AutoSerialize.Ignore.class) != null) {
-                continue;
-            }
-
-            final TypeName fieldType = TypeName.get(e.asType());
-            final TypeName serializedFieldType = getSerializedType(fieldType);
-            final boolean optional = isParameterOptional(fieldType);
-            final boolean useGetter = isParameterUsingGetter(e, autoSerialize);
-            final boolean provided = isParameterProvided(e);
-            final String accessor = accessorForField(e, useGetter);
-
-            fieldTypes.add(new SerializedFieldType(accessor, fieldType, serializedFieldType, optional, provided));
-        }
-
-        return new SerializedType(root, elementType, fieldTypes);
-    }
-
-    static boolean isParameterProvided(Element e) {
-        final AutoSerialize.Field field;
-
-        if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null) {
-            return field.provided();
-        }
-
-        return false;
-    }
-
-    static boolean isParameterUsingGetter(Element e, AutoSerialize autoSerialize) {
-        final AutoSerialize.Field field;
-
-        if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null) {
-            return field.useGetter();
-        }
-
-        return autoSerialize.useGetter();
-    }
-
-    static boolean accessorMethodExists(final Element root, final String accessor, final TypeName serializedType) {
-        for (final Element enclosed : root.getEnclosedElements()) {
-            if (enclosed.getKind() != ElementKind.METHOD) {
-                continue;
-            }
-
-            final ExecutableElement executable = (ExecutableElement) enclosed;
-
-            if (!executable.getSimpleName().toString().equals(accessor)) {
-                continue;
-            }
-
-            if (!executable.getParameters().isEmpty()) {
-                continue;
-            }
-
-            final TypeName returnType = TypeName.get(executable.getReturnType());
-
-            return serializedType.equals(returnType);
-        }
-
-        return false;
-    }
-
-    static String accessorForField(Element e, final boolean useGetter) {
-        final AutoSerialize.Field field;
-
-        if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null && !"".equals(field.accessor())) {
-            return field.accessor();
-        }
-
-        final String accessor = e.getSimpleName().toString();
-
-        if (!useGetter) {
-            return accessor;
-        }
-
-        return "get" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, accessor);
-    }
-
-    static TypeName getSerializedType(TypeName type) {
-        if (type instanceof ParameterizedTypeName) {
-            final ParameterizedTypeName parameterized = (ParameterizedTypeName) type;
-
-            if (parameterized.rawType.equals(optionalPropertyType)) {
-                return parameterized.typeArguments.iterator().next();
-            }
-        }
-
-        return type;
-    }
-
-    static boolean isParameterOptional(final TypeName type) {
-        if (type instanceof ParameterizedTypeName) {
-            final ParameterizedTypeName parameterized = (ParameterizedTypeName) type;
-            return parameterized.rawType.equals(optionalPropertyType);
-        }
-
-        return false;
-    }
-
     static ClassName serializerClassFor(ClassName type) {
         return ClassName.get(type.packageName(), String.format(SERIALIZER_NAME_FORMAT, type.simpleName()));
     }
@@ -684,184 +541,5 @@ public class AutoSerializerProcessor extends AbstractProcessor {
         }
 
         return element.getSimpleName().toString();
-    }
-
-    static void serializeOptionalParameter(final MethodSpec.Builder b, final SerializedField field,
-            final ParameterSpec buffer, final ParameterSpec value, FieldSpec optional) {
-        b.beginControlFlow("");
-        {
-            final TypeName optionalType = ParameterizedTypeName.get(optionalPropertyType,
-                    field.type.serializedFieldType);
-            b.addStatement("final $T o = $N.$L()", optionalType, value, field.type.accessor);
-
-            b.beginControlFlow("if (o.isPresent())");
-            {
-                b.addStatement("$N.serialize($N, $L)", optional, buffer, true);
-                b.addStatement("$N.serialize($N, o.get())", field.fieldSpec, buffer);
-            }
-            b.endControlFlow();
-
-            b.beginControlFlow("else");
-            {
-                b.addStatement("$N.serialize($N, $L)", optional, buffer, false);
-            }
-            b.endControlFlow();
-        }
-        b.endControlFlow();
-    }
-
-    static void deserializeOptionalParameter(final MethodSpec.Builder b, final SerializedField field,
-            final ParameterSpec buffer, final FieldSpec optional, final String name) {
-        final TypeName optionalType = ParameterizedTypeName.get(optionalPropertyType, field.type.serializedFieldType);
-        b.addStatement("final $T $L", optionalType, name);
-
-        b.beginControlFlow("if ($N.deserialize($N))", optional, buffer);
-        {
-            final TypeName presentType = ParameterizedTypeName
-                    .get(presentPropertytType, field.type.serializedFieldType);
-            b.addStatement("$L = new $T($N.deserialize($N))", name, presentType, field.fieldSpec, buffer);
-        }
-        b.endControlFlow();
-
-        b.beginControlFlow("else");
-        {
-            b.addStatement("$L = $T.absent()", name, absentPropertyType);
-        }
-        b.endControlFlow();
-    }
-
-    static class ProcessedSerializer {
-        final String packageName;
-        final String name;
-        final TypeSpec type;
-        final TypeName elementType;
-        final TypeName supertype;
-        final List<SerializedField> fields;
-
-        public ProcessedSerializer(String packageName, String name, TypeSpec type, TypeName elementType,
-                TypeName supertype, List<SerializedField> fields) {
-            this.packageName = packageName;
-            this.name = name;
-            this.type = type;
-            this.elementType = elementType;
-            this.supertype = supertype;
-            this.fields = fields;
-        }
-
-        public JavaFile asJavaFile() {
-            return JavaFile.builder(packageName, type).skipJavaLangImports(true).indent("    ").build();
-        }
-    }
-
-    static class SerializedType {
-        static final List<SerializedFieldType> EMPTY_FIELDS = ImmutableList.of();
-
-        final Element root;
-        final TypeName type;
-        final List<SerializedFieldType> fieldTypes;
-        final List<SerializedField> fields;
-        final boolean anyOptional;
-
-        public SerializedType(final Element root, final TypeName type) {
-            this(root, type, EMPTY_FIELDS);
-        }
-
-        public SerializedType(Element root, TypeName type, List<SerializedFieldType> fieldTypes) {
-            this.root = root;
-            this.type = type;
-            this.fieldTypes = fieldTypes;
-            this.fields = fields(fieldTypes);
-            this.anyOptional = hasAnyOptional(fieldTypes);
-        }
-
-        SerializedType verify() {
-            for (final SerializedFieldType field : fieldTypes) {
-                final TypeName expected = field.optional ? field.fieldType : field.serializedFieldType;
-
-                if (!accessorMethodExists(root, field.accessor, expected)) {
-                    throw new IllegalStateException(String.format("Accessor #%s() does not exist on type %s",
-                            field.accessor,
-                            root.asType()));
-                }
-            }
-
-            return this;
-        }
-
-        static List<SerializedField> fields(List<SerializedFieldType> parameters) {
-            final Set<Pair<TypeName, Boolean>> defined = new HashSet<>();
-            final Collection<SerializedFieldType> types = new ArrayList<>();
-
-            for (final SerializedFieldType p : parameters) {
-                final Pair<TypeName, Boolean> key = Pair.of(p.serializedFieldType, p.provided);
-
-                if (defined.contains(key)) {
-                    continue;
-                }
-
-                defined.add(key);
-                types.add(p);
-            }
-
-            int i = 0;
-
-            final List<SerializedField> serializedTypes = new ArrayList<>();
-
-            for (final SerializedFieldType p : types) {
-                final FieldSpec field = FieldSpec.builder(serializerFor(p.serializedFieldType), String.format("s%d", i++))
-                        .addModifiers(Modifier.FINAL).build();
-
-                serializedTypes.add(new SerializedField(field, p));
-            }
-
-            return ImmutableList.copyOf(serializedTypes);
-        }
-
-        static boolean hasAnyOptional(final Iterable<SerializedFieldType> fields) {
-            for (final SerializedFieldType p : fields) {
-                if (p.optional) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-    }
-
-    static class SerializedFieldType {
-        final String accessor;
-        final TypeName fieldType;
-        final TypeName serializedFieldType;
-        final boolean optional;
-        final boolean provided;
-
-        public SerializedFieldType(final String accessor, final TypeName fieldType, final TypeName serializedFieldType,
-                final boolean optional, final boolean provided) {
-            this.accessor = accessor;
-            this.fieldType = fieldType;
-            this.serializedFieldType = serializedFieldType;
-            this.optional = optional;
-            this.provided = provided;
-        }
-    }
-
-    static class SerializedField {
-        final FieldSpec fieldSpec;
-        final SerializedFieldType type;
-
-        public SerializedField(FieldSpec field, SerializedFieldType type) {
-            this.fieldSpec = field;
-            this.type = type;
-        }
-    }
-
-    static class SubType {
-        final ClassName type;
-        final short id;
-
-        public SubType(ClassName type, short id) {
-            this.type = type;
-            this.id = id;
-        }
     }
 }

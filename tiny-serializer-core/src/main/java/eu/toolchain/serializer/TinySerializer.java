@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -175,6 +176,11 @@ public class TinySerializer implements SerializerFramework {
     @Override
     public Serializer<UUID> uuid() {
         return uuid;
+    }
+
+    @Override
+    public <T> Serializer<Optional<T>> optional(Serializer<T> element) {
+        return new OptionalSerializer<T>(bool, element);
     }
 
     @Override

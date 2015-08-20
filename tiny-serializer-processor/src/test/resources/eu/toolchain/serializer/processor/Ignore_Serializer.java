@@ -7,20 +7,20 @@ import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
 
 public final class Ignore_Serializer implements Serializer<Ignore> {
-    final Serializer<String> s0;
+    final Serializer<String> s_String;
 
     public Ignore_Serializer(final SerializerFramework framework) {
-        s0 = framework.string();
+        s_String = framework.string();
     }
 
     @Override
     public void serialize(final SerialWriter buffer, final Ignore value) throws IOException {
-        s0.serialize(buffer, value.getVisible());
+        s_String.serialize(buffer, value.getVisible());
     }
 
     @Override
     public Ignore deserialize(final SerialReader buffer) throws IOException {
-        final String v0 = s0.deserialize(buffer);
-        return new Ignore(v0);
+        final String v_visible = s_String.deserialize(buffer);
+        return new Ignore(v_visible);
     }
 }

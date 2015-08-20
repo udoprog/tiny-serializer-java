@@ -60,6 +60,16 @@ public class AutoSerializerProcessorTest {
     }
 
     @Test
+    public void testOptional() {
+        verifySerializer("OptionalTest");
+    }
+
+    @Test
+    public void testDuplicateTypes() {
+        verifySerializer("DuplicateTypes");
+    }
+
+    @Test
     public void testSerialization() {
         final List<JavaFileObject> files = new ArrayList<>();
 

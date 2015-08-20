@@ -7,20 +7,20 @@ import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
 
 public final class Getter_Serializer implements Serializer<Getter> {
-    final Serializer<String> s0;
+    final Serializer<String> s_String;
 
     public Getter_Serializer(final SerializerFramework framework) {
-        s0 = framework.string();
+        s_String = framework.string();
     }
 
     @Override
     public void serialize(final SerialWriter buffer, final Getter value) throws IOException {
-        s0.serialize(buffer, value.getString());
+        s_String.serialize(buffer, value.getString());
     }
 
     @Override
     public Getter deserialize(final SerialReader buffer) throws IOException {
-        final String v0 = s0.deserialize(buffer);
-        return new Getter(v0);
+        final String v_string = s_String.deserialize(buffer);
+        return new Getter(v_string);
     }
 }

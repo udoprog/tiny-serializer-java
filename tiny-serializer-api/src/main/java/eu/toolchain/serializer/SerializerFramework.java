@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -149,6 +150,14 @@ public interface SerializerFramework {
      * A {@code Serializer} that can serializer UUIDs.
      */
     public Serializer<UUID> uuid();
+
+    /**
+     * Build a serializer for an optional type.
+     *
+     * @param element The element serializer to use.
+     * @return A serializer for the specified optional type.
+     */
+    public <T> Serializer<Optional<T>> optional(Serializer<T> element);
 
     // @formatter:off
     /**

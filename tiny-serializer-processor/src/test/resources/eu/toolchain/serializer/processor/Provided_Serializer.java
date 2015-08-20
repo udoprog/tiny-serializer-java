@@ -7,24 +7,24 @@ import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
 
 public final class Provided_Serializer implements Serializer<Provided> {
-    final Serializer<String> s0;
-    final Serializer<String> s1;
+    final Serializer<String> s_ProvidedString;
+    final Serializer<String> s_String;
 
     public Provided_Serializer(final SerializerFramework framework, final Serializer<String> p0) {
-        s0 = p0;
-        s1 = framework.string();
+        s_ProvidedString = p0;
+        s_String = framework.string();
     }
 
     @Override
     public void serialize(final SerialWriter buffer, final Provided value) throws IOException {
-        s0.serialize(buffer, value.getString());
-        s1.serialize(buffer, value.getOther());
+        s_ProvidedString.serialize(buffer, value.getString());
+        s_String.serialize(buffer, value.getOther());
     }
 
     @Override
     public Provided deserialize(final SerialReader buffer) throws IOException {
-        final String v0 = s0.deserialize(buffer);
-        final String v1 = s1.deserialize(buffer);
-        return new Provided(v0, v1);
+        final String v_string = s_ProvidedString.deserialize(buffer);
+        final String v_other = s_String.deserialize(buffer);
+        return new Provided(v_string, v_other);
     }
 }

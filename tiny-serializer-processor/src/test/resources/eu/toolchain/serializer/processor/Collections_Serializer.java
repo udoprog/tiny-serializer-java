@@ -12,36 +12,36 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 
 public final class Collections_Serializer implements Serializer<Collections> {
-    final Serializer<List<Interface>> s0;
-    final Serializer<Map<String, Interface>> s1;
-    final Serializer<SortedMap<String, Interface>> s2;
-    final Serializer<Set<Interface>> s3;
-    final Serializer<SortedSet<Interface>> s4;
+    final Serializer<List<Interface>> s_List;
+    final Serializer<Map<String, Interface>> s_Map;
+    final Serializer<SortedMap<String, Interface>> s_SortedMap;
+    final Serializer<Set<Interface>> s_Set;
+    final Serializer<SortedSet<Interface>> s_SortedSet;
 
     public Collections_Serializer(final SerializerFramework framework) {
-        s0 = framework.list(new Interface_Serializer(framework));
-        s1 = framework.map(framework.string(), new Interface_Serializer(framework));
-        s2 = framework.sortedMap(framework.string(), new Interface_Serializer(framework));
-        s3 = framework.set(new Interface_Serializer(framework));
-        s4 = framework.sortedSet(new Interface_Serializer(framework));
+        s_List = framework.list(new Interface_Serializer(framework));
+        s_Map = framework.map(framework.string(), new Interface_Serializer(framework));
+        s_SortedMap = framework.sortedMap(framework.string(), new Interface_Serializer(framework));
+        s_Set = framework.set(new Interface_Serializer(framework));
+        s_SortedSet = framework.sortedSet(new Interface_Serializer(framework));
     }
 
     @Override
     public void serialize(final SerialWriter buffer, final Collections value) throws IOException {
-        s0.serialize(buffer, value.getList());
-        s1.serialize(buffer, value.getMap());
-        s2.serialize(buffer, value.getSortedMap());
-        s3.serialize(buffer, value.getSet());
-        s4.serialize(buffer, value.getSortedSet());
+        s_List.serialize(buffer, value.getList());
+        s_Map.serialize(buffer, value.getMap());
+        s_SortedMap.serialize(buffer, value.getSortedMap());
+        s_Set.serialize(buffer, value.getSet());
+        s_SortedSet.serialize(buffer, value.getSortedSet());
     }
 
     @Override
     public Collections deserialize(final SerialReader buffer) throws IOException {
-        final List<Interface> v0 = s0.deserialize(buffer);
-        final Map<String, Interface> v1 = s1.deserialize(buffer);
-        final SortedMap<String, Interface> v2 = s2.deserialize(buffer);
-        final Set<Interface> v3 = s3.deserialize(buffer);
-        final SortedSet<Interface> v4 = s4.deserialize(buffer);
-        return new Collections(v0, v1, v2, v3, v4);
+        final List<Interface> v_list = s_List.deserialize(buffer);
+        final Map<String, Interface> v_map = s_Map.deserialize(buffer);
+        final SortedMap<String, Interface> v_sortedMap = s_SortedMap.deserialize(buffer);
+        final Set<Interface> v_set = s_Set.deserialize(buffer);
+        final SortedSet<Interface> v_sortedSet = s_SortedSet.deserialize(buffer);
+        return new Collections(v_list, v_map, v_sortedMap, v_set, v_sortedSet);
     }
 }
