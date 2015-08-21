@@ -1,7 +1,9 @@
 package eu.toolchain.serializer.perftests.tests;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.function.Supplier;
 
 import org.nustaq.serialization.FSTConfiguration;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -20,6 +22,13 @@ public class FSTPerformance {
 
     final FSTConfiguration conf = FSTConfiguration.createDefaultConfiguration();
 
+    final Supplier<InputStream> inputObject = ObjectHelper.supplyInputStreamFrom(() -> {
+        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            conf.encodeToStream(output, object);
+            return output.toByteArray();
+        }
+    });
+
     @Benchmark
     public void testSerializeToNull() throws Exception {
         conf.encodeToStream(nullStream, object);
@@ -30,5 +39,10 @@ public class FSTPerformance {
         final ByteArrayOutputStream output = new ByteArrayOutputStream();
         conf.encodeToStream(output, object);
         bh.consume(output.toByteArray());
+    }
+
+    @Benchmark
+    public void testDeserializeFromMemory(Blackhole bh) throws Exception {
+        bh.consume(conf.decodeFromStream(inputObject.get()));
     }
 }

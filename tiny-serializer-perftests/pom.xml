@@ -36,6 +36,7 @@
     <dependency>
       <groupId>eu.toolchain.serializer</groupId>
       <artifactId>tiny-serializer-api</artifactId>
+      <version>${tiny-serializer.benchmark-version}</version>
     </dependency>
 
     <dependency>
