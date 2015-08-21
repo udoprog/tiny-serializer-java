@@ -12,7 +12,7 @@ import eu.toolchain.serializer.io.CharArraySerializer;
 public class CharArraySerializerTest {
     final SerializerFramework s = TinySerializer.builder().build();
 
-    final Serializer<char[]> serializer = new CharArraySerializer(new VarIntSerializer());
+    final Serializer<char[]> serializer = new CharArraySerializer(new CompactVarIntSerializer());
 
     private void roundtrip(char[] chars) throws IOException {
         final ByteBuffer buffer = s.serialize(serializer, chars);

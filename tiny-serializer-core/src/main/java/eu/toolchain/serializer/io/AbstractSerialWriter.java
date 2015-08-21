@@ -4,10 +4,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import eu.toolchain.serializer.SerialWriter;
-import eu.toolchain.serializer.VarIntSerializer;
+import eu.toolchain.serializer.CompactVarIntSerializer;
 
 public abstract class AbstractSerialWriter implements SerialWriter {
-    private static final VarIntSerializer varint = new VarIntSerializer();
+    private static final CompactVarIntSerializer varint = new CompactVarIntSerializer();
 
     @Override
     public void write(byte[] bytes) throws IOException {

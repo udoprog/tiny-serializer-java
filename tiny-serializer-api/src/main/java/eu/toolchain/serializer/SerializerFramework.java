@@ -27,6 +27,8 @@ public interface SerializerFramework {
      */
     public Serializer<Integer> varint();
 
+    public Serializer<Long> varlong();
+
     /**
      * A {@code Serializer} for 16 bit signed integers (short).
      */
@@ -59,12 +61,12 @@ public interface SerializerFramework {
     /**
      * Build a {@code Serializer} that can serialize null values.
      */
-    public <T> Serializer<T> nullable(final Serializer<T> serializer);
+    public <T> Serializer<T> nullable(Serializer<T> serializer);
 
     /**
      * Same as {@link #prefix(byte[], Serializer)}, but using a 32 bit integer as a prefix.
      */
-    public <T> Serializer<T> prefix(int prefix, final Serializer<T> serializer);
+    public <T> Serializer<T> prefix(int prefix, Serializer<T> serializer);
 
     /**
      * Build a {@code Serializer} that adds the specified prefix when serializing.
@@ -75,7 +77,24 @@ public interface SerializerFramework {
      * @param serializer The {@code Serializer} to prefix.
      * @return A new {@code Serializer} with the prefix operation.
      */
-    public <T> Serializer<T> prefix(final byte[] prefix, final Serializer<T> serializer);
+    public <T> Serializer<T> prefix(byte[] prefix, Serializer<T> serializer);
+
+    /**
+     * Create a length-prefixed serialized that buffers up data, and guarantees that the underlying child-serializer
+     * gets the specified amount.
+     *
+     * @param serializer The {@code Serializer} to length prefix.
+     * @param policy A policy governing how long a child message is allowed to be.
+     * @return A new {@code Serializer} with the length prefix operation.
+     */
+    public <T> Serializer<T> lengthPrefixed(Serializer<T> serializer, LengthPolicy policy);
+
+    /**
+     * This will use a the default length policy that is configured in the framework.
+     *
+     * @see #lengthPrefixed(Serializer, LengthPolicy)
+     */
+    public <T> Serializer<T> lengthPrefixed(Serializer<T> serializer);
 
     /**
      * Build a {@code Serializer} that can serialize a list.

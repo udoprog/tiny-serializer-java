@@ -2,7 +2,7 @@ package eu.toolchain.serializer;
 
 import java.io.IOException;
 
-public class VarIntSerializer implements Serializer<Integer> {
+public class CompactVarIntSerializer implements Serializer<Integer> {
     private static final int CONT = 0x80;
     private static final int MASK = (CONT ^ 0xff);
 
@@ -12,7 +12,7 @@ public class VarIntSerializer implements Serializer<Integer> {
 
         while ((v >>> 7) > 0) {
             buffer.write((v & MASK) | CONT);
-            v = (v >>> 7);
+            v = (v >>> 7) - 1;
         }
 
         buffer.write(v);
@@ -36,6 +36,7 @@ public class VarIntSerializer implements Serializer<Integer> {
             }
 
             shift <<= 7;
+            v += shift;
         }
 
         throw new IOException("Too many continuation bytes");

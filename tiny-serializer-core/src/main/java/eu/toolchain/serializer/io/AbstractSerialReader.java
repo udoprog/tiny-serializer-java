@@ -5,10 +5,10 @@ import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.VarIntSerializer;
+import eu.toolchain.serializer.CompactVarIntSerializer;
 
 public abstract class AbstractSerialReader implements SerialReader {
-    private static final Serializer<Integer> varint = new VarIntSerializer();
+    private static final Serializer<Integer> varint = new CompactVarIntSerializer();
 
     @Override
     public void skip() throws IOException {

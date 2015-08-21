@@ -27,6 +27,8 @@ public class TinySerializer implements SerializerFramework {
     private final Serializer<Integer> collectionSize;
     private final Serializer<Integer> subTypeId;
     private final Serializer<Integer> enumOrdinal;
+    private final LengthPolicy defaultLengthPolicy;
+
     private final ByteArraySerializer byteArray;
     private final CharArraySerializer charArray;
     private final Serializer<String> string;
@@ -39,6 +41,7 @@ public class TinySerializer implements SerializerFramework {
     private final Serializer<Double> doubleNumber;
 
     private final Serializer<Integer> varint;
+    private final Serializer<Long> varlong;
     private final Serializer<UUID> uuid;
 
     private final Serializer<? extends Object> notImplemented = new Serializer<Object>() {
@@ -54,10 +57,11 @@ public class TinySerializer implements SerializerFramework {
     };
 
     private TinySerializer(Serializer<Integer> collectionSize, Serializer<Integer> subTypeId,
-            Serializer<Integer> enumOrdinal, Serializer<Integer> stringSize) {
+            Serializer<Integer> enumOrdinal, Serializer<Integer> stringSize, LengthPolicy defaultLengthPolicy) {
         this.collectionSize = collectionSize;
         this.subTypeId = subTypeId;
         this.enumOrdinal = enumOrdinal;
+        this.defaultLengthPolicy = defaultLengthPolicy;
 
         this.byteArray = new ByteArraySerializer(collectionSize);
         this.charArray = new CharArraySerializer(collectionSize);
@@ -70,7 +74,8 @@ public class TinySerializer implements SerializerFramework {
         this.floatNumber = new FloatSerializer(integer);
         this.doubleNumber = new DoubleSerializer(longNumber);
 
-        this.varint = new VarIntSerializer();
+        this.varint = new CompactVarIntSerializer();
+        this.varlong = new VarLongSerializer();
         this.uuid = new UUIDSerializer(longNumber);
     }
 
@@ -89,6 +94,11 @@ public class TinySerializer implements SerializerFramework {
     @Override
     public Serializer<Integer> varint() {
         return varint;
+    }
+
+    @Override
+    public Serializer<Long> varlong() {
+        return varlong;
     }
 
     @Override
@@ -136,6 +146,16 @@ public class TinySerializer implements SerializerFramework {
     @Override
     public <T> Serializer<T> prefix(final byte[] prefix, final Serializer<T> serializer) {
         return new PrefixSerializer<T>(prefix, serializer);
+    }
+
+    @Override
+    public <T> Serializer<T> lengthPrefixed(Serializer<T> serializer) {
+        return lengthPrefixed(serializer, defaultLengthPolicy);
+    }
+
+    @Override
+    public <T> Serializer<T> lengthPrefixed(Serializer<T> serializer, LengthPolicy policy) {
+        return new LengthPrefixedSerializer<T>(varlong(), serializer, policy);
     }
 
     @Override
@@ -265,12 +285,13 @@ public class TinySerializer implements SerializerFramework {
     }
 
     public static final class Builder {
-        public static final Serializer<Integer> DEFAULT_INTEGER = new VarIntSerializer();
+        public static final Serializer<Integer> DEFAULT_INTEGER = new CompactVarIntSerializer();
 
         private Serializer<Integer> collectionSize = DEFAULT_INTEGER;
         private Serializer<Integer> subTypeId = DEFAULT_INTEGER;
         private Serializer<Integer> enumOrdinal = DEFAULT_INTEGER;
         private Serializer<Integer> stringSize = DEFAULT_INTEGER;
+        private LengthPolicy defaultLengthPolicy = new MaxLengthPolicy(Integer.MAX_VALUE);
 
         /**
          * Set serializer to use for container sizes.
@@ -279,8 +300,9 @@ public class TinySerializer implements SerializerFramework {
          * @return This builder.
          */
         public Builder collectionSize(Serializer<Integer> containerSize) {
-            if (containerSize == null)
+            if (containerSize == null) {
                 throw new NullPointerException("containerSize");
+            }
 
             this.collectionSize = containerSize;
             return this;
@@ -293,8 +315,9 @@ public class TinySerializer implements SerializerFramework {
          * @return This builder.
          */
         public Builder subTypeId(Serializer<Integer> subTypeId) {
-            if (subTypeId == null)
+            if (subTypeId == null) {
                 throw new NullPointerException("subTypeId");
+            }
 
             this.subTypeId = subTypeId;
             return this;
@@ -307,8 +330,9 @@ public class TinySerializer implements SerializerFramework {
          * @return This builder.
          */
         public Builder enumOrdinal(Serializer<Integer> enumOrdinal) {
-            if (enumOrdinal == null)
+            if (enumOrdinal == null) {
                 throw new NullPointerException("enumOrdinal");
+            }
 
             this.enumOrdinal = enumOrdinal;
             return this;
@@ -321,15 +345,25 @@ public class TinySerializer implements SerializerFramework {
          * @return This builder.
          */
         public Builder stringSize(Serializer<Integer> stringSize) {
-            if (stringSize == null)
+            if (stringSize == null) {
                 throw new NullPointerException("stringSize");
+            }
 
             this.stringSize = stringSize;
             return this;
         }
 
+        public Builder defaultLengthPolicy(LengthPolicy defaultLengthPolicy) {
+            if (defaultLengthPolicy == null) {
+                throw new NullPointerException("defaultLengthPolicy");
+            }
+
+            this.defaultLengthPolicy = defaultLengthPolicy;
+            return this;
+        }
+
         public TinySerializer build() {
-            return new TinySerializer(collectionSize, subTypeId, enumOrdinal, stringSize);
+            return new TinySerializer(collectionSize, subTypeId, enumOrdinal, stringSize, defaultLengthPolicy);
         }
     }
 
