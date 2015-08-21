@@ -40,4 +40,9 @@ public class InputStreamSerialReader extends AbstractSerialReader {
     public void skip(int length) throws IOException {
         input.skip(length);
     }
+
+    @Override
+    public void close() throws IOException {
+        input.close();
+    }
 }

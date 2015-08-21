@@ -21,6 +21,10 @@ public class ByteArrayOutputStreamSerialWriter extends AbstractSerialWriter {
         output.flush();
     }
 
+    @Override
+    public void close() throws IOException {
+    }
+
     public byte[] toByteArray() {
         return output.toByteArray();
     }

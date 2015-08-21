@@ -20,6 +20,11 @@ public class OutputStreamSerialWriter extends AbstractSerialWriter {
     }
 
     @Override
+    public void close() throws IOException {
+        output.close();
+    }
+
+    @Override
     public void flush() throws IOException {
         output.flush();
     }

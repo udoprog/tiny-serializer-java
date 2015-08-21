@@ -1,14 +1,16 @@
 package eu.toolchain.serializer;
 
+import java.io.Closeable;
 import java.io.IOException;
 
-public interface SerialWriter {
-    public interface Scope extends SerialWriter, AutoCloseable {
+public interface SerialWriter extends Closeable {
+    public interface Scope extends SerialWriter {
         /**
          * Close the current scoped section.
          *
          * After this, the section should be guaranteed to have been written to its parent {@code SerialWriter}.
          */
+        @Override
         public void close() throws IOException;
     }
 

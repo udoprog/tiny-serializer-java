@@ -2,22 +2,28 @@ package eu.toolchain.serializer.io;
 
 import java.io.IOException;
 
+import lombok.RequiredArgsConstructor;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.VarIntSerializer;
-import lombok.RequiredArgsConstructor;
 
 public abstract class AbstractSerialReader implements SerialReader {
     private static final Serializer<Integer> varint = new VarIntSerializer();
 
+    @Override
     public void skip() throws IOException {
         final int skip = varint.deserialize(this);
         skip(skip);
     }
 
+    @Override
     public SerialReader scope() throws IOException {
         final int size = varint.deserialize(this);
         return new ScopedSerialReader(this, size);
+    }
+
+    @Override
+    public void close() throws IOException {
     }
 
     @RequiredArgsConstructor

@@ -29,6 +29,11 @@ public class SerializeCustomWriterExample {
             public void flush() throws IOException {
                 outputStream.flush();
             }
+
+            @Override
+            public void close() throws IOException {
+                outputStream.close();
+            }
         };
 
         s.integer().serialize(writer, 0xf07f0000);

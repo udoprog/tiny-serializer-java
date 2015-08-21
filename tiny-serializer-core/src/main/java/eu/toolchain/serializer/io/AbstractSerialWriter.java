@@ -15,6 +15,10 @@ public abstract class AbstractSerialWriter implements SerialWriter {
     }
 
     @Override
+    public void close() throws IOException {
+    }
+
+    @Override
     public SerialWriter.Scope scope() {
         return new ScopedSerialWriter(this);
     }

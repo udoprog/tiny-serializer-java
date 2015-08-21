@@ -20,6 +20,15 @@ public class ByteBufferSerialWriter extends AbstractSerialWriter {
     public void flush() throws IOException {
     }
 
+    @Override
+    public void close() throws IOException {
+    }
+
+    /**
+     * Return a flipped, read-only reference to the underlying byte buffer.
+     *
+     * @return A new ByteBuffer for the current state of the buffer.
+     */
     public ByteBuffer buffer() {
         return output.buffer();
     }

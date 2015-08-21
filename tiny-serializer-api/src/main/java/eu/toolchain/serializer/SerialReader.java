@@ -1,8 +1,9 @@
 package eu.toolchain.serializer;
 
+import java.io.Closeable;
 import java.io.IOException;
 
-public interface SerialReader {
+public interface SerialReader extends Closeable {
     /**
      * Read a single byte.
      *
