@@ -74,6 +74,7 @@ TinySerializer performance is being compared against the following frameworks.
 
 * [Kryo](https://github.com/EsotericSoftware/kryo)
 * [FST](https://github.com/RuedigerMoeller/fast-serialization)
+* [MessagePack](https://github.com/msgpack/msgpack-java)
 
 # Usage
 

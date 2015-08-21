@@ -9,6 +9,7 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -25,7 +26,7 @@ import com.squareup.javapoet.JavaFile;
 
 import eu.toolchain.serializer.AutoSerialize;
 
-@AutoService(AutoSerializeProcessor.class)
+@AutoService(Processor.class)
 public class AutoSerializeProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;

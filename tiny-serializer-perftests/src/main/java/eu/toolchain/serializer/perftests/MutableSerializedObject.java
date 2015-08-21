@@ -8,13 +8,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.msgpack.annotation.Message;
+
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Message
 public class MutableSerializedObject implements Serializable {
-    int version;
-    String field;
-    Map<String, String> map;
-    List<String> someStrings;
+    public int version;
+    public String field;
+    public Map<String, String> map;
+    public List<String> someStrings;
 }

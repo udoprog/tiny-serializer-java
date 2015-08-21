@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.perftests.tests;
+package eu.toolchain.serializer.perftests.benchmarks;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;

@@ -1,48 +1,59 @@
-package eu.toolchain.serializer.perftests.tests;
+package eu.toolchain.serializer.perftests.benchmarks;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.function.Supplier;
 
-import org.nustaq.serialization.FSTConfiguration;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+import eu.toolchain.serializer.perftests.MutableSerializedObject;
 import eu.toolchain.serializer.perftests.ObjectHelper;
 import eu.toolchain.serializer.perftests.OutputStreamHelper;
-import eu.toolchain.serializer.perftests.MutableSerializedObject;
 
 @State(Scope.Benchmark)
-public class FSTPerformance {
+public class KryoPerformance {
     final MutableSerializedObject object = ObjectHelper.newMutableSerializedObject();
     final OutputStream nullStream = OutputStreamHelper.newNullStream();
 
-    final FSTConfiguration conf = FSTConfiguration.createDefaultConfiguration();
+    final Kryo kryo = new Kryo();
+    final Output kryoOutput = new Output(nullStream);
 
     final Supplier<InputStream> inputObject = ObjectHelper.supplyInputStreamFrom(() -> {
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            conf.encodeToStream(output, object);
+            try (final Output out = new Output(output)) {
+                kryo.writeObject(out, object);
+            }
+
             return output.toByteArray();
         }
     });
 
     @Benchmark
     public void testSerializeToNull() throws Exception {
-        conf.encodeToStream(nullStream, object);
+        kryo.writeObject(kryoOutput, object);
     }
 
     @Benchmark
     public void testSerializeToMemory(Blackhole bh) throws Exception {
         final ByteArrayOutputStream output = new ByteArrayOutputStream();
-        conf.encodeToStream(output, object);
+
+        try (final Output out = new Output(output)) {
+            kryo.writeObject(out, object);
+        }
+
         bh.consume(output.toByteArray());
     }
 
     @Benchmark
     public void testDeserializeFromMemory(Blackhole bh) throws Exception {
-        bh.consume(conf.decodeFromStream(inputObject.get()));
+        bh.consume(kryo.readObject(new Input(inputObject.get()), MutableSerializedObject.class));
     }
 }

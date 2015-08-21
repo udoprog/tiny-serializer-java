@@ -20,8 +20,9 @@
   <properties>
     <kryo.version>3.0.3</kryo.version>
     <fst.version>2.37</fst.version>
-    <tiny-serializer.benchmark-version>1.2.3</tiny-serializer.benchmark-version>
+    <tiny-serializer.benchmark-version>1.2.5-SNAPSHOT</tiny-serializer.benchmark-version>
     <jmh.version>1.10.4</jmh.version>
+    <msgpack.version>0.6.12</msgpack.version>
     <uberjar.name>benchmarks</uberjar.name>
   </properties>
 
@@ -35,13 +36,11 @@
     <dependency>
       <groupId>eu.toolchain.serializer</groupId>
       <artifactId>tiny-serializer-api</artifactId>
-      <version>${tiny-serializer.benchmark-version}</version>
     </dependency>
 
     <dependency>
       <groupId>eu.toolchain.serializer</groupId>
       <artifactId>tiny-serializer-processor</artifactId>
-      <version>${tiny-serializer.benchmark-version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -73,6 +72,12 @@
       <groupId>de.ruedigermoeller</groupId>
       <artifactId>fst</artifactId>
       <version>${fst.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.msgpack</groupId>
+      <artifactId>msgpack</artifactId>
+      <version>${msgpack.version}</version>
     </dependency>
 
     <dependency>

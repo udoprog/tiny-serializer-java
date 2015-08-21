@@ -2,6 +2,9 @@ package eu.toolchain.serializer.perftests;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
@@ -15,8 +18,10 @@ public class ObjectHelper {
     }
 
     public static MutableSerializedObject newMutableSerializedObject() {
-        return new MutableSerializedObject(42, "hello world", ImmutableMap.of("hello", "world", "this", "sucks"),
-                ImmutableList.of("fee", "fii", "foo", "fum"));
+        final HashMap<String, String> map = new HashMap<>(ImmutableMap.of("hello", "world", "this",
+                "sucks"));
+        final List<String> list = new ArrayList<>(ImmutableList.of("fee", "fii", "foo", "fum"));
+        return new MutableSerializedObject(42, "hello world", map, list);
     }
 
     public static Supplier<InputStream> supplyInputStreamFrom(Callable<byte[]> bytesSupplier) {
