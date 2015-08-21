@@ -5,7 +5,7 @@ import lombok.Data;
 import com.squareup.javapoet.ClassName;
 
 @Data
-class SubType {
+class SerializedSubType {
     final ClassName type;
     final short id;
 }

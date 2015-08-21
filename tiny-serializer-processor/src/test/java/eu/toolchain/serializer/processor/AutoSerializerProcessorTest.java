@@ -2,10 +2,6 @@ package eu.toolchain.serializer.processor;
 
 import static com.google.common.truth.Truth.assert_;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.tools.JavaFileObject;
 
@@ -22,6 +18,11 @@ public class AutoSerializerProcessorTest {
     @Test
     public void testInterface() {
         verifySerializer("Interface");
+    }
+
+    @Test
+    public void testAbstract() {
+        verifySerializer("Abstract");
     }
 
     @Test
@@ -84,13 +85,13 @@ public class AutoSerializerProcessorTest {
         final JavaFileObject serializer = resourcePathFor(String.format(FrameworkStatements.SERIALIZER_NAME_FORMAT,
                 name));
 
-        assert_().about(javaSource()).that(source).processedWith(new AutoSerializerProcessor()).compilesWithoutError()
-                .and().generatesSources(serializer);
+        assert_().about(javaSource()).that(source).processedWith(new AutoSerializeProcessor()).compilesWithoutError()
+        .and().generatesSources(serializer);
     }
 
     static void verifyFailingSerializer(String name) {
         final JavaFileObject source = resourcePathFor(name);
-        assert_().about(javaSource()).that(source).processedWith(new AutoSerializerProcessor()).failsToCompile();
+        assert_().about(javaSource()).that(source).processedWith(new AutoSerializeProcessor()).failsToCompile();
     }
 
     static JavaFileObject resourcePathFor(String name) {
