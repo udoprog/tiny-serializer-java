@@ -14,8 +14,8 @@ public class ObjectHelper {
                 ImmutableList.of("fee", "fii", "foo", "fum"));
     }
 
-    public static SerializableSerializedObject newSerializableSerializedObject() {
-        return new SerializableSerializedObject(42, "hello world", ImmutableMap.of("hello", "world", "this", "sucks"),
+    public static MutableSerializedObject newMutableSerializedObject() {
+        return new MutableSerializedObject(42, "hello world", ImmutableMap.of("hello", "world", "this", "sucks"),
                 ImmutableList.of("fee", "fii", "foo", "fum"));
     }
 

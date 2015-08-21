@@ -31,7 +31,9 @@ public class TinyPerformance {
 
     final Supplier<InputStream> inputObject = ObjectHelper.supplyInputStreamFrom(() -> {
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            serializer.serialize(new OutputStreamSerialWriter(output), object);
+            final SerialWriter out = new OutputStreamSerialWriter(output);
+            serializer.serialize(out, object);
+            out.flush();
             return output.toByteArray();
         }
     });
@@ -44,7 +46,9 @@ public class TinyPerformance {
     @Benchmark
     public void testSerializeToMemory(Blackhole bh) throws Exception {
         final ByteArrayOutputStream output = new ByteArrayOutputStream();
-        serializer.serialize(new OutputStreamSerialWriter(output), object);
+        final SerialWriter out = new OutputStreamSerialWriter(output);
+        serializer.serialize(out, object);
+        out.flush();
         bh.consume(output.toByteArray());
     }
 

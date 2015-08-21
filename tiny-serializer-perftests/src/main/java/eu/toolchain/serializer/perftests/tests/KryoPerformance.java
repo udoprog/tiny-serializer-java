@@ -14,13 +14,13 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import eu.toolchain.serializer.perftests.MutableSerializedObject;
 import eu.toolchain.serializer.perftests.ObjectHelper;
 import eu.toolchain.serializer.perftests.OutputStreamHelper;
-import eu.toolchain.serializer.perftests.SerializedObject;
 
 @State(Scope.Benchmark)
 public class KryoPerformance {
-    final SerializedObject object = ObjectHelper.newSerializedObject();
+    final MutableSerializedObject object = ObjectHelper.newMutableSerializedObject();
     final OutputStream nullStream = OutputStreamHelper.newNullStream();
 
     final Kryo kryo = new Kryo();
@@ -28,7 +28,10 @@ public class KryoPerformance {
 
     final Supplier<InputStream> inputObject = ObjectHelper.supplyInputStreamFrom(() -> {
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            kryo.writeObject(new Output(output), object);
+            try (final Output out = new Output(output)) {
+                kryo.writeObject(out, object);
+            }
+
             return output.toByteArray();
         }
     });
@@ -41,12 +44,16 @@ public class KryoPerformance {
     @Benchmark
     public void testSerializeToMemory(Blackhole bh) throws Exception {
         final ByteArrayOutputStream output = new ByteArrayOutputStream();
-        kryo.writeObject(new Output(output), object);
+
+        try (final Output out = new Output(output)) {
+            kryo.writeObject(out, object);
+        }
+
         bh.consume(output.toByteArray());
     }
 
     @Benchmark
     public void testDeserializeFromMemory(Blackhole bh) throws Exception {
-        bh.consume(kryo.readObject(new Input(inputObject.get()), SerializedObject.class));
+        bh.consume(kryo.readObject(new Input(inputObject.get()), MutableSerializedObject.class));
     }
 }

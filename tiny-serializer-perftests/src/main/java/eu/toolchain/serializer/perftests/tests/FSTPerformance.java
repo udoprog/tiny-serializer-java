@@ -13,11 +13,11 @@ import org.openjdk.jmh.infra.Blackhole;
 
 import eu.toolchain.serializer.perftests.ObjectHelper;
 import eu.toolchain.serializer.perftests.OutputStreamHelper;
-import eu.toolchain.serializer.perftests.SerializableSerializedObject;
+import eu.toolchain.serializer.perftests.MutableSerializedObject;
 
 @State(Scope.Benchmark)
 public class FSTPerformance {
-    final SerializableSerializedObject object = ObjectHelper.newSerializableSerializedObject();
+    final MutableSerializedObject object = ObjectHelper.newMutableSerializedObject();
     final OutputStream nullStream = OutputStreamHelper.newNullStream();
 
     final FSTConfiguration conf = FSTConfiguration.createDefaultConfiguration();
