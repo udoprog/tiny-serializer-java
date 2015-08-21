@@ -64,6 +64,8 @@ The suite runs tests with the following profiles.
   that has a no-op implementation](tiny-serializer-perftests/src/main/java/eu/toolchain/serializer/perftests/NullOutputStream.java).
 * `#testSerializeToMemory` which performs serialization against
   a ByteArrayOutputStream.
+* `#testDeserializeFromMemory` which performs deserialization from a previously
+  serialized object in-memory.
 
 TinySerializer performance is being compared against the following frameworks.
 
