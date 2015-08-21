@@ -5,7 +5,7 @@ import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.CompactVarIntSerializer;
+import eu.toolchain.serializer.var.CompactVarIntSerializer;
 
 public abstract class AbstractSerialReader implements SerialReader {
     private static final Serializer<Integer> varint = new CompactVarIntSerializer();

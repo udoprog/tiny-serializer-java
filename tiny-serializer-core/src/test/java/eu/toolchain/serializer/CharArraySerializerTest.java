@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import org.junit.Test;
 
 import eu.toolchain.serializer.io.CharArraySerializer;
+import eu.toolchain.serializer.var.CompactVarIntSerializer;
 
 public class CharArraySerializerTest {
     final SerializerFramework s = TinySerializer.builder().build();

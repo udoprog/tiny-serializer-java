@@ -1,7 +1,17 @@
-package eu.toolchain.serializer;
+package eu.toolchain.serializer.var;
 
 import java.io.IOException;
 
+import eu.toolchain.serializer.SerialReader;
+import eu.toolchain.serializer.SerialWriter;
+import eu.toolchain.serializer.Serializer;
+
+/**
+ * Based on the same concept as {@link VarIntSerializer} expanded to 64 bits.
+ *
+ * @see VarIntSerializer
+ * @author udoprog
+ */
 public class VarLongSerializer implements Serializer<Long> {
     private static final int CONT = 0x80;
     private static final int MASK = (CONT ^ 0xff);

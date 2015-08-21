@@ -22,11 +22,15 @@ public interface SerializerFramework {
     public Serializer<Boolean> bool();
 
     /**
-     * A {@code Serializer} for integers that uses variadic encoding, which varies in length depending on the number
-     * being serialized.
+     * A {@code Serializer} for integers that uses a variable length encoding that is more space-efficient at encoding
+     * smaller values than the naive approach.
      */
     public Serializer<Integer> varint();
 
+    /**
+     * A {@code Serializer} for longs that uses a variable length encoding that is more space-efficient at encoding
+     * smaller values than the naive approach.
+     */
     public Serializer<Long> varlong();
 
     /**

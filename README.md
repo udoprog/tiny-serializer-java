@@ -202,6 +202,10 @@ The bundled implementations of these can be found in [`eu.toolchain.serializer.i
 
 How to implement your own is documented further down in [Implementing a Writer/Reader](#implementing-a-serialreaderwriter).
 
+Examples:
+
+* [Stream Communication](tiny-serializer-core/src/example/java/eu/toolchain/examples/StreamCommunicationExample.java)
+
 ## Serializing Values
 
 The following methods give access to primitive serializers.

@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import eu.toolchain.serializer.SerialWriter;
-import eu.toolchain.serializer.CompactVarIntSerializer;
+import eu.toolchain.serializer.var.CompactVarIntSerializer;
 
 public abstract class AbstractSerialWriter implements SerialWriter {
     private static final CompactVarIntSerializer varint = new CompactVarIntSerializer();

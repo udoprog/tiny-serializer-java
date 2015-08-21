@@ -15,6 +15,8 @@ import eu.toolchain.serializer.io.ByteArraySerializer;
 import eu.toolchain.serializer.io.ByteBufferSerialReader;
 import eu.toolchain.serializer.io.ByteBufferSerialWriter;
 import eu.toolchain.serializer.io.CharArraySerializer;
+import eu.toolchain.serializer.var.CompactVarIntSerializer;
+import eu.toolchain.serializer.var.CompactVarLongSerializer;
 
 public class TinySerializer implements SerializerFramework {
     /**
@@ -75,7 +77,7 @@ public class TinySerializer implements SerializerFramework {
         this.doubleNumber = new DoubleSerializer(longNumber);
 
         this.varint = new CompactVarIntSerializer();
-        this.varlong = new VarLongSerializer();
+        this.varlong = new CompactVarLongSerializer();
         this.uuid = new UUIDSerializer(longNumber);
     }
 
@@ -155,7 +157,7 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public <T> Serializer<T> lengthPrefixed(Serializer<T> serializer, LengthPolicy policy) {
-        return new LengthPrefixedSerializer<T>(varlong(), serializer, policy);
+        return new LengthPrefixedSerializer<T>(varint(), serializer, policy);
     }
 
     @Override
