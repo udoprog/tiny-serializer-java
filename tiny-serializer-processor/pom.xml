@@ -11,7 +11,7 @@
   <artifactId>tiny-serializer-processor</artifactId>
   <packaging>jar</packaging>
 
-  <name>A processor for the @AutoSerialize annotation</name>
+  <name>A tiny serialization framework for Java (Processor)</name>
 
   <description>
       A processor for the @AutoSerialize annotation

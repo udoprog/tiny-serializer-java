@@ -45,6 +45,31 @@ Examples:
 
 * [Serializer Setup](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializerSetup.java)
 
+# Performance
+
+Due to the very explicit nature of TinySerializer, you can expect it thrive
+when it comes to serialization performance.
+
+Included in this project is a performance testing module built using JMH, it
+can be run by doing the following.
+
+```sh
+$ mvn clean package
+$ java -jar tiny-serializer-perftests/target/benchmarks.jar -bm sample -bu ns
+```
+
+The suite runs tests with the following profiles.
+
+* `#testSerializeToNull` which performs serialization against an [OutputStream
+  that has a no-op implementation](tiny-serializer-perftests/src/main/java/eu/toolchain/serializer/perftests/NullOutputStream.java).
+* `#testSerializeToMemory` which performs serialization against
+  a ByteArrayOutputStream.
+
+TinySerializer performance is being compared against the following frameworks.
+
+* [Kryo](https://github.com/EsotericSoftware/kryo)
+* [FST](https://github.com/RuedigerMoeller/fast-serialization)
+
 # Usage
 
 The following section contains documentation on how to use TinySerializer.

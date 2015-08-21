@@ -22,6 +22,7 @@
     <module>tiny-serializer-api</module>
     <module>tiny-serializer-core</module>
     <module>tiny-serializer-processor</module>
+    <module>tiny-serializer-perftests</module>
   </modules>
 
   <licenses>
@@ -56,6 +57,12 @@
       <dependency>
         <groupId>eu.toolchain.serializer</groupId>
         <artifactId>tiny-serializer-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>eu.toolchain.serializer</groupId>
+        <artifactId>tiny-serializer-processor</artifactId>
         <version>${project.version}</version>
       </dependency>
 
