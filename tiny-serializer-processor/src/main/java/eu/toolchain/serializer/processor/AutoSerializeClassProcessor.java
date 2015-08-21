@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.MethodSpec.Builder;
@@ -20,6 +22,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import eu.toolchain.serializer.AutoSerialize;
+import eu.toolchain.serializer.DefaultBuilderType;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.SerializerFramework;
@@ -28,6 +31,7 @@ import eu.toolchain.serializer.SerializerFramework;
 public class AutoSerializeClassProcessor {
     static final Joiner parameterJoiner = Joiner.on(", ");
     static final Joiner emptyJoiner = Joiner.on("");
+    static final ClassName defaultBuilder = ClassName.get(DefaultBuilderType.class);
 
     final Types types;
     final Elements elements;
@@ -36,14 +40,16 @@ public class AutoSerializeClassProcessor {
 
     SerializedType process(final Element element) {
         final AutoSerialize autoSerialize = element.getAnnotation(AutoSerialize.class);
+        final Optional<AutoSerialize.Builder> elementBuilder = Optional.fromNullable(element
+                .getAnnotation(AutoSerialize.Builder.class));
 
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final String name = utils.serializedName(element, autoSerialize);
 
-        final SerializedTypeFields serializedType = SerializedTypeFields.build(statements, element, autoSerialize);
+        final SerializedTypeFields serializedType = SerializedTypeFields.build(utils, element, autoSerialize);
 
-        final TypeName elementType = TypeName.get(element.asType());
-        final TypeName supertype = TypeName.get(statements.serializerFor(element.asType()));
+        final ClassName elementType = (ClassName) TypeName.get(element.asType());
+        final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
 
         final TypeSpec.Builder generated = TypeSpec.classBuilder(statements.serializerName(element));
 
@@ -56,7 +62,7 @@ public class AutoSerializeClassProcessor {
 
         generated.addMethod(constructor(serializedType));
         generated.addMethod(serializeMethod(elementType, serializedType));
-        generated.addMethod(deserializeMethod(elementType, serializedType, autoSerialize));
+        generated.addMethod(deserializeMethod(elementType, serializedType, autoSerialize, elementBuilder));
 
         return new SerializedType(element, packageName, name, generated.build(), elementType, supertype, serializedType);
     }
@@ -109,8 +115,9 @@ public class AutoSerializeClassProcessor {
         return b.build();
     }
 
-    MethodSpec deserializeMethod(TypeName returnType, SerializedTypeFields serializedType,
-            AutoSerialize autoSerialize) {
+    MethodSpec deserializeMethod(ClassName returnType, SerializedTypeFields serializedType,
+            AutoSerialize autoSerialize,
+            Optional<AutoSerialize.Builder> elementBuilder) {
         final ParameterSpec buffer = utils.parameter(TypeName.get(SerialReader.class), "buffer");
         final MethodSpec.Builder b = utils.deserializeMethod(returnType, buffer);
 
@@ -120,8 +127,10 @@ public class AutoSerializeClassProcessor {
             b.addStatement("final $T $L = $N.deserialize($N)", fieldType, field.getVariableName(), fieldSpec, buffer);
         }
 
-        if (autoSerialize.useBuilder()) {
-            deserializeUsingBuilder(returnType, b, serializedType.getFields(), autoSerialize);
+        final Optional<AutoSerialize.Builder> builder = getSpecifiedBuilder(autoSerialize.builder(), elementBuilder);
+
+        if (builder.isPresent()) {
+            deserializeUsingBuilder(returnType, b, serializedType.getFields(), builder.get());
         } else {
             b.addStatement("return new $T($L)", returnType,
                     parameterJoiner.join(serializedType.getConstructorVariables()));
@@ -130,25 +139,65 @@ public class AutoSerializeClassProcessor {
         return b.build();
     }
 
-    void deserializeUsingBuilder(TypeName returnType, Builder b, List<SerializedField> variables,
-            AutoSerialize autoSerialize) {
+    private Optional<AutoSerialize.Builder> getSpecifiedBuilder(AutoSerialize.Builder[] builder,
+            Optional<AutoSerialize.Builder> elementBuilder) {
+        if (builder.length > 0) {
+            return Optional.of(builder[0]);
+        }
+
+        return elementBuilder;
+    }
+
+    void deserializeUsingBuilder(ClassName returnType, Builder b, List<SerializedField> variables,
+            AutoSerialize.Builder builder) {
         final ImmutableList.Builder<String> builders = ImmutableList.builder();
         final ImmutableList.Builder<Object> parameters = ImmutableList.builder();
 
-        parameters.add(returnType);
+        final TypeName builderType;
+        final String builderStatement;
+
+        if (builder.useConstructor()) {
+            builderType = getBuilderTypeForConstructor(returnType, builder);
+            builderStatement = "new $T()";
+        } else {
+            builderType = getBuilderTypeForMethod(returnType, builder);
+            builderStatement = String.format("$T.%s()", builder.useMethod());
+        }
+
+        parameters.add(builderType);
 
         for (final SerializedField f : variables) {
-            final String setter = builderSetter(f, autoSerialize);
+            final String setter = builderSetter(f, builder);
             builders.add(String.format(".%s($L)", setter));
             parameters.add(f.getVariableName());
         }
 
-        b.addStatement(String.format("return $T.builder()%s.build()", emptyJoiner.join(builders.build())), parameters
-                .build().toArray());
+        b.addStatement(String.format("return %s%s.build()", builderStatement, emptyJoiner.join(builders.build())),
+                parameters.build().toArray());
     }
 
-    String builderSetter(final SerializedField f, AutoSerialize autoSerialize) {
-        if (autoSerialize.useBuilderSetter()) {
+    TypeName getBuilderTypeForConstructor(ClassName returnType, AutoSerialize.Builder builder) {
+        final ClassName builderType = utils.pullMirroredClass(builder::type);
+
+        if (!builderType.equals(defaultBuilder)) {
+            return builderType;
+        }
+
+        return returnType.nestedClass("Builder");
+    }
+
+    TypeName getBuilderTypeForMethod(ClassName returnType, AutoSerialize.Builder builder) {
+        final ClassName builderType = utils.pullMirroredClass(builder::type);
+
+        if (!builderType.equals(defaultBuilder)) {
+            return builderType;
+        }
+
+        return returnType;
+    }
+
+    String builderSetter(final SerializedField f, AutoSerialize.Builder builder) {
+        if (builder.useSetter()) {
             return "set" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, f.getFieldName());
         }
 

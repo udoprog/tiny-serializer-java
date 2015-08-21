@@ -66,7 +66,7 @@ class SerializedTypeFields {
 
     /**
      * Optionally verify the structure of this SerializedType.
-     * @param messager 
+     * @param messager
      *
      * @return This instance.
      */
@@ -83,7 +83,8 @@ class SerializedTypeFields {
         return valid;
     }
 
-    public static SerializedTypeFields build(final FrameworkStatements statements, final Element root, final AutoSerialize autoSerialize) {
+    public static SerializedTypeFields build(final AutoSerializeUtils utils, final Element root,
+            final AutoSerialize autoSerialize) {
         final List<SerializedField> fields = new ArrayList<>();
 
         final List<SerializedFieldType> types = new ArrayList<>();
@@ -106,7 +107,7 @@ class SerializedTypeFields {
             }
 
             final TypeName fieldType = TypeName.get(e.asType());
-            final TypeName serializerType = TypeName.get(statements.serializerFor(e.asType()));
+            final TypeName serializerType = TypeName.get(utils.serializerFor(e.asType()));
 
             final boolean provided = isParameterProvided(e);
 

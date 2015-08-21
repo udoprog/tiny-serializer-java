@@ -42,8 +42,8 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         final Elements elements = env.getElementUtils();
         final Types types = env.getTypeUtils();
-        final FrameworkStatements statements = new FrameworkStatements(types, elements);
-        final AutoSerializeUtils utils = new AutoSerializeUtils(types);
+        final FrameworkStatements statements = new FrameworkStatements();
+        final AutoSerializeUtils utils = new AutoSerializeUtils(types, elements);
 
         abstractProcessor = new AutoSerializeAbstractProcessor(elements, statements, utils);
         classProcessor = new AutoSerializeClassProcessor(types, elements, statements, utils);

@@ -20,16 +20,9 @@ public @interface AutoSerialize {
     /**
      * Use builder when creating instance (instead of implicit constructor).
      *
-     * @return {@code true} if builders should be used, {@code false} otherwise.
+     * @return If non-empty, will use the first configured builder, otherwise will use constructor.
      */
-    boolean useBuilder() default false;
-
-    /**
-     * Use setters when assigning values to a builder.
-     *
-     * @return {@code true} if builders use setters, {@code false} otherwise.
-     */
-    boolean useBuilderSetter() default false;
+    Builder[] builder() default {};
 
     /**
      * Order field serialization by id.
@@ -39,6 +32,40 @@ public @interface AutoSerialize {
     boolean orderById() default true;
 
     boolean orderConstructorById() default false;
+
+    @Target({ ElementType.ANNOTATION_TYPE, ElementType.TYPE })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Builder {
+        /**
+         * Use the specified builder class instead of assuming the serialized type has a builder.
+         *
+         * @return Builder type to use, or {@link DefaultBuilderType} if none is specified.
+         */
+        Class<?> type() default DefaultBuilderType.class;
+
+        /**
+         * Use setters when assigning values to a builder.
+         *
+         * @return {@code true} if builders use setters, {@code false} otherwise.
+         */
+        boolean useSetter() default true;
+
+        /**
+         * Use builder constructor when constructing builder.
+         *
+         * The default method would otherwise be to create a builder instance using {@link #useBuilderMethod()}.
+         *
+         * @return {@code true} if constructor should be used for builder type, {@code false} otherwise.
+         */
+        boolean useConstructor() default false;
+
+        /**
+         * Builder method to use unless {@link #useBuilderConstructor()} is true.
+         *
+         * @return Builder method to use, or empty string if not specified;
+         */
+        String useMethod() default "builder";
+    }
 
     @Target(ElementType.TYPE)
     @Retention(RetentionPolicy.SOURCE)

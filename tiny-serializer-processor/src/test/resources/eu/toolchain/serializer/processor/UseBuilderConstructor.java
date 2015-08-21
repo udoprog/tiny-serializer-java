@@ -3,11 +3,11 @@ package eu.toolchain.serializer.processor;
 import eu.toolchain.serializer.AutoSerialize;
 
 @AutoSerialize
-@AutoSerialize.Builder
-public class UseBuilder {
+@AutoSerialize.Builder(useConstructor = true)
+public class UseBuilderConstructor {
     final String string;
 
-    public UseBuilder(String string) {
+    public UseBuilderConstructor(String string) {
         this.string = string;
     }
 
@@ -27,8 +27,8 @@ public class UseBuilder {
             return this;
         }
 
-        public UseBuilder build() {
-            return new UseBuilder(string);
+        public UseBuilderConstructor build() {
+            return new UseBuilderConstructor(string);
         }
     }
 }

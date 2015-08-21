@@ -76,6 +76,11 @@ public class AutoSerializerProcessorTest {
     }
 
     @Test
+    public void testUseBuilderConstructor() {
+        verifySerializer("UseBuilderConstructor");
+    }
+
+    @Test
     public void testOrdering() {
         verifySerializer("Ordering");
     }

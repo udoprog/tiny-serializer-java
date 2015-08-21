@@ -7,7 +7,6 @@ import java.util.Set;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.util.Elements;
 
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,7 @@ public class AutoSerializeAbstractProcessor {
         final String name = utils.serializedName(element, annotation);
 
         final TypeName elementType = TypeName.get(element.asType());
-        final TypeName supertype = TypeName.get(statements.serializerFor(element.asType()));
+        final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
 
         final List<SerializedSubType> subtypes = buildSubTypes(element);
 
@@ -114,11 +113,11 @@ public class AutoSerializeAbstractProcessor {
         final ImmutableList.Builder<SerializedSubType> subtypes = ImmutableList.builder();
 
         int offset = 0;
-        int index = 0;
+        final ShortIterator index = new ShortIterator();
 
         for (final AutoSerialize.SubType s : annotation.value()) {
-            final ClassName type = hackilyPullClassName(s);
-            final short id = s.id() < 0 ? nextShort(index++) : s.id();
+            final ClassName type = utils.pullMirroredClass(s::value);
+            final short id = s.id() < 0 ? index.next() : s.id();
 
             if (!seenIds.add(id)) {
                 throw new IllegalStateException(String.format("Conflicting subtype id (%d) defined for definition #%d",
@@ -130,21 +129,5 @@ public class AutoSerializeAbstractProcessor {
         }
 
         return subtypes.build();
-    }
-
-    short nextShort(int i) {
-        if (i > Short.MAX_VALUE) {
-            throw new IllegalStateException("Too many subtypes defined");
-        }
-
-        return (short) i;
-    }
-
-    ClassName hackilyPullClassName(AutoSerialize.SubType annotation) {
-        try {
-            return ClassName.get(annotation.value());
-        } catch (final MirroredTypeException e) {
-            return (ClassName) TypeName.get(e.getTypeMirror());
-        }
     }
 }

@@ -15,10 +15,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,8 +23,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
-
-import eu.toolchain.serializer.Serializer;
 
 @RequiredArgsConstructor
 public class FrameworkStatements {
@@ -57,18 +52,6 @@ public class FrameworkStatements {
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(Set.class), "$N.set", 1));
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(SortedSet.class), "$N.sortedSet", 1));
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(Optional.class), "$N.optional", 1));
-    }
-
-    private final Types types;
-    private final Elements elements;
-
-    public TypeMirror serializerFor(TypeMirror type) {
-        if (type instanceof PrimitiveType) {
-            return serializerFor(types.boxedClass((PrimitiveType)type).asType());
-        }
-
-        final TypeElement serializer = elements.getTypeElement(Serializer.class.getCanonicalName());
-        return types.getDeclaredType(serializer, type);
     }
 
     String serializerName(Element element) {
