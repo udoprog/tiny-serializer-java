@@ -230,6 +230,7 @@ in strings for which there are `TinySerializer#string()`.
 Examples:
 
 * [Primitive Example](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializePrimitiveExample.java)
+* [Serialize a Map](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializeMap.java)
 
 ## Implementing a Serial{Reader|Writer}
 
