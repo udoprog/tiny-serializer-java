@@ -22,13 +22,13 @@ public class InputStreamSerialReader extends AbstractSerialReader {
     }
 
     @Override
-    public void read(byte[] b) throws IOException {
+    public void read(byte[] b, int offset, int length) throws IOException {
         int index = 0;
 
-        while (index < b.length) {
+        while (index < length) {
             final int r;
 
-            if ((r = input.read(b, index, b.length - index)) == -1) {
+            if ((r = input.read(b, offset + index, length - index)) == -1) {
                 throw new EOFException();
             }
 
@@ -38,7 +38,17 @@ public class InputStreamSerialReader extends AbstractSerialReader {
 
     @Override
     public void skip(int length) throws IOException {
-        input.skip(length);
+        int index = 0;
+
+        while (index < length) {
+            final long r;
+
+            if ((r = input.skip(length - index)) == 0) {
+                throw new EOFException();
+            }
+
+            index += r;
+        }
     }
 
     @Override

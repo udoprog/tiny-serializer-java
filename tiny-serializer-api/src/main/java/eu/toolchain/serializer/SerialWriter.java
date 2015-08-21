@@ -36,10 +36,10 @@ public interface SerialWriter extends Closeable {
     /**
      * Write an array of bytes with the given offset and length.
      *
-     * @param bytes Array of bytes to write.
-     * @param offset Offset at which writing from the array starts.
+     * @param bytes Bytes to write.
+     * @param offset Offset to start writing from.
      * @param length Length to write.
-     * @throws IOException When all bytes cannot be written.
+     * @throws IOException If underlying stream could not be written to.
      */
     public void write(byte[] bytes, int offset, int length) throws IOException;
 

@@ -21,6 +21,15 @@ public interface SerialReader extends Closeable {
     void read(byte[] b) throws IOException;
 
     /**
+     * Read an array of bytes with the given offset and length.
+     *
+     * @param bytes The array to read into.
+     * @param offset The offset to read to.
+     * @param length The number of bytes to read.
+     */
+    void read(byte[] bytes, int offset, int length) throws IOException;
+
+    /**
      * Skip the given amount of bytes.
      *
      * @param length Number of bytes to skip.

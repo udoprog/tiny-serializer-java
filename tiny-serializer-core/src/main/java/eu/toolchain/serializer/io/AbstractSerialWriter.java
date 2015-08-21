@@ -15,6 +15,17 @@ public abstract class AbstractSerialWriter implements SerialWriter {
     }
 
     @Override
+    public void write(byte[] bytes, int offset, int length) throws IOException {
+        if (offset < 0 || length < 0 || offset + length > bytes.length) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        for (int i = 0; i < bytes.length; i++) {
+            write(bytes[i]);
+        }
+    }
+
+    @Override
     public void close() throws IOException {
     }
 

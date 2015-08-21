@@ -6,7 +6,7 @@ import org.junit.Test;
 
 public class TestIntegerSerializer {
     private void roundtrip(int value, int... pattern) throws IOException {
-        Helpers.roundtripArray(new IntegerSerializer(), value, pattern);
+        Helpers.roundTripPattern(new IntegerSerializer(), value, pattern);
     }
 
     @Test

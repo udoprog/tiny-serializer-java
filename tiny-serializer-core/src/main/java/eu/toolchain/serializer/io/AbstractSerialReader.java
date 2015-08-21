@@ -11,6 +11,26 @@ public abstract class AbstractSerialReader implements SerialReader {
     private static final Serializer<Integer> varint = new CompactVarIntSerializer();
 
     @Override
+    public void read(byte[] bytes) throws IOException {
+        read(bytes, 0, bytes.length);
+    }
+
+    @Override
+    public void read(byte[] bytes, int offset, int length) throws IOException {
+        if (offset < 0 || length < 0 || offset + length > bytes.length) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        if (length == 0) {
+            return;
+        }
+
+        for (int i = 0; i < length; i++) {
+            bytes[offset + i] = read();
+        }
+    }
+
+    @Override
     public void skip() throws IOException {
         final int skip = varint.deserialize(this);
         skip(skip);
@@ -41,10 +61,10 @@ public abstract class AbstractSerialReader implements SerialReader {
         }
 
         @Override
-        public void read(byte[] b) throws IOException {
+        public void read(byte[] b, int offset, int length) throws IOException {
             p += b.length;
             checkScope();
-            parent.read(b);
+            parent.read(b, offset, length);
         }
 
         @Override
@@ -55,8 +75,9 @@ public abstract class AbstractSerialReader implements SerialReader {
         }
 
         private void checkScope() throws IOException {
-            if (p > size)
+            if (p > size) {
                 throw new IOException("end of scope reached (p: " + p + ", size: " + size + ")");
+            }
         }
     }
 }
