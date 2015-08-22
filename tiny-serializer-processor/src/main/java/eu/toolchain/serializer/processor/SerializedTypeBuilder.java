@@ -45,12 +45,7 @@ public class SerializedTypeBuilder {
     final String method;
 
     public static Optional<SerializedTypeBuilder> build(final AutoSerializeUtils utils, final TypeElement element) {
-        final AutoSerialize autoSerialize = element.getAnnotation(AutoSerialize.class);
-
-        if (autoSerialize == null) {
-            throw new IllegalArgumentException(String.format("Type not annotated with @AutoSerialize (%s)", element));
-        }
-
+        final AutoSerialize autoSerialize = utils.requireAnnotation(element, AutoSerialize.class);
         final AutoSerialize.Builder direct = element.getAnnotation(AutoSerialize.Builder.class);
         return Optional.fromNullable(direct).or(providedFrom(autoSerialize.builder())).transform(build(utils));
     }

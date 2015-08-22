@@ -30,6 +30,7 @@ import eu.toolchain.serializer.AutoSerialize;
 public class AutoSerializeProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
+    private AutoSerializeUtils utils;
     private AutoSerializeAbstractProcessor abstractProcessor;
     private AutoSerializeClassProcessor classProcessor;
     private int round = 0;
@@ -44,8 +45,8 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         final Elements elements = env.getElementUtils();
         final Types types = env.getTypeUtils();
         final FrameworkStatements statements = new FrameworkStatements();
-        final AutoSerializeUtils utils = new AutoSerializeUtils(types, elements);
 
+        utils = new AutoSerializeUtils(types, elements);
         abstractProcessor = new AutoSerializeAbstractProcessor(elements, statements, utils);
         classProcessor = new AutoSerializeClassProcessor(types, elements, statements, utils);
 
@@ -100,24 +101,33 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         final List<SerializedType> processed = new ArrayList<>();
 
         for (final Element element : elements) {
-            messager.printMessage(Diagnostic.Kind.NOTE, String.format("Processing %s", element));
-            processed.add(processElement(element));
+            if (!(element instanceof TypeElement)) {
+                throw new IllegalArgumentException(String.format("Element unsupported (%s), expected Type (interface or class)", element));
+            }
+
+            final TypeElement typeElement = (TypeElement) element;
+            messager.printMessage(Diagnostic.Kind.NOTE, String.format("Processing %s", typeElement));
+            processed.add(processElement(typeElement));
         }
 
         return processed;
     }
 
-    SerializedType processElement(Element element) {
+    SerializedType processElement(TypeElement element) {
         if (element.getKind() == ElementKind.INTERFACE) {
-            return abstractProcessor.process((TypeElement)element);
+            if (utils.useBuilder(element)) {
+                return classProcessor.process(element);
+            } else {
+                return abstractProcessor.process(element);
+            }
         }
 
         if (element.getKind() == ElementKind.CLASS) {
-            if (element.getModifiers().contains(Modifier.ABSTRACT)) {
-                return abstractProcessor.process((TypeElement)element);
-            } else {
-                return classProcessor.process((TypeElement)element);
+            if (element.getModifiers().contains(Modifier.ABSTRACT) && !utils.useBuilder(element)) {
+                return abstractProcessor.process(element);
             }
+
+            return classProcessor.process(element);
         }
 
         throw new IllegalArgumentException("Unexpected type " + element);

@@ -1,8 +1,9 @@
 package eu.toolchain.serializer.processor;
 
 import java.util.List;
+import java.util.Set;
 
-import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -11,6 +12,7 @@ import javax.lang.model.util.Types;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -18,7 +20,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.SerializerFramework;
@@ -34,13 +35,12 @@ public class AutoSerializeClassProcessor {
     final AutoSerializeUtils utils;
 
     SerializedType process(final TypeElement element) {
-        final AutoSerialize autoSerialize = element.getAnnotation(AutoSerialize.class);
-
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
-        final String name = utils.serializedName(element, autoSerialize);
+        final String name = utils.serializedName(element);
 
         final Optional<SerializedTypeBuilder> builder = SerializedTypeBuilder.build(utils, element);
-        final SerializedTypeFields serializedType = SerializedTypeFields.build(utils, element, autoSerialize);
+        final Set<ElementKind> kinds = getKinds(element);
+        final SerializedTypeFields serializedType = SerializedTypeFields.build(utils, element, kinds);
 
         final ClassName elementType = (ClassName) TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
@@ -56,9 +56,34 @@ public class AutoSerializeClassProcessor {
 
         generated.addMethod(constructor(serializedType));
         generated.addMethod(serializeMethod(elementType, serializedType));
-        generated.addMethod(deserializeMethod(elementType, serializedType, autoSerialize, builder));
+        generated.addMethod(deserializeMethod(elementType, serializedType, builder));
 
         return new SerializedType(element, packageName, name, generated.build(), elementType, supertype, serializedType);
+    }
+
+
+    /**
+     * Get the set of supported element kinds that make up the total set of fields for this type.
+     *
+     * @param element
+     * @return
+     */
+    Set<ElementKind> getKinds(TypeElement element) {
+        final ImmutableSet.Builder<ElementKind> kinds = ImmutableSet.builder();
+
+        if (element.getKind() == ElementKind.INTERFACE) {
+            kinds.add(ElementKind.METHOD);
+        }
+
+        if (element.getKind() == ElementKind.CLASS) {
+            kinds.add(ElementKind.FIELD);
+
+            if (element.getModifiers().contains(Modifier.ABSTRACT)) {
+                kinds.add(ElementKind.METHOD);
+            }
+        }
+
+        return kinds.build();
     }
 
     MethodSpec constructor(final SerializedTypeFields serialized) {
@@ -89,7 +114,7 @@ public class AutoSerializeClassProcessor {
                 }
             };
 
-            statements.resolveStatement(utils.boxedIfNeeded(fieldType.getTypeElement().asType()), framework).writeTo(
+            statements.resolveStatement(utils.boxedIfNeeded(fieldType.getFieldTypeMirror()), framework).writeTo(
                     builder);
         }
 
@@ -110,7 +135,6 @@ public class AutoSerializeClassProcessor {
     }
 
     MethodSpec deserializeMethod(ClassName returnType, SerializedTypeFields serializedType,
-            AutoSerialize autoSerialize,
             Optional<SerializedTypeBuilder> typeBuilder) {
         final ParameterSpec buffer = utils.parameter(TypeName.get(SerialReader.class), "buffer");
         final MethodSpec.Builder b = utils.deserializeMethod(returnType, buffer);

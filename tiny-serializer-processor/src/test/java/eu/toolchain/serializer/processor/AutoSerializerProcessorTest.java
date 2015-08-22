@@ -90,6 +90,11 @@ public class AutoSerializerProcessorTest {
         verifySerializer("Nested", "Nested_Foo_Serializer");
     }
 
+    @Test
+    public void testInterfaceUsingBuilder() {
+        verifySerializer("InterfaceUsingBuilder", "InterfaceUsingBuilder_Serializer");
+    }
+
     static void verifySerializer(String name) {
         verifySerializer(name, String.format(FrameworkStatements.SERIALIZER_NAME_FORMAT, name));
     }

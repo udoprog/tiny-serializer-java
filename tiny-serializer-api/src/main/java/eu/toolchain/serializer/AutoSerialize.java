@@ -46,9 +46,11 @@ public @interface AutoSerialize {
         /**
          * Use setters when assigning values to a builder.
          *
+         * Default behavior is to assume the builder has methods named the same as the field.
+         *
          * @return {@code true} if builders use setters, {@code false} otherwise.
          */
-        boolean useSetter() default true;
+        boolean useSetter() default false;
 
         /**
          * Use builder constructor when constructing builder.
@@ -81,7 +83,7 @@ public @interface AutoSerialize {
         short id() default -1;
     }
 
-    @Target({ ElementType.PARAMETER, ElementType.FIELD })
+    @Target({ ElementType.PARAMETER, ElementType.FIELD, ElementType.METHOD })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Field {
         String accessor() default "";
@@ -118,7 +120,7 @@ public @interface AutoSerialize {
         String providerName() default "";
     }
 
-    @Target({ ElementType.FIELD })
+    @Target({ ElementType.FIELD, ElementType.METHOD })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Ignore {
     }

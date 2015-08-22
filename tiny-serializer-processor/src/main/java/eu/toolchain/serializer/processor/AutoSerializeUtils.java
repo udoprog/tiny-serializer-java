@@ -1,6 +1,7 @@
 package eu.toolchain.serializer.processor;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.function.Supplier;
 
 import javax.lang.model.element.Element;
@@ -55,12 +56,24 @@ public class AutoSerializeUtils {
         return ParameterSpec.builder(type, name).addModifiers(Modifier.FINAL).build();
     }
 
-    public String serializedName(Element element, AutoSerialize annotation) {
+    public String serializedName(Element element) {
+        final AutoSerialize annotation = requireAnnotation(element, AutoSerialize.class);
+
         if (!"".equals(annotation.name())) {
             return annotation.name();
         }
 
         return element.getSimpleName().toString();
+    }
+
+    public <T extends Annotation> T requireAnnotation(Element element, Class<T> annotationType) {
+        final T annotation = element.getAnnotation(annotationType);
+
+        if (annotation == null) {
+            throw new IllegalArgumentException(String.format("Type not annotated with @%s (%s)", annotationType.getSimpleName(), element));
+        }
+
+        return annotation;
     }
 
     public TypeMirror serializerFor(TypeMirror type) {
@@ -82,5 +95,21 @@ public class AutoSerializeUtils {
         } catch (final MirroredTypeException e) {
             return (ClassName) TypeName.get(e.getTypeMirror());
         }
+    }
+
+    /**
+     * Indicates if this type uses builders or not.
+     *
+     * @param element
+     * @return
+     */
+    public boolean useBuilder(TypeElement element) {
+        final AutoSerialize autoSerialize = requireAnnotation(element, AutoSerialize.class);
+
+        if (element.getAnnotation(AutoSerialize.Builder.class) != null) {
+            return true;
+        }
+
+        return autoSerialize.builder().length > 0;
     }
 }

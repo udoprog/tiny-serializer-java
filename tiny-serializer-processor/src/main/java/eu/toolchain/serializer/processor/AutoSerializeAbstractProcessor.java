@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -33,11 +34,9 @@ public class AutoSerializeAbstractProcessor {
     final AutoSerializeUtils utils;
 
     SerializedType process(final TypeElement element) {
-        final AutoSerialize annotation = element.getAnnotation(AutoSerialize.class);
-
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final String serializerName = statements.serializerName(element);
-        final String name = utils.serializedName(element, annotation);
+        final String name = utils.serializedName(element);
 
         final TypeName elementType = TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
@@ -57,9 +56,9 @@ public class AutoSerializeAbstractProcessor {
         generated.addMethod(serializeMethod(elementType, serializer));
         generated.addMethod(deserializeMethod(elementType, serializer));
 
-        final SerializedTypeFields fields = new SerializedTypeFields(annotation.orderById(),
-                annotation.orderConstructorById());
+        final AutoSerialize annotation = utils.requireAnnotation(element, AutoSerialize.class);
 
+        final SerializedTypeFields fields = new SerializedTypeFields(annotation.orderById(), annotation.orderConstructorById());
         return new SerializedType(element, packageName, name, generated.build(), elementType, supertype, fields);
     }
 

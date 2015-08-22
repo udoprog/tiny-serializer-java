@@ -11,6 +11,11 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
+/**
+ * Provides utilities for generating unique, readable names from given types.
+ *
+ * @author udoprog
+ */
 @RequiredArgsConstructor
 public class Naming {
     static final ClassName optionalType = ClassName.get(Optional.class);

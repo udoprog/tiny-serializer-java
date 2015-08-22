@@ -3,7 +3,7 @@ package eu.toolchain.serializer.processor;
 import eu.toolchain.serializer.AutoSerialize;
 
 @AutoSerialize
-@AutoSerialize.Builder(useConstructor = true)
+@AutoSerialize.Builder(useConstructor = true, useSetter = true)
 public class UseBuilderConstructor {
     final String string;
 
