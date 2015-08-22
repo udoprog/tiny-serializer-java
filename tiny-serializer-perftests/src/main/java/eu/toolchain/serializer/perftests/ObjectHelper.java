@@ -17,6 +17,11 @@ public class ObjectHelper {
                 ImmutableList.of("fee", "fii", "foo", "fum"));
     }
 
+    public static AutoMatterSerializedObject newAutoMatterSerializedObject() {
+        return new AutoMatterSerializedObjectBuilder().version(42).field("hello world").map(ImmutableMap.of("hello", "world", "this", "sucks")).someStrings(
+                ImmutableList.of("fee", "fii", "foo", "fum")).build();
+    }
+
     public static MutableSerializedObject newMutableSerializedObject() {
         final HashMap<String, String> map = new HashMap<>(ImmutableMap.of("hello", "world", "this",
                 "sucks"));
