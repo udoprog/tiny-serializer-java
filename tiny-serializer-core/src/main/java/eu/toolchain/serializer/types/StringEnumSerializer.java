@@ -1,9 +1,12 @@
-package eu.toolchain.serializer;
+package eu.toolchain.serializer.types;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
+import eu.toolchain.serializer.SerialReader;
+import eu.toolchain.serializer.SerialWriter;
+import eu.toolchain.serializer.Serializer;
 
 public class StringEnumSerializer<T extends Enum<T>> implements Serializer<T> {
     private final Serializer<String> string;
@@ -17,13 +20,13 @@ public class StringEnumSerializer<T extends Enum<T>> implements Serializer<T> {
     }
 
     private Map<String, T> buildNameMapping(T[] values) {
-        final ImmutableMap.Builder<String, T> mapping = ImmutableMap.builder();
+        final Map<String, T> mapping = new HashMap<>();
 
         for (final T value : values) {
             mapping.put(value.name(), value);
         }
 
-        return mapping.build();
+        return mapping;
     }
 
     @Override

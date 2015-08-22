@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.junit.Test;
 
+import eu.toolchain.serializer.types.ShortSerializer;
+
 public class TestShortSerializer {
     private void roundtrip(short value, int... pattern) throws IOException {
         Helpers.roundTripPattern(new ShortSerializer(), value, pattern);

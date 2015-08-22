@@ -2,6 +2,7 @@ package eu.toolchain.serializer;
 
 import java.io.IOException;
 
+import eu.toolchain.serializer.LengthPolicy;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 

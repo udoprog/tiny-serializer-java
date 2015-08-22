@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.var;
+package eu.toolchain.serializer.types;
 
 import java.io.IOException;
 
@@ -7,12 +7,12 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 
 /**
- * Based on the same concept as {@link CompactVarIntSerializer} expanded to 64 bits.
+ * Based on the same concept as {@link VarIntSerializer} expanded to 64 bits.
  *
- * @see CompactVarIntSerializer
+ * @see VarIntSerializer
  * @author udoprog
  */
-public class CompactVarLongSerializer implements Serializer<Long> {
+public class VarLongSerializer implements Serializer<Long> {
     private static final int CONT = 0x80;
     private static final int MASK = (CONT ^ 0xff);
 
@@ -22,11 +22,10 @@ public class CompactVarLongSerializer implements Serializer<Long> {
 
         while ((v >>> 7) > 0) {
             buffer.write(((int) (v & MASK)) | CONT);
-            v = (v >>> 7) - 1;
+            v = (v >>> 7);
         }
 
         buffer.write((int) v);
-        return;
     }
 
     @Override
@@ -46,7 +45,6 @@ public class CompactVarLongSerializer implements Serializer<Long> {
             }
 
             shift <<= 7;
-            v += shift;
         }
 
         throw new IOException("Too many continuation bytes");

@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.var;
+package eu.toolchain.serializer.types;
 
 import java.io.IOException;
 
@@ -9,26 +9,33 @@ import eu.toolchain.serializer.Serializer;
 /**
  * Variable-length number encoding based on continuation bits.
  *
- * Each byte carries 7 bits of data, the first bit indicates whether the sequence continues or not. Any bit not included
- * in the sequence is padded to 0.
+ * This is very similar to {@link VarIntSerializer}, with the exception that the encoding achieves a perfect mapping for
+ * a sequence of bytes to a single number.
  *
- * <h1>Example</h1>
- *
- * <pre>
- * 00000000 00000000 10001000 01010101
- *             zzzzz zzyyyyyy yxxxxxxx
- * </pre>
- *
- * Is encoded as:
+ * Consider the following case.
  *
  * <pre>
- * 11010101 10010000 00000010
- * Cxxxxxxx Cyyyyyyy Czzzzzzz
+ * 10000000 00000000
  * </pre>
+ *
+ * This essentially represents the same as a single byte, with no continuation of.
+ *
+ * <pre>
+ * 00000000
+ * </pre>
+ *
+ * We can do better by mapping each *continuation* to a specific value, subtract that value during encoding, and add it
+ * back during decoding.
+ *
+ * So each continuation would have a value of (1 << (7 * n)) which we can subtract from the 7 bit encoded message, and
+ * re-encode it.
+ *
+ * Using this technique, we can represent 2113665 more values with 5 bytes than was previously possible. This also means
+ * that the encoding is more compact (hence the name) because these bits are coalesced towards zero.
  *
  * @author udoprog
  */
-public class VarIntSerializer implements Serializer<Integer> {
+public class CompactVarIntSerializer implements Serializer<Integer> {
     private static final int CONT = 0x80;
     private static final int MASK = (CONT ^ 0xff);
 
@@ -38,7 +45,7 @@ public class VarIntSerializer implements Serializer<Integer> {
 
         while ((v >>> 7) > 0) {
             buffer.write((v & MASK) | CONT);
-            v = (v >>> 7);
+            v = (v >>> 7) - 1;
         }
 
         buffer.write(v);
@@ -62,6 +69,7 @@ public class VarIntSerializer implements Serializer<Integer> {
             }
 
             shift <<= 7;
+            v += shift;
         }
 
         throw new IOException("Too many continuation bytes");

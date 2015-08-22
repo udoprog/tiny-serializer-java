@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.junit.Test;
 
+import eu.toolchain.serializer.types.IntegerSerializer;
+
 public class TestIntegerSerializer {
     private void roundtrip(int value, int... pattern) throws IOException {
         Helpers.roundTripPattern(new IntegerSerializer(), value, pattern);

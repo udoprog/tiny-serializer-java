@@ -1,9 +1,13 @@
-package eu.toolchain.serializer;
+package eu.toolchain.serializer.types;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.toolchain.serializer.SerialReader;
+import eu.toolchain.serializer.SerialWriter;
+import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.SerializerFramework.TypeMapping;
 import lombok.RequiredArgsConstructor;
 

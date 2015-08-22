@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import eu.toolchain.serializer.Helpers;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.types.CompactVarLongSerializer;
+import eu.toolchain.serializer.types.VarLongSerializer;
 
 public class VarLongSerializerTest {
     final VarLongSerializer regular = new VarLongSerializer();

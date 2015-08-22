@@ -1,10 +1,13 @@
-package eu.toolchain.serializer;
+package eu.toolchain.serializer.types;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import eu.toolchain.serializer.SerialReader;
+import eu.toolchain.serializer.SerialWriter;
+import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

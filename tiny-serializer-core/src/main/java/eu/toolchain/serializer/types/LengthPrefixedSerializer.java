@@ -1,9 +1,13 @@
-package eu.toolchain.serializer;
+package eu.toolchain.serializer.types;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import lombok.RequiredArgsConstructor;
+import eu.toolchain.serializer.LengthPolicy;
+import eu.toolchain.serializer.SerialReader;
+import eu.toolchain.serializer.SerialWriter;
+import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.io.ByteArraySerialReader;
 import eu.toolchain.serializer.io.OutputStreamSerialWriter;
 

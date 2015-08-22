@@ -1,4 +1,4 @@
-package eu.toolchain.serializer;
+package eu.toolchain.serializer.types;
 
 import java.io.IOException;
 
@@ -11,14 +11,14 @@ import eu.toolchain.serializer.Serializer;
  * 
  * <pre>
  * | 0    |
- * | 0x40 |
+ * | 0x7e |
  * </pre>
  * 
  * Non-{@code null} is serialized as follows.
  * 
  * <pre>
  * | 0    | 1..n  |
- * | 0x80 | value |
+ * | 0x7f | value |
  * </pre>
  */
 public class NullSerializer<T> implements Serializer<T> {

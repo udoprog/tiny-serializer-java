@@ -6,6 +6,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import eu.toolchain.serializer.types.NullSerializer;
+
 public class TestNullSerializer {
     final Object reference = new Object();
 

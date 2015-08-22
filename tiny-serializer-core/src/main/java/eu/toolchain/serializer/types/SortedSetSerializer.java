@@ -1,8 +1,8 @@
-package eu.toolchain.serializer;
+package eu.toolchain.serializer.types;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
@@ -10,12 +10,12 @@ import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ListSerializer<T> implements Serializer<List<T>> {
+public class SortedSetSerializer<T> implements Serializer<SortedSet<T>> {
     private final Serializer<Integer> size;
     private final Serializer<T> serializer;
 
     @Override
-    public void serialize(SerialWriter buffer, List<T> values) throws IOException {
+    public void serialize(SerialWriter buffer, SortedSet<T> values) throws IOException {
         size.serialize(buffer, values.size());
 
         for (final T value : values)
@@ -23,10 +23,10 @@ public class ListSerializer<T> implements Serializer<List<T>> {
     }
 
     @Override
-    public List<T> deserialize(SerialReader buffer) throws IOException {
+    public SortedSet<T> deserialize(SerialReader buffer) throws IOException {
         final int size = this.size.deserialize(buffer);
 
-        final List<T> values = new ArrayList<>(size);
+        final SortedSet<T> values = new TreeSet<>();
 
         for (int i = 0; i < size; ++i)
             values.add(serializer.deserialize(buffer));

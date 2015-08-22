@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.junit.Test;
 
+import eu.toolchain.serializer.types.LongSerializer;
+
 public class TestLongSerializer {
     private void roundtrip(long value, int... pattern) throws IOException {
         Helpers.roundTripPattern(new LongSerializer(), value, pattern);

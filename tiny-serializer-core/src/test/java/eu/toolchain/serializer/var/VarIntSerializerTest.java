@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import eu.toolchain.serializer.Helpers;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.types.CompactVarIntSerializer;
+import eu.toolchain.serializer.types.VarIntSerializer;
 
 public class VarIntSerializerTest {
     final Serializer<Integer> regular = new VarIntSerializer();
