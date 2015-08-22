@@ -13,6 +13,7 @@ A small serialization framework for Java for Immutable objects.
 Topics:
 
 * [Setup](#setup)
+* [Serialization Format](#serialization-format)
 * [Basic Serialization](#basic-serialization)
 * [Generated Serializers](#generated-serializers)
 * [Performance](#performance)
@@ -29,6 +30,7 @@ central](http://search.maven.org/#search%7Cga%7C1%7Cg%3Aeu.toolchain.serializer)
 <dependency>
   <groupId>eu.toolchain.serializer</groupId>
   <artifactId>tiny-serializer-core</artifactId>
+  <version>${tiny.version}</version>
 </dependency>
 ```
 
@@ -45,6 +47,29 @@ There are quite a few configuration options available in the builder.
 Examples:
 
 * [Serializer Setup](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializerSetup.java)
+
+# Serialization Format
+
+TinySerializer is _not_ intended to be used as a well-established,
+general-purpose serialization format.
+
+It provides a framework to build a specific serialization _on top of_.
+
+This can be useful if you have some data in an application that needs to be
+serialized to disk, or if you have to components of the same application
+needing to communicate over the network (provide the serializer implementation
+as a separate library).
+
+Other than that, the project aims that within a major version, same
+builder configuration will generate the same wire-format.
+The builder, and API types will be subject to versioning guarantees as-per
+semantic versioning.
+
+Stronger guarantees _might_ be possible in the future by providing
+special-purpose serialization implementations of `SerializerFramework`.
+
+As it stands right now, what I've (udoprog) done here is take a pattern I
+implement very frequently by hand, and make it as convenient as possible.
 
 # Basic serialization
 
@@ -83,7 +108,7 @@ Examples:
 
 * [Stream Communication](tiny-serializer-core/src/example/java/eu/toolchain/examples/StreamCommunicationExample.java)
 
-# Serializing Values
+## Serializing Values
 
 The following methods give access to primitive serializers.
 
@@ -113,7 +138,7 @@ Examples:
 * [Primitive Example](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializePrimitiveExample.java)
 * [Serialize a Map](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializeMap.java)
 
-# Implementing a Serial{Reader|Writer}
+## Implementing a Serial{Reader|Writer}
 
 `SerialReader` and `SerialWriter` are the two primary I/O interfaces, they perform reading and writing respectively.
 
@@ -191,11 +216,13 @@ api artifact.
   <dependency>
     <groupId>eu.toolchain.serializer</groupId>
     <artifactId>tiny-serializer-api</artifactId>
+    <version>${tiny.version}</version>
   </dependency>
 
   <dependency>
     <groupId>eu.toolchain.serializer</groupId>
     <artifactId>tiny-serializer-processor</artifactId>
+    <version>${tiny.version}</version>
     <scope>provided</scope>
   </dependency>
 <dependencies>
@@ -235,6 +262,37 @@ Fields can be ignored using the `@AutoSerialize.Ignore` annotation.
 
 * [Ignore Test](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/Ignore.java)
   (generates: [Ignore_Serializer](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/Ignore_Serializer.java))
+
+##### Immutable Collections
+
+TinySerializer can be configured to use (guava) immutable collections when
+building collection-oriented serializers.
+Take note that this does _not_ mean that the serializer guarantees that the
+input collection is immutable, only that the collections produced by the
+framework are.
+
+You accomplish this by using the `#useImmutableCollections(boolean)`
+configuration on the builder, like the following.
+
+```java
+TinySerializer.builder().useImmutableCollections(true).build()
+```
+
+Due to `tiny-serializer-core` not depending on guava, this is something that
+you will have to add to your project in order for this to work, otherwise it
+will throw an exception at configuration time.
+
+```xml
+<dependency>
+  <groupId>com.google.guava</groupId>
+  <artifactId>guava</artifactId>
+  <version>${guava.version}</version>
+</dependency>
+```
+
+Examples:
+
+* [Serialize an Immutable Map](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializeImmutableMap.java)
 
 #### Immutable Objects
 

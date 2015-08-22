@@ -329,11 +329,13 @@ public class TinySerializer implements SerializerFramework {
         }
 
         /**
-         * Use immutable collections when de-serializing data.
+         * Use immutable collections when deserializing data. Note that this does not enforce that serialized
+         * collections are immutable, only that the ones produced by the framework are.
          *
-         * Note: this requires a dependency guava.
+         * <b>This option requires that google guava</b> is in your classpath, if this is not the case, an
+         * {@link IllegalStateException} will be thrown in the {@link #build()} method call.
          *
-         * @param useImmutableCollections {@code true} will cause collections to be immutable.
+         * @param useImmutableCollections {@code true} will cause produced collections to be immutable.
          * @return This builder.
          */
         public Builder useImmutableCollections(boolean useImmutableCollections) {
@@ -412,6 +414,12 @@ public class TinySerializer implements SerializerFramework {
             return this;
         }
 
+        /**
+         * Set a default length policy for the {@link SerializerFramework#lengthPrefixed(Serializer)} serialization.
+         *
+         * @param defaultLengthPolicy New length policy to set.
+         * @return This builder.
+         */
         public Builder defaultLengthPolicy(LengthPolicy defaultLengthPolicy) {
             if (defaultLengthPolicy == null) {
                 throw new NullPointerException("defaultLengthPolicy");
@@ -430,6 +438,16 @@ public class TinySerializer implements SerializerFramework {
             return this;
         }
 
+        /**
+         * Build a new instance of the Tiny implementation of the {@code SerializerFramework} according to the current
+         * configuration.
+         *
+         * The builder may be modified after an invocation to build.
+         *
+         * @return
+         * @throws IllegalStateException If the configuration is invalid, or the environment does not match the specified configuration.
+         * @see #useImmutableCollections
+         */
         public TinySerializer build() {
             final Serializer<Integer> size = ofNullable(this.size).orElseGet(this::defaultCollectionSize);
             final Serializer<Integer> subTypeId = ofNullable(this.subTypeId).orElse(size);
