@@ -1,12 +1,8 @@
 package eu.toolchain.serializer.processor;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import eu.toolchain.serializer.AutoSerialize;
-import eu.toolchain.serializer.OptionalProperty;
 
 @AutoSerialize(useGetter = false)
 public class Fields {
