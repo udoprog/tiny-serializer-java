@@ -14,7 +14,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
-import eu.toolchain.serializer.AutoSerialize.Builder;
 import eu.toolchain.serializer.DefaultBuilderType;
 import lombok.Data;
 
@@ -45,10 +44,10 @@ public class SerializedTypeBuilder {
      */
     final String method;
 
-    public static Optional<SerializedTypeBuilder> build(final AutoSerializeUtils utils, final TypeElement element) {
+    public static Optional<SerializedTypeBuilder> build(final AutoSerializeUtils utils, final TypeElement element, final String defaultPackageName) {
         final AutoSerialize autoSerialize = utils.requireAnnotation(element, AutoSerialize.class);
         final AutoSerialize.Builder direct = element.getAnnotation(AutoSerialize.Builder.class);
-        return Optional.fromNullable(direct).or(providedFrom(autoSerialize.builder())).transform(build(utils));
+        return Optional.fromNullable(direct).or(providedFrom(autoSerialize.builder())).transform(build(utils, defaultPackageName));
     }
 
     static Optional<AutoSerialize.Builder> providedFrom(AutoSerialize.Builder[] builders) {
@@ -59,9 +58,9 @@ public class SerializedTypeBuilder {
         return Optional.of(builders[0]);
     }
 
-    static Function<AutoSerialize.Builder, SerializedTypeBuilder> build(final AutoSerializeUtils utils) {
+    static Function<AutoSerialize.Builder, SerializedTypeBuilder> build(final AutoSerializeUtils utils, final String defaultPackageName) {
         return (builder) -> {
-            final ClassName builderType = utils.pullMirroredClass(builder::type);
+            final ClassName builderType = utils.pullMirroredClass(builder::type, defaultPackageName);
 
             final boolean useConstructor = shouldUseConstructor(builderType, builder);
 

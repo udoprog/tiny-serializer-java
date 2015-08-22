@@ -38,7 +38,7 @@ public class AutoSerializeClassProcessor {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final String name = utils.serializedName(element);
 
-        final Optional<SerializedTypeBuilder> builder = SerializedTypeBuilder.build(utils, element);
+        final Optional<SerializedTypeBuilder> builder = SerializedTypeBuilder.build(utils, element, packageName);
         final Set<ElementKind> kinds = getKinds(element);
         final SerializedFields serializedType = SerializedFields.build(utils, element, kinds);
 

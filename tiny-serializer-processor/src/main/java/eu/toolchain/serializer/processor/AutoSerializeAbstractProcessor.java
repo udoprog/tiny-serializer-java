@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -41,7 +39,7 @@ public class AutoSerializeAbstractProcessor {
         final TypeName elementType = TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
 
-        final List<SerializedSubType> subtypes = buildSubTypes(element);
+        final List<SerializedSubType> subtypes = buildSubTypes(element, packageName);
 
         final FieldSpec serializer = FieldSpec.builder(supertype, "serializer", Modifier.FINAL).build();
 
@@ -102,7 +100,7 @@ public class AutoSerializeAbstractProcessor {
                 .addStatement("return $N.deserialize($N)", serializer, buffer).build();
     }
 
-    List<SerializedSubType> buildSubTypes(Element element) {
+    List<SerializedSubType> buildSubTypes(Element element, final String defaultPackageName) {
         final AutoSerialize.SubTypes annotation = element.getAnnotation(AutoSerialize.SubTypes.class);
 
         if (annotation == null) {
@@ -116,7 +114,7 @@ public class AutoSerializeAbstractProcessor {
         final ShortIterator index = new ShortIterator();
 
         for (final AutoSerialize.SubType s : annotation.value()) {
-            final ClassName type = utils.pullMirroredClass(s::value);
+            final ClassName type = utils.pullMirroredClass(s::value, defaultPackageName);
             final short id = s.id() < 0 ? index.next() : s.id();
 
             if (!seenIds.add(id)) {

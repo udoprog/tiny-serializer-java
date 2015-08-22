@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
@@ -89,12 +90,20 @@ public class AutoSerializeUtils {
         return type;
     }
 
-    public ClassName pullMirroredClass(Supplier<Class<?>> supplier) {
+    public ClassName pullMirroredClass(Supplier<Class<?>> supplier, String defaultPackageName) {
         try {
             return ClassName.get(supplier.get());
         } catch (final MirroredTypeException e) {
-            return (ClassName) TypeName.get(e.getTypeMirror());
+            return buildClassName(e, e.getTypeMirror(), defaultPackageName);
         }
+    }
+
+    private ClassName buildClassName(final MirroredTypeException e, final TypeMirror type, final String defaultPackageName) {
+        if (type instanceof ErrorType) {
+            throw new IllegalArgumentException("Got ErroType when attempting to access Class", e);
+        }
+
+        return (ClassName)TypeName.get(type);
     }
 
     /**
@@ -111,5 +120,17 @@ public class AutoSerializeUtils {
         }
 
         return autoSerialize.builder().length > 0;
+    }
+
+    /**
+     * Re-fetch the given element from the environment.
+     *
+     * This might be necessary to update type information which was not available on previous rounds.
+     *
+     * @param element Element to fetch.
+     * @return A refreshed version of the specified element from the environment.
+     */
+    public TypeElement refetch(TypeElement element) {
+        return elements.getTypeElement(element.getQualifiedName());
     }
 }
