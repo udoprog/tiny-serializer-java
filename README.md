@@ -4,7 +4,7 @@ A small serialization framework for Java for Immutable objects.
 
 * Simple, compsable serializer interface with little fuzz.
 * Optionally removes boilerplate through reflection-free
-  [annotation processing](#annotation-processing).
+  [annotation processing](#generated-serializers).
 * No static components, the framework uses an instance of `SerializerFramework`
   as its main contact point.
   See the [Setup](#setup) section.
@@ -302,9 +302,36 @@ The serialized object can specify a builder type through
 
 If specified, all field construction will be delegated to the specified builder.
 
-This should be very convenient to couple with
-[`@AutoMatter`](https://github.com/danielnorberg/auto-matter) or lombok's
-[`@Builder`](https://projectlombok.org/features/Builder.html).
+The following is an example using lombok's [`@Builder`](https://projectlombok.org/features/Builder.html).
+
+```java
+@AutoSerialize(builder = @AutoSerialize.Builder())
+@Builder
+@Data
+public class LombokSerializedObject {
+    public int version;
+    public String field;
+    public Map<String, String> map;
+    public List<String> someStrings;
+}
+```
+
+*Note*: This should only be used as an example, lombok's `@Data` annotation
+already generates a suitable constructor which provides `@AutoSerialize` with
+the means to construct a new instance.
+
+The following is an example using [`@AutoMatter`](https://github.com/danielnorberg/auto-matter).
+
+```java
+@AutoSerialize(builder = @AutoSerialize.Builder(type = AutoMatterSerializedObjectBuilder.class))
+@AutoMatter
+public interface AutoMatterSerializedObject {
+    public int version();
+    public String field();
+    public Map<String, String> map();
+    public List<String> someStrings();
+}
+```
 
 Examples:
 
