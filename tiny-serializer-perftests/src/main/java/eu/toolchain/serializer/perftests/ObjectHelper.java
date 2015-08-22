@@ -4,32 +4,45 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 public class ObjectHelper {
-    public static SerializedObject newSerializedObject() {
+    public static ImmutableSerializedObject newSerializedObject() {
         final Map<String, String> map = newMap();
         final List<String> list = newList();
-        return new SerializedObject(42, "hello world", map, list);
+        final Map<String, List<String>> optionalMap = newOptionalMap();
+        final Set<Long> set = newSet();
+        return new ImmutableSerializedObject(42, "hello world", map, list, optionalMap, set);
     }
 
     public static AutoMatterSerializedObject newAutoMatterSerializedObject() {
         final Map<String, String> map = newMap();
         final List<String> list = newList();
-        return new AutoMatterSerializedObjectBuilder().version(42).field("hello world").map(map).someStrings(list)
-                .build();
+        final Map<String, List<String>> optionalMap = newOptionalMap();
+        final Set<Long> set = newSet();
+        return new AutoMatterSerializedObjectBuilder().version(42).field("hello world").map(map).list(list).optionalMap(optionalMap).set(set).build();
     }
 
     public static MutableSerializedObject newMutableSerializedObject() {
         final Map<String, String> map = new HashMap<>(newMap());
         final List<String> list = new ArrayList<>(newList());
-        return new MutableSerializedObject(42, "hello world", map, list);
+        final Map<String, List<String>> optionalMap = new HashMap<>(newOptionalMap());
+        final Set<Long> set = new HashSet<>(newSet());
+        return new MutableSerializedObject(42, "hello world", map, list, optionalMap, set);
+    }
+
+    private static Map<String, List<String>> newOptionalMap() {
+        return ImmutableMap.of("a", ImmutableList.of("c", "b"), "c", ImmutableList.of("e", "f"));
     }
 
     private static Map<String, String> newMap() {
@@ -38,6 +51,18 @@ public class ObjectHelper {
 
     private static List<String> newList() {
         return ImmutableList.of("fee", "fii", "foo", "fum");
+    }
+
+    private static Set<Long> newSet() {
+        ImmutableSet.Builder<Long> set = ImmutableSet.builder();
+        long v = 1;
+
+        for (long i = 0; i < 100; i++) {
+            set.add(v);
+            v = (v << 5) + 1;
+        }
+
+        return set.build();
     }
 
     public static Supplier<InputStream> supplyInputStreamFrom(Callable<byte[]> bytesSupplier) {

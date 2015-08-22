@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.types;
+package eu.toolchain.serializer.collections;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -10,7 +10,7 @@ import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class SetSerializer<T> implements Serializer<Set<T>> {
+public class DefaultSetSerializer<T> implements Serializer<Set<T>> {
     private final Serializer<Integer> size;
     private final Serializer<T> serializer;
 

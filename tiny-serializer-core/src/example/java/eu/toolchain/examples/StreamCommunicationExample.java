@@ -14,7 +14,7 @@ import eu.toolchain.serializer.io.OutputStreamSerialWriter;
 
 public class StreamCommunicationExample {
     public static void main(String[] argv) throws IOException, InterruptedException {
-        final TinySerializer s = SerializerSetup.setup();
+        final TinySerializer s = SerializerSetup.setup().build();
 
         // Sends each message like the following:
         // 0xde 0xad 0xbe 0xef

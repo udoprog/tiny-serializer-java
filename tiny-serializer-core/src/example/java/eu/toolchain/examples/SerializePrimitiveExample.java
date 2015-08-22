@@ -7,7 +7,7 @@ import eu.toolchain.serializer.TinySerializer;
 
 public class SerializePrimitiveExample {
     public static void main(String[] argv) throws IOException {
-        final TinySerializer s = SerializerSetup.setup();
+        final TinySerializer s = SerializerSetup.setup().build();
 
         final Serializer<Integer> i = s.integer();
         final Serializer<Long> l = s.longNumber();

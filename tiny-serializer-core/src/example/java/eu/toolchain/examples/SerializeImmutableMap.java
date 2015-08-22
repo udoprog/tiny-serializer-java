@@ -2,22 +2,21 @@ package eu.toolchain.examples;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
 
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
 import eu.toolchain.serializer.io.ByteBufferSerialReader;
 import eu.toolchain.serializer.io.ByteBufferSerialWriter;
 
-public class SerializeMap {
+public class SerializeImmutableMap {
     public static void main(String argv[]) throws IOException {
-        final TinySerializer s = SerializerSetup.setup().build();
+        final TinySerializer s = SerializerSetup.setup().useImmutableCollections(true).build();
         final Serializer<Map<String, String>> map = s.map(s.string(), s.nullable(s.string()));
 
-        final Map<String, String> serialized = new HashMap<>();
-        serialized.put("hello", "world");
-        serialized.put("foo", "bar");
+        final Map<String, String> serialized = ImmutableMap.of("hello", "world", "foo", "bar");
 
         final ByteBuffer bytes;
 

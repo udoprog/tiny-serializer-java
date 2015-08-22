@@ -15,18 +15,18 @@ import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
 import eu.toolchain.serializer.io.InputStreamSerialReader;
 import eu.toolchain.serializer.io.OutputStreamSerialWriter;
+import eu.toolchain.serializer.perftests.ImmutableSerializedObject;
+import eu.toolchain.serializer.perftests.ImmutableSerializedObject_Serializer;
 import eu.toolchain.serializer.perftests.ObjectHelper;
 import eu.toolchain.serializer.perftests.OutputStreamHelper;
-import eu.toolchain.serializer.perftests.SerializedObject;
-import eu.toolchain.serializer.perftests.SerializedObject_Serializer;
 
 @State(Scope.Benchmark)
 public class TinyPerformance {
-    final SerializedObject object = ObjectHelper.newSerializedObject();;
+    final ImmutableSerializedObject object = ObjectHelper.newSerializedObject();;
     final OutputStream nullStream = OutputStreamHelper.newNullStream();
 
     final TinySerializer tiny = TinySerializer.builder().build();
-    final Serializer<SerializedObject> serializer = new SerializedObject_Serializer(tiny);
+    final Serializer<ImmutableSerializedObject> serializer = new ImmutableSerializedObject_Serializer(tiny);
     final SerialWriter writer = new OutputStreamSerialWriter(nullStream);
 
     final Supplier<InputStream> inputObject = ObjectHelper.supplyInputStreamFrom(() -> {

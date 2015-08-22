@@ -8,12 +8,23 @@
     <relativePath>..</relativePath>
   </parent>
 
+  <properties>
+    <guava.version>18.0</guava.version>
+  </properties>
+
   <artifactId>tiny-serializer-core</artifactId>
   <packaging>jar</packaging>
 
   <name>A tiny serialization framework for Java (Core)</name>
 
   <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>eu.toolchain.serializer</groupId>
       <artifactId>tiny-serializer-api</artifactId>
@@ -34,13 +45,6 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>18.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

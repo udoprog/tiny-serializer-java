@@ -1,9 +1,8 @@
-package eu.toolchain.serializer.types;
+package eu.toolchain.serializer.collections;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
@@ -11,14 +10,14 @@ import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class SortedMapSerializer<K, V> implements Serializer<SortedMap<K, V>> {
+public class DefaultMapSerializer<K, V> implements Serializer<Map<K, V>> {
     private final Serializer<Integer> integer;
 
     private final Serializer<K> key;
     private final Serializer<V> value;
 
     @Override
-    public void serialize(SerialWriter buffer, SortedMap<K, V> values) throws IOException {
+    public void serialize(SerialWriter buffer, Map<K, V> values) throws IOException {
         integer.serialize(buffer, values.size());
 
         for (final Map.Entry<K, V> entry : values.entrySet()) {
@@ -28,10 +27,10 @@ public class SortedMapSerializer<K, V> implements Serializer<SortedMap<K, V>> {
     }
 
     @Override
-    public SortedMap<K, V> deserialize(SerialReader buffer) throws IOException {
+    public Map<K, V> deserialize(SerialReader buffer) throws IOException {
         final int size = integer.deserialize(buffer);
 
-        final SortedMap<K, V> values = new TreeMap<>();
+        final Map<K, V> values = new HashMap<>();
 
         for (int i = 0; i < size; ++i) {
             final K key = this.key.deserialize(buffer);

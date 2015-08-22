@@ -135,7 +135,7 @@ public interface SerializerFramework {
      * @param value The {@code Serializer} to use for map values.
      * @return A new map {@code Serializer}.
      */
-    public <K, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value);
+    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value);
 
     /**
      * Build a {@code Serializer} that can serialize a set.
@@ -157,7 +157,7 @@ public interface SerializerFramework {
      * @param serializer The {@code Serializer} to use for each set item.
      * @return A new set {@code Serializer}.
      */
-    public <T> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer);
+    public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer);
 
     /**
      * A {@code Serializer} that can serialize a byte array.

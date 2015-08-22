@@ -9,7 +9,7 @@ import eu.toolchain.serializer.io.AbstractSerialReader;
 
 public class SerializeCustomReaderExample {
     public static void main(String argv[]) throws IOException {
-        final TinySerializer s = SerializerSetup.setup();
+        final TinySerializer s = SerializerSetup.setup().build();
 
         final byte[] source = new byte[] { (byte) 0xf0, 0x7f, 0x00, 0x00 };
 

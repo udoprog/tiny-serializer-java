@@ -1,8 +1,10 @@
-package eu.toolchain.serializer.types;
+package eu.toolchain.serializer.collections;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
+
+import com.google.common.collect.ImmutableSortedMap;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
@@ -10,15 +12,15 @@ import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
-    private final Serializer<Integer> integer;
+public class ImmutableSortedMapSerializer<K extends Comparable<?>, V> implements Serializer<SortedMap<K, V>> {
+    private final Serializer<Integer> size;
 
     private final Serializer<K> key;
     private final Serializer<V> value;
 
     @Override
-    public void serialize(SerialWriter buffer, Map<K, V> values) throws IOException {
-        integer.serialize(buffer, values.size());
+    public void serialize(SerialWriter buffer, SortedMap<K, V> values) throws IOException {
+        size.serialize(buffer, values.size());
 
         for (final Map.Entry<K, V> entry : values.entrySet()) {
             key.serialize(buffer, entry.getKey());
@@ -27,10 +29,10 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
     }
 
     @Override
-    public Map<K, V> deserialize(SerialReader buffer) throws IOException {
-        final int size = integer.deserialize(buffer);
+    public SortedMap<K, V> deserialize(SerialReader buffer) throws IOException {
+        final int size = this.size.deserialize(buffer);
 
-        final Map<K, V> values = new HashMap<>();
+        final ImmutableSortedMap.Builder<K, V> values = ImmutableSortedMap.naturalOrder();
 
         for (int i = 0; i < size; ++i) {
             final K key = this.key.deserialize(buffer);
@@ -38,6 +40,6 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
             values.put(key, value);
         }
 
-        return values;
+        return values.build();
     }
 }

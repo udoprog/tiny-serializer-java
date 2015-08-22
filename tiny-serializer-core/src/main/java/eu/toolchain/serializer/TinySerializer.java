@@ -24,18 +24,13 @@ import eu.toolchain.serializer.types.DoubleSerializer;
 import eu.toolchain.serializer.types.FloatSerializer;
 import eu.toolchain.serializer.types.IntegerSerializer;
 import eu.toolchain.serializer.types.LengthPrefixedSerializer;
-import eu.toolchain.serializer.types.ListSerializer;
 import eu.toolchain.serializer.types.LongSerializer;
-import eu.toolchain.serializer.types.MapSerializer;
 import eu.toolchain.serializer.types.NullSerializer;
 import eu.toolchain.serializer.types.OptionalSerializer;
 import eu.toolchain.serializer.types.OrdinalEnumSerializer;
 import eu.toolchain.serializer.types.PrefixSerializer;
-import eu.toolchain.serializer.types.SetSerializer;
 import eu.toolchain.serializer.types.ShortSerializer;
 import eu.toolchain.serializer.types.SingletonSerializer;
-import eu.toolchain.serializer.types.SortedMapSerializer;
-import eu.toolchain.serializer.types.SortedSetSerializer;
 import eu.toolchain.serializer.types.StringEnumSerializer;
 import eu.toolchain.serializer.types.StringSerializer;
 import eu.toolchain.serializer.types.SubTypesSerializer;
@@ -49,7 +44,6 @@ public class TinySerializer implements SerializerFramework {
     public static final Serializer<Integer> DEFAULT_INTEGER = new CompactVarIntSerializer();
     public static final LengthPolicy DEFAULT_LENGTH_POLICY = new MaxLengthPolicy(Integer.MAX_VALUE);
 
-    private final Serializer<Integer> size;
     private final Serializer<Integer> subTypeId;
     private final Serializer<Integer> enumOrdinal;
 
@@ -69,6 +63,8 @@ public class TinySerializer implements SerializerFramework {
     private final Serializer<Integer> varint;
     private final Serializer<Long> varlong;
     private final Serializer<UUID> uuid;
+
+    private final CollectionsProvider collections;
 
     private final boolean useStringsForEnums;
 
@@ -165,27 +161,27 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public <T> Serializer<List<T>> list(Serializer<T> serializer) {
-        return new ListSerializer<T>(size, serializer);
+        return collections.list(serializer);
     }
 
     @Override
     public <K, V> Serializer<Map<K, V>> map(Serializer<K> key, Serializer<V> value) {
-        return new MapSerializer<K, V>(size, key, value);
+        return collections.map(key, value);
     }
 
     @Override
-    public <K, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value) {
-        return new SortedMapSerializer<K, V>(size, key, value);
+    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value) {
+        return collections.sortedMap(key, value);
     }
 
     @Override
     public <T> Serializer<Set<T>> set(Serializer<T> serializer) {
-        return new SetSerializer<T>(size, serializer);
+        return collections.set(serializer);
     }
 
     @Override
-    public <T> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer) {
-        return new SortedSetSerializer<T>(size, serializer);
+    public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer) {
+        return collections.sortedSet(serializer);
     }
 
     @Override
@@ -295,9 +291,12 @@ public class TinySerializer implements SerializerFramework {
         private Serializer<Long> varlong;
         private Serializer<UUID> uuid;
 
-        private boolean useSimplerVariableLength;
-        private boolean useCompactSize;
-        private boolean useStringsForEnums;
+        private CollectionsProvider collections;
+
+        private boolean useSimplerVariableLength = false;
+        private boolean useCompactSize = true;
+        private boolean useStringsForEnums = false;
+        private boolean useImmutableCollections = false;
 
         /**
          * Prefer the 'simpler' variable length implementation over the more compact one.
@@ -326,6 +325,19 @@ public class TinySerializer implements SerializerFramework {
          */
         public Builder useCompactSize(boolean useCompactSize) {
             this.useCompactSize = useCompactSize;
+            return this;
+        }
+
+        /**
+         * Use immutable collections when de-serializing data.
+         *
+         * Note: this requires a dependency guava.
+         *
+         * @param useImmutableCollections {@code true} will cause collections to be immutable.
+         * @return This builder.
+         */
+        public Builder useImmutableCollections(boolean useImmutableCollections) {
+            this.useImmutableCollections = useImmutableCollections;
             return this;
         }
 
@@ -409,6 +421,15 @@ public class TinySerializer implements SerializerFramework {
             return this;
         }
 
+        public Builder collections(CollectionsProvider collections) {
+            if (collections == null) {
+                throw new NullPointerException("collections");
+            }
+
+            this.collections = collections;
+            return this;
+        }
+
         public TinySerializer build() {
             final Serializer<Integer> size = ofNullable(this.size).orElseGet(this::defaultCollectionSize);
             final Serializer<Integer> subTypeId = ofNullable(this.subTypeId).orElse(size);
@@ -433,9 +454,22 @@ public class TinySerializer implements SerializerFramework {
             final Serializer<Long> varlong = ofNullable(this.varlong).orElseGet(this::defaultVarLong);
             final Serializer<UUID> uuid = ofNullable(this.uuid).orElseGet(this.defaultUUID(longNumber));
 
-            return new TinySerializer(size, subTypeId, enumOrdinal, defaultLengthPolicy, byteArray, charArray, string,
-                    bool, shortNumber, integer, longNumber, floatNumber, doubleNumber, varint, varlong, uuid,
+            final CollectionsProvider collections = ofNullable(this.collections).orElseGet(defaultCollections(size));
+
+            return new TinySerializer(subTypeId, enumOrdinal, defaultLengthPolicy, byteArray, charArray, string, bool,
+                    shortNumber, integer, longNumber, floatNumber, doubleNumber, varint, varlong, uuid, collections,
                     useStringsForEnums);
+        }
+
+        private Supplier<CollectionsProvider> defaultCollections(final Serializer<Integer> size) {
+            return () -> {
+                if (useImmutableCollections) {
+                    ImmutableCollectionsProvider.verifyGuavaAvailable();
+                    return new ImmutableCollectionsProvider(size);
+                }
+
+                return new DefaultCollectionsProvider(size);
+            };
         }
 
         private Serializer<Integer> defaultCollectionSize() {
@@ -460,18 +494,18 @@ public class TinySerializer implements SerializerFramework {
 
         private Serializer<Integer> defaultVarInt() {
             if (useSimplerVariableLength) {
-                return new CompactVarIntSerializer();
+                return new VarIntSerializer();
             }
 
-            return new VarIntSerializer();
+            return new CompactVarIntSerializer();
         }
 
         private Serializer<Long> defaultVarLong() {
             if (useSimplerVariableLength) {
-                return new CompactVarLongSerializer();
+                return new VarLongSerializer();
             }
 
-            return new VarLongSerializer();
+            return new CompactVarLongSerializer();
         }
 
         private Supplier<Serializer<UUID>> defaultUUID(Serializer<Long> longNumber) {

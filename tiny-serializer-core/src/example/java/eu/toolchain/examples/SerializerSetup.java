@@ -4,12 +4,12 @@ import eu.toolchain.serializer.TinySerializer;
 import eu.toolchain.serializer.types.CompactVarIntSerializer;
 
 public class SerializerSetup {
-    public static TinySerializer setup() {
+    public static TinySerializer.Builder setup() {
         final TinySerializer.Builder builder = TinySerializer.builder();
 
         /* Configure a custom Serializer for collection sizes. */
-        builder.size(new CompactVarIntSerializer());
+        builder.useCompactSize(true);
 
-        return builder.build();
+        return builder;
     }
 }

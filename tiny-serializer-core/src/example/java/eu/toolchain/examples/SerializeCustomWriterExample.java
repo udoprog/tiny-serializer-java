@@ -10,7 +10,7 @@ import eu.toolchain.serializer.io.AbstractSerialWriter;
 
 public class SerializeCustomWriterExample {
     public static void main(String argv[]) throws IOException {
-        final TinySerializer s = SerializerSetup.setup();
+        final TinySerializer s = SerializerSetup.setup().build();
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 

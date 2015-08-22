@@ -2,6 +2,7 @@ package eu.toolchain.serializer.perftests;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import eu.toolchain.serializer.AutoSerialize;
 import io.norberg.automatter.AutoMatter;
@@ -12,5 +13,7 @@ public interface AutoMatterSerializedObject {
     public int version();
     public String field();
     public Map<String, String> map();
-    public List<String> someStrings();
+    public List<String> list();
+    public Map<String, List<String>> optionalMap();
+    public Set<Long> set();
 }
