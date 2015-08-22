@@ -6,9 +6,7 @@ import java.util.Map;
 import eu.toolchain.serializer.AutoSerialize;
 import io.norberg.automatter.AutoMatter;
 
-
-@AutoSerialize
-@AutoSerialize.Builder(type = AutoMatterSerializedObjectBuilder.class)
+@AutoSerialize(builder = @AutoSerialize.Builder(type = AutoMatterSerializedObjectBuilder.class))
 @AutoMatter
 public interface AutoMatterSerializedObject {
     public int version();
