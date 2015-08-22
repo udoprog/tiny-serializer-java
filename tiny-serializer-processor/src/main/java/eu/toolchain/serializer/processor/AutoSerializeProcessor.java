@@ -107,7 +107,12 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
             final TypeElement typeElement = (TypeElement) element;
             messager.printMessage(Diagnostic.Kind.NOTE, String.format("Processing %s", typeElement));
-            processed.add(processElement(typeElement));
+
+            try {
+                processed.add(processElement(typeElement));
+            } catch(Exception e) {
+                messager.printMessage(Diagnostic.Kind.ERROR, e.getMessage(), typeElement);
+            }
         }
 
         return processed;
