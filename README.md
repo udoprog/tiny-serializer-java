@@ -298,7 +298,9 @@ Examples:
 ##### Builder Types
 
 The serialized object can specify a builder type through
-`@AutoSerialize.Builder` for which all field construction will be delegated.
+`@AutoSerialize.Builder`.
+
+If specified, all field construction will be delegated to the specified builder.
 
 This should be very convenient to couple with
 [`@AutoMatter`](https://github.com/danielnorberg/auto-matter) or lombok's
@@ -306,10 +308,12 @@ This should be very convenient to couple with
 
 Examples:
 
-* [Builder Test](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/UseBuilder.java)
+* [Use Builder Test](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/UseBuilder.java)
   (generates: [UseBuilder_Serializer](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/UseBuilder_Serializer.java))
-* [Builder through Constructor Test](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/UseBuilderConstructor.java)
+* [Use Builder Constructor Test](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/UseBuilderConstructor.java)
   (generates: [UseBuilderConstructor_Serializer](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/UseBuilderConstructor_Serializer.java))
+* [Interface Using Builder Test](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/InterfaceUsingBuilder.java)
+  (generates: [UseBuilderConstructor_Serializer](tiny-serializer-processor/src/test/resources/eu/toolchain/serializer/processor/InterfaceUsingBuilder_Serializer.java))
 
 # Performance
 
