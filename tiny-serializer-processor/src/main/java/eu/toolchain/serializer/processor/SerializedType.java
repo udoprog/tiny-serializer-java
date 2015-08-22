@@ -17,7 +17,7 @@ class SerializedType {
     final TypeSpec type;
     final TypeName elementType;
     final TypeName supertype;
-    final SerializedTypeFields fields;
+    final SerializedFields fields;
 
     public JavaFile asJavaFile() {
         return JavaFile.builder(packageName, type).skipJavaLangImports(true).indent("    ").build();

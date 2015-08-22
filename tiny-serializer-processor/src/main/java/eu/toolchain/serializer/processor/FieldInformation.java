@@ -23,6 +23,7 @@ public class FieldInformation {
 
     public static FieldInformation build(Element e, boolean defaultUseGetter) {
         final TypeMirror fieldType;
+        final boolean useGetter;
 
         /**
          * If method, the desired type is the return type.
@@ -30,12 +31,14 @@ public class FieldInformation {
         if (e instanceof ExecutableElement) {
             final ExecutableElement executable = (ExecutableElement)e;
             fieldType = executable.getReturnType();
+            // methods are direct accessors, should never use getters.
+            useGetter = false;
         } else {
             fieldType = e.asType();
+            useGetter = isFieldUsingGetter(e, defaultUseGetter);
         }
 
         final boolean provided = isProvided(e);
-        final boolean useGetter = isParameterUsingGetter(e, defaultUseGetter);
         final String accessor = getAccessor(e, useGetter);
         final Optional<Integer> constructorOrder = getConstructorOrder(e);
         final Optional<Integer> id = getId(e);
@@ -66,7 +69,7 @@ public class FieldInformation {
         return Optional.empty();
     }
 
-    static boolean isParameterUsingGetter(Element e, boolean defaultUseGetter) {
+    static boolean isFieldUsingGetter(Element e, boolean defaultUseGetter) {
         final AutoSerialize.Field field;
 
         if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null) {
@@ -89,6 +92,7 @@ public class FieldInformation {
     static String getAccessor(Element e, final boolean useGetter) {
         final AutoSerialize.Field field;
 
+        // explicit name through annotation.
         if ((field = e.getAnnotation(AutoSerialize.Field.class)) != null && !"".equals(field.accessor())) {
             return field.accessor();
         }

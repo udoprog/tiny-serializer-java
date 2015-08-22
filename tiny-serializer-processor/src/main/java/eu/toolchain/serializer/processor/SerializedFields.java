@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-class SerializedTypeFields {
+class SerializedFields {
     final static Ordering<Optional<Integer>> integerOrdering = Ordering.from(new Comparator<Optional<Integer>>() {
         @Override
         public int compare(Optional<Integer> a, Optional<Integer> b) {
@@ -60,7 +60,7 @@ class SerializedTypeFields {
     private final List<SerializedField> fields;
     private final List<SerializedFieldType> fieldTypes;
 
-    public SerializedTypeFields(final boolean orderById, final boolean orderConstructorById) {
+    public SerializedFields(final boolean orderById, final boolean orderConstructorById) {
         this(orderById, orderConstructorById, ImmutableList.of(), ImmutableList.of());
     }
 
@@ -83,7 +83,7 @@ class SerializedTypeFields {
         return valid;
     }
 
-    public static SerializedTypeFields build(final AutoSerializeUtils utils, final Element element, final Set<ElementKind> kinds) {
+    public static SerializedFields build(final AutoSerializeUtils utils, final Element element, final Set<ElementKind> kinds) {
         final AutoSerialize autoSerialize = utils.requireAnnotation(element, AutoSerialize.class);
 
         final List<SerializedField> fields = new ArrayList<>();
@@ -93,7 +93,7 @@ class SerializedTypeFields {
         final Naming fieldNaming = new Naming("s_");
         final Naming providerNaming = new Naming("p_");
 
-        for (final FieldInformation f : getFields(element, kinds, autoSerialize)) {
+        for (final FieldInformation f : getFields(element, kinds, autoSerialize.useGetter())) {
             final TypeName fieldType = TypeName.get(f.getFieldType());
             final TypeName serializerType = TypeName.get(utils.serializerFor(f.getFieldType()));
 
@@ -137,11 +137,11 @@ class SerializedTypeFields {
                     f.getId(), f.getConstructorOrder()));
         }
 
-        return new SerializedTypeFields(autoSerialize.orderById(), autoSerialize.orderConstructorById(),
+        return new SerializedFields(autoSerialize.orderById(), autoSerialize.orderConstructorById(),
                 ImmutableList.copyOf(fields), ImmutableList.copyOf(types));
     }
 
-    private static Iterable<FieldInformation> getFields(final Element element, final Set<ElementKind> kinds, final AutoSerialize autoSerialize) {
+    static Iterable<FieldInformation> getFields(final Element element, final Set<ElementKind> kinds, final boolean defaultUseGetter) {
         final ImmutableList.Builder<FieldInformation> builder = ImmutableList.builder();
 
         for (final Element e : element.getEnclosedElements()) {
@@ -158,7 +158,7 @@ class SerializedTypeFields {
                 continue;
             }
 
-            builder.add(FieldInformation.build(e, autoSerialize.useGetter()));
+            builder.add(FieldInformation.build(e, defaultUseGetter));
         }
 
         return builder.build();

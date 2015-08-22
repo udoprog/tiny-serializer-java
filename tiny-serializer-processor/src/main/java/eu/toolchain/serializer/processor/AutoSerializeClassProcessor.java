@@ -40,7 +40,7 @@ public class AutoSerializeClassProcessor {
 
         final Optional<SerializedTypeBuilder> builder = SerializedTypeBuilder.build(utils, element);
         final Set<ElementKind> kinds = getKinds(element);
-        final SerializedTypeFields serializedType = SerializedTypeFields.build(utils, element, kinds);
+        final SerializedFields serializedType = SerializedFields.build(utils, element, kinds);
 
         final ClassName elementType = (ClassName) TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
@@ -86,7 +86,7 @@ public class AutoSerializeClassProcessor {
         return kinds.build();
     }
 
-    MethodSpec constructor(final SerializedTypeFields serialized) {
+    MethodSpec constructor(final SerializedFields serialized) {
         final ParameterSpec framework = ParameterSpec.builder(SerializerFramework.class, "framework")
                 .addModifiers(Modifier.FINAL).build();
 
@@ -121,7 +121,7 @@ public class AutoSerializeClassProcessor {
         return b.build();
     }
 
-    MethodSpec serializeMethod(final TypeName valueType, final SerializedTypeFields serialized) {
+    MethodSpec serializeMethod(final TypeName valueType, final SerializedFields serialized) {
         final ParameterSpec buffer = utils.parameter(TypeName.get(SerialWriter.class), "buffer");
         final ParameterSpec value = utils.parameter(valueType, "value");
         final MethodSpec.Builder b = utils.serializeMethod(buffer, value);
@@ -134,7 +134,7 @@ public class AutoSerializeClassProcessor {
         return b.build();
     }
 
-    MethodSpec deserializeMethod(ClassName returnType, SerializedTypeFields serializedType,
+    MethodSpec deserializeMethod(ClassName returnType, SerializedFields serializedType,
             Optional<SerializedTypeBuilder> typeBuilder) {
         final ParameterSpec buffer = utils.parameter(TypeName.get(SerialReader.class), "buffer");
         final MethodSpec.Builder b = utils.deserializeMethod(returnType, buffer);

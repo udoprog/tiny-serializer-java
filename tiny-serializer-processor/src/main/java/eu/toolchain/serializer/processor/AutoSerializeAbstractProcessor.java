@@ -58,7 +58,7 @@ public class AutoSerializeAbstractProcessor {
 
         final AutoSerialize annotation = utils.requireAnnotation(element, AutoSerialize.class);
 
-        final SerializedTypeFields fields = new SerializedTypeFields(annotation.orderById(), annotation.orderConstructorById());
+        final SerializedFields fields = new SerializedFields(annotation.orderById(), annotation.orderConstructorById());
         return new SerializedType(element, packageName, name, generated.build(), elementType, supertype, fields);
     }
 
