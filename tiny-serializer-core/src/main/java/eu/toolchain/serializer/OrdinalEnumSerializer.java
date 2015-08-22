@@ -2,15 +2,13 @@ package eu.toolchain.serializer;
 
 import java.io.IOException;
 
-import eu.toolchain.serializer.SerialReader;
-import eu.toolchain.serializer.SerialWriter;
-import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class EnumSerializer<T extends Enum<T>> implements Serializer<T> {
+public class OrdinalEnumSerializer<T extends Enum<T>> implements Serializer<T> {
     private final Serializer<Integer> ordinal;
     private final T[] values;
+    private final DefaultAction<T> defaultAction;
 
     @Override
     public void serialize(SerialWriter buffer, T value) throws IOException {
@@ -19,6 +17,12 @@ public class EnumSerializer<T extends Enum<T>> implements Serializer<T> {
 
     @Override
     public T deserialize(SerialReader buffer) throws IOException {
-        return values[this.ordinal.deserialize(buffer)];
+        final int ordinal = this.ordinal.deserialize(buffer);
+
+        if (ordinal < 0 || ordinal >= values.length) {
+            return defaultAction.call();
+        }
+
+        return values[ordinal];
     }
 }

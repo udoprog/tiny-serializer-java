@@ -8,7 +8,7 @@ public class SerializerSetup {
         final TinySerializer.Builder builder = TinySerializer.builder();
 
         /* Configure a custom Serializer for collection sizes. */
-        builder.collectionSize(new CompactVarIntSerializer());
+        builder.size(new CompactVarIntSerializer());
 
         return builder.build();
     }

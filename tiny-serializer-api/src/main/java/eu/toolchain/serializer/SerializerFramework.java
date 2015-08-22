@@ -182,7 +182,12 @@ public interface SerializerFramework {
      */
     public <T> Serializer<Optional<T>> optional(Serializer<T> element);
 
-    // @formatter:off
+    /**
+     * Same as {@link #forEnum(Object[], Object)}, but throws an exception when out-of-range.
+     * @see #forEnum(Object[], Object)
+     */
+    public <T extends Enum<T>> Serializer<T> forEnum(final T[] values);
+
     /**
      * A serializer that can serialize enums.
      *
@@ -196,45 +201,16 @@ public interface SerializerFramework {
      * }
      * </pre>
      *
-     * @param values
-     * @return
+     * @param values Enum values.
+     * @param defaultValue Default value to use when enum deserialized value is out-of-range.
+     * @return A serializer for enum values.
      */
-    // @formatter:on
-    public <T extends Enum<T>> Serializer<T> forEnum(final T[] values);
+    public <T extends Enum<T>> Serializer<T> forEnum(T[] values, T defaultValue);
 
     /**
      * A {@code Serializer} that throws a runtime exception with the message "not implemented".
      */
     public <T> Serializer<T> notImplemented();
-
-    /**
-     * Maps a specific ordinal id to a type (key), and a serializer for that type.
-     *
-     * @param <T> The mapped type.
-     */
-    public static class TypeMapping<T extends S, S> {
-        final int id;
-        final Class<T> key;
-        final Serializer<T> serializer;
-
-        public TypeMapping(int id, Class<T> key, Serializer<T> serializer) {
-            this.id = id;
-            this.key = key;
-            this.serializer = serializer;
-        }
-
-        public int id() {
-            return id;
-        }
-
-        public Class<T> key() {
-            return key;
-        }
-
-        public Serializer<T> serializer() {
-            return serializer;
-        }
-    }
 
     /**
      * A type mapping, that maps a specific type {@code Class<K>}, to a {@code Serializer}, and an ordinal id.
@@ -290,4 +266,33 @@ public interface SerializerFramework {
      * @throws IOException If serialization fails.
      */
     public <T> T deserialize(Serializer<T> serializer, ByteBuffer buffer) throws IOException;
+
+    /**
+     * Maps a specific ordinal id to a type (key), and a serializer for that type.
+     *
+     * @param <T> The mapped type.
+     */
+    public static class TypeMapping<T extends S, S> {
+        final int id;
+        final Class<T> key;
+        final Serializer<T> serializer;
+
+        public TypeMapping(int id, Class<T> key, Serializer<T> serializer) {
+            this.id = id;
+            this.key = key;
+            this.serializer = serializer;
+        }
+
+        public int id() {
+            return id;
+        }
+
+        public Class<T> key() {
+            return key;
+        }
+
+        public Serializer<T> serializer() {
+            return serializer;
+        }
+    }
 }

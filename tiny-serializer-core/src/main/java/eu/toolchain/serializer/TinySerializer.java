@@ -1,8 +1,9 @@
 package eu.toolchain.serializer;
 
+import static java.util.Optional.ofNullable;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import eu.toolchain.serializer.io.ByteArraySerializer;
 import eu.toolchain.serializer.io.ByteBufferSerialReader;
@@ -17,22 +19,23 @@ import eu.toolchain.serializer.io.ByteBufferSerialWriter;
 import eu.toolchain.serializer.io.CharArraySerializer;
 import eu.toolchain.serializer.var.CompactVarIntSerializer;
 import eu.toolchain.serializer.var.CompactVarLongSerializer;
+import eu.toolchain.serializer.var.VarIntSerializer;
+import eu.toolchain.serializer.var.VarLongSerializer;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class TinySerializer implements SerializerFramework {
-    /**
-     * Create a new TinySerializer instance.
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
+    public static final Serializer<Integer> DEFAULT_INTEGER = new CompactVarIntSerializer();
+    public static final LengthPolicy DEFAULT_LENGTH_POLICY = new MaxLengthPolicy(Integer.MAX_VALUE);
 
-    private final Serializer<Integer> collectionSize;
+    private final Serializer<Integer> size;
     private final Serializer<Integer> subTypeId;
     private final Serializer<Integer> enumOrdinal;
+
     private final LengthPolicy defaultLengthPolicy;
 
-    private final ByteArraySerializer byteArray;
-    private final CharArraySerializer charArray;
+    private final Serializer<byte[]> byteArray;
+    private final Serializer<char[]> charArray;
     private final Serializer<String> string;
 
     private final Serializer<Boolean> bool;
@@ -46,6 +49,8 @@ public class TinySerializer implements SerializerFramework {
     private final Serializer<Long> varlong;
     private final Serializer<UUID> uuid;
 
+    private final boolean useStringsForEnums;
+
     private final Serializer<? extends Object> notImplemented = new Serializer<Object>() {
         @Override
         public void serialize(SerialWriter buffer, Object value) throws IOException {
@@ -57,29 +62,6 @@ public class TinySerializer implements SerializerFramework {
             throw new RuntimeException("not implemented");
         }
     };
-
-    private TinySerializer(Serializer<Integer> collectionSize, Serializer<Integer> subTypeId,
-            Serializer<Integer> enumOrdinal, Serializer<Integer> stringSize, LengthPolicy defaultLengthPolicy) {
-        this.collectionSize = collectionSize;
-        this.subTypeId = subTypeId;
-        this.enumOrdinal = enumOrdinal;
-        this.defaultLengthPolicy = defaultLengthPolicy;
-
-        this.byteArray = new ByteArraySerializer(collectionSize);
-        this.charArray = new CharArraySerializer(collectionSize);
-        this.string = new StringSerializer(stringSize);
-
-        this.bool = new BooleanSerializer();
-        this.shortNumber = new ShortSerializer();
-        this.integer = new IntegerSerializer();
-        this.longNumber = new LongSerializer();
-        this.floatNumber = new FloatSerializer(integer);
-        this.doubleNumber = new DoubleSerializer(longNumber);
-
-        this.varint = new CompactVarIntSerializer();
-        this.varlong = new CompactVarLongSerializer();
-        this.uuid = new UUIDSerializer(longNumber);
-    }
 
     /* primitive serializers */
 
@@ -136,17 +118,17 @@ public class TinySerializer implements SerializerFramework {
      * @return
      */
     @Override
-    public <T> Serializer<T> nullable(final Serializer<T> serializer) {
+    public <T> Serializer<T> nullable(Serializer<T> serializer) {
         return new NullSerializer<T>(serializer);
     }
 
     @Override
-    public <T> Serializer<T> prefix(int prefix, final Serializer<T> serializer) {
+    public <T> Serializer<T> prefix(int prefix, Serializer<T> serializer) {
         return prefix(ByteBuffer.allocate(Integer.BYTES).putInt(prefix).array(), serializer);
     }
 
     @Override
-    public <T> Serializer<T> prefix(final byte[] prefix, final Serializer<T> serializer) {
+    public <T> Serializer<T> prefix(byte[] prefix, Serializer<T> serializer) {
         return new PrefixSerializer<T>(prefix, serializer);
     }
 
@@ -162,27 +144,27 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public <T> Serializer<List<T>> list(Serializer<T> serializer) {
-        return new ListSerializer<T>(collectionSize, serializer);
+        return new ListSerializer<T>(size, serializer);
     }
 
     @Override
     public <K, V> Serializer<Map<K, V>> map(Serializer<K> key, Serializer<V> value) {
-        return new MapSerializer<K, V>(collectionSize, key, value);
+        return new MapSerializer<K, V>(size, key, value);
     }
 
     @Override
     public <K, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value) {
-        return new SortedMapSerializer<K, V>(collectionSize, key, value);
+        return new SortedMapSerializer<K, V>(size, key, value);
     }
 
     @Override
     public <T> Serializer<Set<T>> set(Serializer<T> serializer) {
-        return new SetSerializer<T>(collectionSize, serializer);
+        return new SetSerializer<T>(size, serializer);
     }
 
     @Override
     public <T> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer) {
-        return new SortedSetSerializer<T>(collectionSize, serializer);
+        return new SortedSetSerializer<T>(size, serializer);
     }
 
     @Override
@@ -207,7 +189,20 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public <T extends Enum<T>> Serializer<T> forEnum(final T[] values) {
-        return new EnumSerializer<T>(enumOrdinal, values);
+        if (useStringsForEnums) {
+            return new StringEnumSerializer<T>(string, values, () -> { throw new IOException("string does not match enum"); });
+        } else {
+            return new OrdinalEnumSerializer<T>(enumOrdinal, values, () -> { throw new IOException("ordinal out of range"); });
+        }
+    }
+
+    @Override
+    public <T extends Enum<T>> Serializer<T> forEnum(final T[] values, T defaultValue) {
+        if (useStringsForEnums) {
+            return new StringEnumSerializer<T>(string, values, () -> defaultValue);
+        } else {
+            return new OrdinalEnumSerializer<T>(enumOrdinal, values, () -> defaultValue);
+        }
     }
 
     @Override
@@ -218,95 +213,124 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public <T extends S, S> TypeMapping<T, S> type(int id, Class<T> key, Serializer<T> serializer) {
-        if (id >= 0xffff || id < 0)
+        if (id >= 0xffff || id < 0) {
             throw new IllegalArgumentException("id must be a positive number smaller than 0xffff");
+        }
 
         return new TypeMapping<T, S>(id, key, serializer);
     }
 
     @Override
     public final <T> Serializer<T> subtypes(Iterable<? extends TypeMapping<? extends T, T>> mappings) {
-        final Map<Integer, TypeMapping<? extends T, T>> ids = buildIdMapping(mappings);
-        final Map<Class<? extends T>, TypeMapping<? extends T, T>> keys = buildTypeMapping(mappings);
-
-        return new Serializer<T>() {
-            @Override
-            public void serialize(SerialWriter buffer, T value) throws IOException {
-                final TypeMapping<? extends T, T> m = keys.get(value.getClass());
-
-                if (m == null) {
-                    throw new IllegalArgumentException("Type not supported: " + value.getClass());
-                }
-
-                subTypeId.serialize(buffer, m.id());
-                @SuppressWarnings("unchecked")
-                final Serializer<T> serializer = (Serializer<T>) m.serializer();
-                serializer.serialize(buffer, value);
-            }
-
-            @Override
-            public T deserialize(SerialReader buffer) throws IOException {
-                final int id = subTypeId.deserialize(buffer);
-                final TypeMapping<? extends T, T> m = ids.get(id);
-
-                if (m == null) {
-                    throw new IllegalArgumentException("Type id not supported: " + id);
-                }
-
-                return m.serializer().deserialize(buffer);
-            }
-        };
+        return SubTypesSerializer.fromTypeMappings(subTypeId, mappings);
     }
 
-    private <T> Map<Integer, TypeMapping<? extends T, T>> buildIdMapping(
-            Iterable<? extends TypeMapping<? extends T, T>> mappings) {
-        final Map<Integer, TypeMapping<? extends T, T>> mapping = new HashMap<>();
-
-        for (TypeMapping<? extends T, T> m : mappings) {
-            if (mapping.put(m.id(), m) == null)
-                continue;
-
-            throw new IllegalArgumentException("Duplicate mappings for " + m);
-        }
-
-        return mapping;
+    @Override
+    public <T> Serializer<T> singleton(T value) {
+        return new SingletonSerializer<T>(value);
     }
 
-    private <T> Map<Class<? extends T>, TypeMapping<? extends T, T>> buildTypeMapping(
-            Iterable<? extends TypeMapping<? extends T, T>> mappings) {
-        final Map<Class<? extends T>, TypeMapping<? extends T, T>> mapping = new HashMap<>();
+    /* utility functions */
 
-        for (final TypeMapping<? extends T, T> m : mappings) {
-            if (mapping.put(m.key(), m) == null)
-                continue;
+    @Override
+    public <T> ByteBuffer serialize(Serializer<T> serializer, T value) throws IOException {
+        final ByteBufferSerialWriter buffer = new ByteBufferSerialWriter();
+        serializer.serialize(buffer, value);
+        buffer.flush();
+        return buffer.buffer();
+    }
 
-            throw new IllegalArgumentException("Duplicate mappings for " + m);
-        }
+    @Override
+    public <T> T deserialize(Serializer<T> serializer, ByteBuffer buffer) throws IOException {
+        return serializer.deserialize(new ByteBufferSerialReader(buffer));
+    }
 
-        return mapping;
+    /**
+     * Create a new TinySerializer instance.
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static final class Builder {
-        public static final Serializer<Integer> DEFAULT_INTEGER = new CompactVarIntSerializer();
+        private Serializer<Integer> size;
+        private Serializer<Integer> subTypeId;
+        private Serializer<Integer> enumOrdinal;
+        private LengthPolicy defaultLengthPolicy;
 
-        private Serializer<Integer> collectionSize = DEFAULT_INTEGER;
-        private Serializer<Integer> subTypeId = DEFAULT_INTEGER;
-        private Serializer<Integer> enumOrdinal = DEFAULT_INTEGER;
-        private Serializer<Integer> stringSize = DEFAULT_INTEGER;
-        private LengthPolicy defaultLengthPolicy = new MaxLengthPolicy(Integer.MAX_VALUE);
+        private Serializer<byte[]> byteArray;
+        private Serializer<char[]> charArray;
+        private Serializer<String> string;
+        private Serializer<Integer> stringSize;
+
+        private Serializer<Boolean> bool;
+        private Serializer<Short> shortNumber;
+        private Serializer<Integer> integer;
+        private Serializer<Long> longNumber;
+        private Serializer<Float> floatNumber;
+        private Serializer<Double> doubleNumber;
+
+        private Serializer<Integer> varint;
+        private Serializer<Long> varlong;
+        private Serializer<UUID> uuid;
+
+        private boolean useSimplerVariableLength;
+        private boolean useCompactSize;
+        private boolean useStringsForEnums;
 
         /**
-         * Set serializer to use for container sizes.
+         * Prefer the 'simpler' variable length implementation over the more compact one.
          *
-         * @param containerSize Serializer to use for container sizes.
+         * The simpler is beneficial when you are inspecting traffic by eye, since it performs a less esoteric encoding
+         * of the number.
+         *
+         * @see VarIntSerializer
+         * @see CompactVarIntSerializer
+         * @param useCompactVariableLength
+         * @return
+         */
+        public Builder useSimplerVariableLength(boolean useSimplerVariableLength) {
+            this.useSimplerVariableLength = useSimplerVariableLength;
+            return this;
+        }
+
+        /**
+         * Use a compact, but less efficient serializer for size-like numbers.
+         *
+         * Size-like numbers are things which designates sizes, which typically have a small(ish) value. Therefore you
+         * can usually save a fair bit of space by using a VLQ-like serialization on them.
+         *
+         * @param useCompactSize {@code true} will enable compact size serialization.
          * @return This builder.
          */
-        public Builder collectionSize(Serializer<Integer> containerSize) {
-            if (containerSize == null) {
+        public Builder useCompactSize(boolean useCompactSize) {
+            this.useCompactSize = useCompactSize;
+            return this;
+        }
+
+        /**
+         * Encode enums as strings, allowing them to be more portable.
+         */
+        public Builder useStringsForEnums(boolean useStringsForEnums) {
+            this.useStringsForEnums = useStringsForEnums;
+            return this;
+        }
+
+        /**
+         * Set serializer to use for size-like numbers.
+         *
+         * Size-like numbers are things which designates sizes, which typically have a small(ish) value. Therefore you
+         * can usually save a fair bit of space by using a VLQ-like serialization on them.
+         *
+         * @param size Serializer to use for sizes.
+         * @return This builder.
+         */
+        public Builder size(Serializer<Integer> size) {
+            if (size == null) {
                 throw new NullPointerException("containerSize");
             }
 
-            this.collectionSize = containerSize;
+            this.size = size;
             return this;
         }
 
@@ -365,27 +389,72 @@ public class TinySerializer implements SerializerFramework {
         }
 
         public TinySerializer build() {
-            return new TinySerializer(collectionSize, subTypeId, enumOrdinal, stringSize, defaultLengthPolicy);
+            final Serializer<Integer> size = ofNullable(this.size).orElseGet(this::defaultCollectionSize);
+            final Serializer<Integer> subTypeId = ofNullable(this.subTypeId).orElse(size);
+            final Serializer<Integer> enumOrdinal = ofNullable(this.enumOrdinal).orElse(size);
+            final LengthPolicy defaultLengthPolicy = ofNullable(this.defaultLengthPolicy).orElse(DEFAULT_LENGTH_POLICY);
+
+            final Serializer<byte[]> byteArray = ofNullable(this.byteArray).orElseGet(defaultByteArray(size));
+            final Serializer<char[]> charArray = ofNullable(this.charArray).orElseGet(defaultCharArray(size));
+            final Serializer<String> string = ofNullable(this.string)
+                    .orElseGet(defaultString(ofNullable(this.stringSize).orElse(size)));
+
+            final Serializer<Boolean> bool = ofNullable(this.bool).orElseGet(() -> new BooleanSerializer());
+            final Serializer<Short> shortNumber = ofNullable(this.shortNumber).orElseGet(() -> new ShortSerializer());
+            final Serializer<Integer> integer = ofNullable(this.integer).orElseGet(() -> new IntegerSerializer());
+            final Serializer<Long> longNumber = ofNullable(this.longNumber).orElseGet(() -> new LongSerializer());
+            final Serializer<Float> floatNumber = ofNullable(this.floatNumber)
+                    .orElseGet(() -> new FloatSerializer(integer));
+            final Serializer<Double> doubleNumber = ofNullable(this.doubleNumber)
+                    .orElseGet(() -> new DoubleSerializer(longNumber));
+
+            final Serializer<Integer> varint = ofNullable(this.varint).orElseGet(this::defaultVarInt);
+            final Serializer<Long> varlong = ofNullable(this.varlong).orElseGet(this::defaultVarLong);
+            final Serializer<UUID> uuid = ofNullable(this.uuid).orElseGet(this.defaultUUID(longNumber));
+
+            return new TinySerializer(size, subTypeId, enumOrdinal, defaultLengthPolicy, byteArray, charArray, string,
+                    bool, shortNumber, integer, longNumber, floatNumber, doubleNumber, varint, varlong, uuid,
+                    useStringsForEnums);
         }
-    }
 
-    @Override
-    public <T> Serializer<T> singleton(T value) {
-        return new SingletonSerializer<T>(value);
-    }
+        private Serializer<Integer> defaultCollectionSize() {
+            if (useCompactSize) {
+                return defaultVarInt();
+            }
 
-    /* utility functions */
+            return new IntegerSerializer();
+        }
 
-    @Override
-    public <T> ByteBuffer serialize(Serializer<T> serializer, T value) throws IOException {
-        final ByteBufferSerialWriter buffer = new ByteBufferSerialWriter();
-        serializer.serialize(buffer, value);
-        buffer.flush();
-        return buffer.buffer();
-    }
+        private Supplier<Serializer<byte[]>> defaultByteArray(Serializer<Integer> size) {
+            return () -> new ByteArraySerializer(size);
+        }
 
-    @Override
-    public <T> T deserialize(Serializer<T> serializer, ByteBuffer buffer) throws IOException {
-        return serializer.deserialize(new ByteBufferSerialReader(buffer));
+        private Supplier<? extends Serializer<char[]>> defaultCharArray(Serializer<Integer> size) {
+            return () -> new CharArraySerializer(size);
+        }
+
+        private Supplier<Serializer<String>> defaultString(Serializer<Integer> size) {
+            return () -> new StringSerializer(size);
+        }
+
+        private Serializer<Integer> defaultVarInt() {
+            if (useSimplerVariableLength) {
+                return new CompactVarIntSerializer();
+            }
+
+            return new VarIntSerializer();
+        }
+
+        private Serializer<Long> defaultVarLong() {
+            if (useSimplerVariableLength) {
+                return new CompactVarLongSerializer();
+            }
+
+            return new VarLongSerializer();
+        }
+
+        private Supplier<Serializer<UUID>> defaultUUID(Serializer<Long> longNumber) {
+            return () ->  new UUIDSerializer(longNumber);
+        }
     }
 }
