@@ -85,13 +85,27 @@ public class AutoSerializerProcessorTest {
         verifySerializer("Ordering");
     }
 
+    @Test
+    public void testNested() {
+        verifySerializer("Nested", "Nested_Foo_Serializer");
+    }
+
     static void verifySerializer(String name) {
-        final JavaFileObject source = resourcePathFor(name);
-        final JavaFileObject serializer = resourcePathFor(String.format(FrameworkStatements.SERIALIZER_NAME_FORMAT,
-                name));
+        verifySerializer(name, String.format(FrameworkStatements.SERIALIZER_NAME_FORMAT, name));
+    }
+
+    static void verifySerializer(String sourceName, String first, String... rest) {
+        final JavaFileObject source = resourcePathFor(sourceName);
+        final JavaFileObject firstSerializer = resourcePathFor(first);
+
+        final JavaFileObject restSerializers[] = new JavaFileObject[rest.length];
+
+        for (int i = 0; i < rest.length; i++) {
+            restSerializers[i] = resourcePathFor(rest[i]);
+        }
 
         assert_().about(javaSource()).that(source).processedWith(new AutoSerializeProcessor()).compilesWithoutError()
-        .and().generatesSources(serializer);
+                .and().generatesSources(firstSerializer, restSerializers);
     }
 
     static void verifyFailingSerializer(String name) {

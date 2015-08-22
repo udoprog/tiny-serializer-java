@@ -12,8 +12,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-import lombok.RequiredArgsConstructor;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -21,6 +19,7 @@ import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.Serializer;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AutoSerializeUtils {

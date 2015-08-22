@@ -109,14 +109,14 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
     SerializedType processElement(Element element) {
         if (element.getKind() == ElementKind.INTERFACE) {
-            return abstractProcessor.process(element);
+            return abstractProcessor.process((TypeElement)element);
         }
 
         if (element.getKind() == ElementKind.CLASS) {
             if (element.getModifiers().contains(Modifier.ABSTRACT)) {
-                return abstractProcessor.process(element);
+                return abstractProcessor.process((TypeElement)element);
             } else {
-                return classProcessor.process(element);
+                return classProcessor.process((TypeElement)element);
             }
         }
 

@@ -13,20 +13,22 @@ import java.util.UUID;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-
-import lombok.RequiredArgsConstructor;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 
+import lombok.RequiredArgsConstructor;
+
 @RequiredArgsConstructor
 public class FrameworkStatements {
     public static final String SERIALIZER_NAME_FORMAT = "%s_Serializer";
+    public static final Joiner underscoreJoiner = Joiner.on('_');
 
     static final Map<TypeName, String> frameworkSupported = new HashMap<>();
 
@@ -54,8 +56,25 @@ public class FrameworkStatements {
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(Optional.class), "$N.optional", 1));
     }
 
-    String serializerName(Element element) {
-        return String.format(SERIALIZER_NAME_FORMAT, element.getSimpleName());
+    public String serializerName(final Element root) {
+        final ImmutableList.Builder<String> parts = ImmutableList.builder();
+
+        Element element = root;
+
+        do {
+            if (element.getKind() != ElementKind.CLASS && element.getKind() != ElementKind.INTERFACE) {
+                throw new IllegalArgumentException(String.format("Element is not interface or class (%s)", element));
+            }
+
+            if (element.getEnclosingElement().getKind() == ElementKind.CLASS && !element.getModifiers().contains(Modifier.STATIC)) {
+                throw new IllegalArgumentException(String.format("Nested element must be static (%s)", element));
+            }
+
+            parts.add(element.getSimpleName().toString());
+            element = element.getEnclosingElement();
+        } while (element.getKind() != ElementKind.PACKAGE);
+
+        return String.format(SERIALIZER_NAME_FORMAT, underscoreJoiner.join(parts.build().reverse()));
     }
 
     public ClassName serializerClassFor(ClassName type) {

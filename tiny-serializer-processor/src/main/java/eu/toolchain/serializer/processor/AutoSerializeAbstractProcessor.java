@@ -7,10 +7,10 @@ import java.util.Set;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
-import lombok.RequiredArgsConstructor;
-
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -24,6 +24,7 @@ import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.SerializerFramework.TypeMapping;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AutoSerializeAbstractProcessor {
@@ -31,7 +32,7 @@ public class AutoSerializeAbstractProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    SerializedType process(Element element) {
+    SerializedType process(final TypeElement element) {
         final AutoSerialize annotation = element.getAnnotation(AutoSerialize.class);
 
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
