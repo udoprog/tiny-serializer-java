@@ -14,6 +14,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
+import eu.toolchain.serializer.AutoSerialize.Builder;
 import eu.toolchain.serializer.DefaultBuilderType;
 import lombok.Data;
 
@@ -24,7 +25,7 @@ import lombok.Data;
  */
 @Data
 public class SerializedTypeBuilder {
-    static final ClassName defaultBuilder = ClassName.get(DefaultBuilderType.class);
+    static final ClassName defaultBuilderType = ClassName.get(DefaultBuilderType.class);
     static final Joiner emptyJoiner = Joiner.on("");
 
     final ClassName builderType;
@@ -61,8 +62,30 @@ public class SerializedTypeBuilder {
     static Function<AutoSerialize.Builder, SerializedTypeBuilder> build(final AutoSerializeUtils utils) {
         return (builder) -> {
             final ClassName builderType = utils.pullMirroredClass(builder::type);
-            return new SerializedTypeBuilder(builderType, builder.useConstructor(), builder.useSetter(), builder.useMethod());
+
+            final boolean useConstructor = shouldUseConstructor(builderType, builder);
+
+            return new SerializedTypeBuilder(builderType, useConstructor, builder.useSetter(), builder.methodName());
         };
+    }
+
+    private static boolean shouldUseConstructor(ClassName builderType, AutoSerialize.Builder builder) {
+        // use explicitly ask to use method.
+        if (builder.useMethod()) {
+            return false;
+        }
+
+        // use explicitly ask to use constructor.
+        if (builder.useConstructor()) {
+            return true;
+        }
+
+        // by policy, if a type is specified, the constructor should be used.
+        if (!builderType.equals(defaultBuilderType)) {
+            return true;
+        }
+
+        return false;
     }
 
     public void writeTo(ClassName returnType, MethodSpec.Builder b, List<SerializedField> variables) {
@@ -93,7 +116,7 @@ public class SerializedTypeBuilder {
     }
 
     TypeName getBuilderTypeForConstructor(ClassName returnType) {
-        if (!builderType.equals(defaultBuilder)) {
+        if (!builderType.equals(defaultBuilderType)) {
             return builderType;
         }
 
@@ -101,7 +124,7 @@ public class SerializedTypeBuilder {
     }
 
     TypeName getBuilderTypeForMethod(ClassName returnType) {
-        if (!builderType.equals(defaultBuilder)) {
+        if (!builderType.equals(defaultBuilderType)) {
             return builderType;
         }
 

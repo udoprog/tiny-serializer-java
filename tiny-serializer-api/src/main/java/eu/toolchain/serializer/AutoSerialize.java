@@ -62,11 +62,21 @@ public @interface AutoSerialize {
         boolean useConstructor() default false;
 
         /**
+         * Use method on builder type when constructing builder.
+         * This takes precedence over {@link #useConstructor()}
+         *
+         * This only makes sense if the builder type itself has a static builder method (like MyType.builder()).
+         *
+         * @return {@code true} if builder method should be used for builder type, {@code false} otherwise.
+         */
+        boolean useMethod() default false;
+
+        /**
          * Builder method to use unless {@link #useBuilderConstructor()} is true.
          *
          * @return Builder method to use, or empty string if not specified;
          */
-        String useMethod() default "builder";
+        String methodName() default "builder";
     }
 
     @Target(ElementType.TYPE)
