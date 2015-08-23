@@ -29,9 +29,11 @@ import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.processor.annotation.AnnotationValues;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.BuilderMirror;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
+import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -161,14 +163,14 @@ public class AutoSerializeUtils {
         return results.build();
     }
 
-    public AnnotationValues getElementValuesWithDefaults(AnnotationMirror a) {
+    public AnnotationValues getElementValuesWithDefaults(Element element, AnnotationMirror a) {
         final ImmutableMap.Builder<String, AnnotationValue> builder = ImmutableMap.builder();
 
         for (Entry<? extends ExecutableElement, ? extends AnnotationValue> e : elements.getElementValuesWithDefaults(a).entrySet()) {
             builder.put(e.getKey().getSimpleName().toString(), e.getValue());
         }
 
-        return new AnnotationValues(builder.build());
+        return new AnnotationValues(element, a, builder.build());
     }
 
     public <T extends Annotation> Optional<AnnotationMirror> annotation(Element element, Class<T> annotationType) {
@@ -179,15 +181,15 @@ public class AutoSerializeUtils {
         return Optional.empty();
     }
 
-    public Optional<AutoSerializeMirror> autoSerialize(Element element) {
-        return annotation(element, AutoSerialize.class).map((a) -> AutoSerializeMirror.getFor(this, a));
+    public Optional<Unverified<AutoSerializeMirror>> autoSerialize(Element element) {
+        return annotation(element, AutoSerialize.class).map((a) -> AutoSerializeMirror.getFor(this, element, a));
     }
 
     public Optional<FieldMirror> field(Element element) {
-        return annotation(element, AutoSerialize.Field.class).map((a) -> FieldMirror.getFor(this, a));
+        return annotation(element, AutoSerialize.Field.class).map((a) -> FieldMirror.getFor(this, element, a));
     }
 
-    public Optional<BuilderMirror> builder(Element element) {
-        return annotation(element, AutoSerialize.Builder.class).map((a) -> BuilderMirror.getFor(this, a));
+    public Optional<Unverified<BuilderMirror>> builder(Element element) {
+        return annotation(element, AutoSerialize.Builder.class).map((a) -> BuilderMirror.getFor(this, element, a));
     }
 }

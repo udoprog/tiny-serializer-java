@@ -3,12 +3,12 @@ package eu.toolchain.serializer.processor.annotation;
 import java.util.Optional;
 
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.type.ErrorType;
+import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 
 import eu.toolchain.serializer.DefaultBuilderType;
-import eu.toolchain.serializer.processor.AnnotationValues;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
+import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.Data;
 
 @Data
@@ -19,19 +19,23 @@ public class BuilderMirror {
     private final boolean useSetter;
     private final boolean useMethod;
     private final boolean useConstructor;
-    private final Optional<TypeMirror> type;
+    private final Optional<AnnotationValues.Value<TypeMirror>> type;
     private final String methodName;
 
-    public static BuilderMirror getFor(final AutoSerializeUtils utils, final AnnotationMirror a) {
-        final AnnotationValues values = utils.getElementValuesWithDefaults(a);
+    public static Unverified<BuilderMirror> getFor(final AutoSerializeUtils utils, final Element element, final AnnotationMirror a) {
+        final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
 
-        final boolean useSetter = values.getBoolean("useSetter");
-        final boolean useMethod = values.getBoolean("useMethod");
-        final boolean useConstructor = values.getBoolean("useConstructor");
-        final Optional<TypeMirror> type = Optional.of(values.getTypeMirror("type")).filter((t) -> !t.toString().equals(defaultBuilderType));
-        final String methodName = values.getString("methodName");
+        final boolean useSetter = values.getBoolean("useSetter").get();
+        final boolean useMethod = values.getBoolean("useMethod").get();
+        final boolean useConstructor = values.getBoolean("useConstructor").get();
+        final String methodName = values.getString("methodName").get();
 
-        return new BuilderMirror(a, useSetter, useMethod, useConstructor, type, methodName);
+        final Unverified<AnnotationValues.Value<TypeMirror>> unverifiedType = values.getTypeMirror("type");
+
+        return unverifiedType.map((type) -> {
+            final Optional<AnnotationValues.Value<TypeMirror>> typeMirror = Optional.of(type).filter((t) -> !t.get().toString().equals(defaultBuilderType));
+            return new BuilderMirror(a, useSetter, useMethod, useConstructor, typeMirror, methodName);
+        });
     }
 
     public boolean shouldUseConstructor() {
@@ -51,9 +55,5 @@ public class BuilderMirror {
         }
 
         return false;
-    }
-
-    public boolean isErrorType() {
-        return type.map((t) -> t instanceof ErrorType).orElse(false);
     }
 }

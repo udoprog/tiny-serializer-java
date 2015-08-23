@@ -9,18 +9,15 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
-import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
+import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -46,10 +43,11 @@ class SerializedFields {
         }
     });
 
-    final static Ordering<SerializedField> orderingById = integerOrdering.onResultOf((SerializedField f) -> f.getId());
+    final static Ordering<SerializedField> orderingById = integerOrdering
+            .onResultOf((f) -> f.getId());
 
     final static Ordering<SerializedField> orderingByCtorOrder = integerOrdering
-            .onResultOf((SerializedField f) -> f.getConstructorOrder());
+            .onResultOf((f) -> f.getConstructorOrder());
 
     final static Ordering<SerializedFieldType> orderingTypesById = integerOrdering
             .onResultOf((SerializedFieldType f) -> f.getId());
@@ -63,94 +61,24 @@ class SerializedFields {
         this(orderById, orderConstructorById, ImmutableList.of(), ImmutableList.of());
     }
 
-    /**
-     * Optionally verify the structure of this SerializedType.
-     * @param messager
-     *
-     * @return This instance.
-     */
-    public List<SerializedTypeError> validate(final Element root) {
-        final ImmutableList.Builder<SerializedTypeError> errors = ImmutableList.builder();
+    public static Unverified<SerializedFields> build(final AutoSerializeUtils utils, final TypeElement element, final Set<ElementKind> kinds, final AutoSerializeMirror autoSerialize) {
+        final List<Unverified<SerializedField>> unverifiedFields = new ArrayList<>();
 
-        for (final SerializedField field : fields) {
-            if (!accessorMethodExists(root, field.getAccessor(), field.getType().getTypeName())) {
-                errors.add();
-                final String message = String.format("No matching accessor found, expected %s %s()",
-                        field.getType().getTypeName(), field.getAccessor());
-                errors.add(new SerializedTypeError(message, Optional.of(field.getElement())));
-            }
+        final SerializedFieldsBuilder fieldsBuilder = new SerializedFieldsBuilder(utils, element);
+
+        for (final Unverified<FieldInformation> unverifiedField : getFields(utils, element, kinds,
+                autoSerialize.isUseGetter())) {
+            unverifiedFields.add(unverifiedField.transform(fieldsBuilder::buildField));
         }
 
-        return errors.build();
+        return Unverified.combine(unverifiedFields)
+                .map((fields) -> new SerializedFields(autoSerialize.isOrderById(),
+                        autoSerialize.isOrderConstructorById(), ImmutableList.copyOf(fields),
+                        ImmutableList.copyOf(fieldsBuilder.getTypes())));
     }
 
-    public static SerializedFields build(final AutoSerializeUtils utils, final TypeElement element, final Set<ElementKind> kinds) throws ElementException {
-        final Optional<AutoSerializeMirror> a = utils.autoSerialize(element);
-
-        if (!a.isPresent()) {
-            throw new ElementException("@AutoSerialize annotaiton not present", element);
-        }
-
-        final AutoSerializeMirror autoSerialize = a.get();
-        // final AutoSerialize autoSerialize = utils.requireAnnotation(element, AutoSerialize.class);
-
-        final List<SerializedField> fields = new ArrayList<>();
-
-        final List<SerializedFieldType> types = new ArrayList<>();
-
-        final Naming fieldNaming = new Naming("s_");
-        final Naming providerNaming = new Naming("p_");
-
-        for (final FieldInformation f : getFields(utils, element, kinds, autoSerialize.isUseGetter())) {
-            final TypeName fieldType = TypeName.get(f.getFieldType());
-            final TypeName serializerType = TypeName.get(utils.serializerFor(f.getFieldType()));
-
-            final SerializedFieldTypeIdentifier identifier = new SerializedFieldTypeIdentifier(fieldType, f.isProvided(),
-                    f.getProviderName());
-
-            final SerializedFieldType type;
-            final Optional<SerializedFieldType> found;
-
-            if ((found = types.stream().filter((t) -> t.getIdentifier().equals(identifier)).findFirst()).isPresent()) {
-                type = found.get();
-            } else {
-                final String typeFieldName = fieldNaming.forType(fieldType, f.isProvided());
-
-                final FieldSpec fieldSpec = FieldSpec
-                        .builder(serializerType, typeFieldName)
-                        .addModifiers(Modifier.FINAL).build();
-
-                final Optional<ParameterSpec> providedParameterSpec;
-
-                if (f.isProvided()) {
-                    final String uniqueProviderName;
-
-                    if (f.getProviderName().isPresent()) {
-                        uniqueProviderName = providerNaming.forName(f.getProviderName().get());
-                    } else {
-                        uniqueProviderName = providerNaming.forType(fieldType, false);
-                    }
-
-                    providedParameterSpec = Optional.of(ParameterSpec.builder(serializerType, uniqueProviderName,
-                            Modifier.FINAL).build());
-                } else {
-                    providedParameterSpec = Optional.empty();
-                }
-
-                type = new SerializedFieldType(identifier, f.getFieldType(), fieldType, fieldSpec, providedParameterSpec, f.getId());
-                types.add(type);
-            }
-
-            fields.add(new SerializedField(f.getElement(), type, f.getFieldName(), f.getAccessor(), variableName(f.getFieldName()),
-                    f.getId(), f.getConstructorOrder()));
-        }
-
-        return new SerializedFields(autoSerialize.isOrderById(), autoSerialize.isOrderConstructorById(),
-                ImmutableList.copyOf(fields), ImmutableList.copyOf(types));
-    }
-
-    static Iterable<FieldInformation> getFields(final AutoSerializeUtils utils, final TypeElement element, final Set<ElementKind> kinds, final boolean defaultUseGetter) {
-        final ImmutableList.Builder<FieldInformation> builder = ImmutableList.builder();
+    static Iterable<Unverified<FieldInformation>> getFields(final AutoSerializeUtils utils, final TypeElement element, final Set<ElementKind> kinds, final boolean defaultUseGetter) {
+        final ImmutableList.Builder<Unverified<FieldInformation>> builder = ImmutableList.builder();
 
         for (final Element e : element.getEnclosedElements()) {
             if (!kinds.contains(e.getKind())) {
@@ -166,38 +94,10 @@ class SerializedFields {
                 continue;
             }
 
-            builder.add(FieldInformation.build(utils, e, defaultUseGetter));
+            builder.add(FieldInformation.build(utils, element, e, defaultUseGetter));
         }
 
         return builder.build();
-    }
-
-    static boolean accessorMethodExists(final Element root, final String accessor, final TypeName serializedType) {
-        for (final Element enclosed : root.getEnclosedElements()) {
-            if (enclosed.getKind() != ElementKind.METHOD) {
-                continue;
-            }
-
-            final ExecutableElement executable = (ExecutableElement) enclosed;
-
-            if (!executable.getSimpleName().toString().equals(accessor)) {
-                continue;
-            }
-
-            if (!executable.getParameters().isEmpty()) {
-                continue;
-            }
-
-            final TypeName returnType = TypeName.get(executable.getReturnType());
-
-            return serializedType.equals(returnType);
-        }
-
-        return false;
-    }
-
-    static String variableName(String fieldName) {
-        return String.format("v_%s", fieldName);
     }
 
     public Iterable<SerializedFieldType> getOrderedFieldTypes() {

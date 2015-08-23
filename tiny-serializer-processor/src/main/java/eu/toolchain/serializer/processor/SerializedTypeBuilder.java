@@ -12,10 +12,9 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 
-import eu.toolchain.serializer.AutoSerialize;
-import eu.toolchain.serializer.DefaultBuilderType;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.BuilderMirror;
+import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.Data;
 
 /**
@@ -44,39 +43,21 @@ public class SerializedTypeBuilder {
      */
     final String method;
 
-    public static Optional<SerializedTypeBuilder> build(final AutoSerializeUtils utils, final TypeElement element,
-            final String defaultPackageName) throws ElementException {
-
-        final Optional<AutoSerializeMirror> optionalAutoSerialize = utils.autoSerialize(element);
-
-        if (!optionalAutoSerialize.isPresent()) {
-            throw new ElementException("@AutoSerialize annotation is not present", element);
-        }
-
-        final AutoSerializeMirror autoSerialize = optionalAutoSerialize.get();
-
-        final Optional<BuilderMirror> direct = utils.builder(element);
-
-        if (direct.isPresent()) {
-            return Optional.of(build(direct.get(), element, utils, defaultPackageName));
-        }
-
-        final Optional<BuilderMirror> nested = autoSerialize.getBuilder().stream().findFirst();
-
-        if (nested.isPresent()) {
-            return Optional.of(build(nested.get(), element, utils, defaultPackageName));
-        }
-
-        return Optional.empty();
+    public static Unverified<Optional<SerializedTypeBuilder>> build(final AutoSerializeUtils utils,
+            final TypeElement element, final AutoSerializeMirror autoSerialize) {
+        return utils.builder(element).map((unverifiedDirect) -> {
+            return unverifiedDirect.map((direct) -> {
+                return Optional.of(build(direct, element, utils));
+            });
+        }).orElseGet(() -> {
+            return Unverified.verified(autoSerialize.getBuilder().stream().findFirst().map((nested) -> {
+                return Optional.of(build(nested, element, utils));
+            }).orElse(Optional.empty()));
+        });
     }
 
     static SerializedTypeBuilder build(final BuilderMirror builder, final TypeElement element,
-            final AutoSerializeUtils utils, final String defaultPackageName) throws ElementException {
-
-        if (builder.isErrorType()) {
-            throw new ElementException("@AutoSerialize.Builder(type=<class>) does not reference a valid Class", element);
-        }
-
+            final AutoSerializeUtils utils) {
         final boolean useConstructor = builder.shouldUseConstructor();
         return new SerializedTypeBuilder(builder, useConstructor, builder.isUseSetter(), builder.getMethodName());
     }
@@ -109,11 +90,11 @@ public class SerializedTypeBuilder {
     }
 
     TypeName getBuilderTypeForConstructor(ClassName returnType) {
-        return builder.getType().map((t) -> TypeName.get(t)).orElse(returnType.nestedClass("Builder"));
+        return builder.getType().map((t) -> TypeName.get(t.get())).orElse(returnType.nestedClass("Builder"));
     }
 
     TypeName getBuilderTypeForMethod(ClassName returnType) {
-        return builder.getType().map((t) -> TypeName.get(t)).orElse(returnType);
+        return builder.getType().map((t) -> TypeName.get(t.get())).orElse(returnType);
     }
 
     String builderSetter(final SerializedField f) {

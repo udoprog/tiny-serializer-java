@@ -1,8 +1,8 @@
 package eu.toolchain.serializer.processor.annotation;
 
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
 
-import eu.toolchain.serializer.processor.AnnotationValues;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import lombok.Data;
 
@@ -17,15 +17,15 @@ public class FieldMirror {
     private final boolean provided;
     private final String providerName;
 
-    public static FieldMirror getFor(final AutoSerializeUtils utils, final AnnotationMirror a) {
-        final AnnotationValues values = utils.getElementValuesWithDefaults(a);
+    public static FieldMirror getFor(final AutoSerializeUtils utils, final Element element, final AnnotationMirror a) {
+        final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
 
-        final String accessor = values.getString("accessor");
-        final int id = values.getInteger("id");
-        final int constructorOrder = values.getInteger("constructorOrder");
-        final boolean useGetter = values.getBoolean("useGetter");
-        final boolean provided = values.getBoolean("provided");
-        final String providerName = values.getString("providerName");
+        final String accessor = values.getString("accessor").get();
+        final int id = values.getInteger("id").get();
+        final int constructorOrder = values.getInteger("constructorOrder").get();
+        final boolean useGetter = values.getBoolean("useGetter").get();
+        final boolean provided = values.getBoolean("provided").get();
+        final String providerName = values.getString("providerName").get();
 
         return new FieldMirror(a, accessor, id, constructorOrder, useGetter, provided, providerName);
     }

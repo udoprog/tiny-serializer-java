@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
@@ -24,44 +25,57 @@ import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
+import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AutoSerializeClassProcessor {
-    static final Joiner parameterJoiner = Joiner.on(", ");
+    private static final Joiner parameterJoiner = Joiner.on(",");
 
     final Types types;
     final Elements elements;
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    public SerializedType process(final TypeElement element, final AutoSerializeMirror autoSerialize) throws ElementException {
+    public Unverified<SerializedType> process(final TypeElement element, final AutoSerializeMirror autoSerialize) {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
-        final String name = utils.serializedName(element);
-
-        final Optional<SerializedTypeBuilder> builder = SerializedTypeBuilder.build(utils, element, packageName);
         final Set<ElementKind> kinds = getKinds(element);
-        final SerializedFields serializedType = SerializedFields.build(utils, element, kinds);
+
+        final Unverified<Optional<SerializedTypeBuilder>> unverifiedBuilder = SerializedTypeBuilder.build(utils, element, autoSerialize);
+        final Unverified<SerializedFields> unverifiedFields = SerializedFields.build(utils, element, kinds, autoSerialize);
 
         final ClassName elementType = (ClassName) TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
+        final String serializerName = statements.serializerName(element);
 
-        final TypeSpec.Builder generated = TypeSpec.classBuilder(statements.serializerName(element));
+        final Unverified<?> combineDifferent = Unverified.combineDifferent(unverifiedFields, unverifiedBuilder);
 
-        for (final SerializedFieldType t : serializedType.getFieldTypes()) {
-            generated.addField(t.getFieldSpec());
-        }
+        return combineDifferent.<SerializedType> map((o) -> {
+            final SerializedFields fields = unverifiedFields.get();
+            final Optional<SerializedTypeBuilder> builder = unverifiedBuilder.get();
 
-        generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
-        generated.addSuperinterface(supertype);
+            return new SerializedType() {
+                @Override
+                public JavaFile asJavaFile() {
+                    final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
 
-        generated.addMethod(constructor(serializedType));
-        generated.addMethod(serializeMethod(elementType, serializedType));
-        generated.addMethod(deserializeMethod(elementType, serializedType, builder));
+                    for (final SerializedFieldType t : fields.getFieldTypes()) {
+                        generated.addField(t.getFieldSpec());
+                    }
 
-        return new SerializedType(element, packageName, name, generated.build(), elementType, supertype, serializedType);
+                    generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+                    generated.addSuperinterface(supertype);
+
+                    generated.addMethod(constructor(fields));
+                    generated.addMethod(serializeMethod(elementType, fields));
+                    generated.addMethod(deserializeMethod(elementType, fields, builder));
+
+                    return JavaFile.builder(packageName, generated.build()).skipJavaLangImports(true).indent("    ")
+                            .build();
+                }
+            };
+        });
     }
-
 
     /**
      * Get the set of supported element kinds that make up the total set of fields for this type.

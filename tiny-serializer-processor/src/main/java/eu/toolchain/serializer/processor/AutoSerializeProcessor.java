@@ -1,6 +1,5 @@
 package eu.toolchain.serializer.processor;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,22 +21,20 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import com.google.auto.service.AutoService;
-import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.JavaFile;
 
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
+import eu.toolchain.serializer.processor.unverified.Unverified;
+import lombok.Data;
 
 @AutoService(Processor.class)
 public class AutoSerializeProcessor extends AbstractProcessor {
-    private static final Joiner lineJoiner = Joiner.on('\n');
-
     private Filer filer;
     private Messager messager;
     private AutoSerializeUtils utils;
+    private FrameworkStatements statements;
     private AutoSerializeAbstractProcessor abstractProcessor;
     private AutoSerializeClassProcessor classProcessor;
 
@@ -52,8 +49,8 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         final Elements elements = env.getElementUtils();
         final Types types = env.getTypeUtils();
-        final FrameworkStatements statements = new FrameworkStatements();
 
+        statements = new FrameworkStatements();
         utils = new AutoSerializeUtils(types, elements);
         abstractProcessor = new AutoSerializeAbstractProcessor(elements, statements, utils);
         classProcessor = new AutoSerializeClassProcessor(types, elements, statements, utils);
@@ -77,9 +74,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         if (env.processingOver()) {
             for (final DeferredProcessing d : deferred) {
-                for (final SerializedTypeError t : d.getErrors()) {
-                    messager.printMessage(Diagnostic.Kind.ERROR, t.getMessage(), t.getElement().orElse(d.getElement()));
-                }
+                d.getBroken().get().writeError(messager);
             }
 
             return false;
@@ -97,22 +92,23 @@ public class AutoSerializeProcessor extends AbstractProcessor {
                 continue;
             }
 
-            elementsToProcess.add(new DeferredProcessing((TypeElement)e, ImmutableList.of()));
+            elementsToProcess.add(new DeferredProcessing((TypeElement)e, Optional.empty()));
         }
 
-        final List<SerializedType> processed = processElements(elementsToProcess.build());
+        final List<Processed> processed = processElements(elementsToProcess.build());
 
-        for (final SerializedType p : processed) {
-            final JavaFile output = p.asJavaFile();
+        for (final Processed p : processed) {
+            final Unverified<SerializedType> serializer = p.getType();
 
-            messager.printMessage(Diagnostic.Kind.NOTE,
-                    String.format("Writing %s.%s", output.packageName, output.typeSpec.name), p.getRoot());
+            if (!serializer.isVerified()) {
+                deferred.add(p.processing.withBroken(serializer));
+                continue;
+            }
 
             try {
-                output.writeTo(filer);
-            } catch (IOException e) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "Failed to write:\n" + Throwables.getStackTraceAsString(e), p.getRoot());
-                return false;
+                serializer.get().asJavaFile().writeTo(filer);
+            } catch (final Exception e) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Failed to write:\n" + Throwables.getStackTraceAsString(e), p.getProcessing().getElement());
             }
         }
 
@@ -129,72 +125,52 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         return SourceVersion.latestSupported();
     }
 
-    List<SerializedType> processElements(Set<DeferredProcessing> elements) {
-        final List<SerializedType> processed = new ArrayList<>();
+    List<Processed> processElements(Set<DeferredProcessing> elements) {
+        final List<Processed> processed = new ArrayList<>();
 
         for (final DeferredProcessing processing : elements) {
             messager.printMessage(Diagnostic.Kind.NOTE, String.format("Processing %s", processing.getElement()));
 
-            final Optional<SerializedType> result;
-
-            try {
-                result = processElement(processing.getElement());
-            } catch (ElementException e) {
-                for (final String message : e.getMessages()) {
-                    deferred.add(processing.withError(new SerializedTypeError(message, e.getElement())));
-                }
-
-                continue;
-            } catch (Exception e) {
-                deferred.add(processing.withError(SerializedTypeError.fromException(e)));
-                continue;
-            }
-
-            if (!result.isPresent()) {
-                messager.printMessage(Diagnostic.Kind.ERROR, String.format("Cannot process element (%s) of kind %s",
-                        processing.getElement(), processing.getElement().getKind()));
-                continue;
-            }
-
-            final SerializedType serialized = result.get();
-            final List<SerializedTypeError> errors = serialized.validate();
-
-            if (!errors.isEmpty()) {
-                deferred.add(processing.withErrors(errors));
-                continue;
-            }
-
-            processed.add(serialized);
+            final Unverified<SerializedType> result = processElement(processing.getElement());
+            processed.add(new Processed(result, processing));
         }
 
         return processed;
     }
 
-    Optional<SerializedType> processElement(TypeElement element) throws ElementException {
-        final Optional<AutoSerializeMirror> annotation = utils.autoSerialize(element);
+    Unverified<SerializedType> processElement(TypeElement element) {
+        final Optional<Unverified<AutoSerializeMirror>> annotation = utils.autoSerialize(element);
 
         if (!annotation.isPresent()) {
-            throw new ElementException("@AutoSerialize annotation not present", element);
+            return Unverified.brokenElement("@AutoSerialize annotation not present", element);
         }
 
-        final AutoSerializeMirror autoSerialize = annotation.get();
+        final Unverified<AutoSerializeMirror> unverifiedAutoSerialize = annotation.get();
 
-        if (element.getKind() == ElementKind.INTERFACE) {
-            if (utils.useBuilder(element)) {
-                return Optional.of(classProcessor.process(element, autoSerialize));
-            } else {
-                return Optional.of(abstractProcessor.process(element, autoSerialize));
-            }
-        }
-
-        if (element.getKind() == ElementKind.CLASS) {
-            if (element.getModifiers().contains(Modifier.ABSTRACT) && !utils.useBuilder(element)) {
-                return Optional.of(abstractProcessor.process(element, autoSerialize));
+        return unverifiedAutoSerialize.<SerializedType> transform((autoSerialize) -> {
+            if (element.getKind() == ElementKind.INTERFACE) {
+                if (utils.useBuilder(element)) {
+                    return classProcessor.process(element, autoSerialize);
+                } else {
+                    return abstractProcessor.process(element, autoSerialize);
+                }
             }
 
-            return Optional.of(classProcessor.process(element, autoSerialize));
-        }
+            if (element.getKind() == ElementKind.CLASS) {
+                if (element.getModifiers().contains(Modifier.ABSTRACT) && !utils.useBuilder(element)) {
+                    return abstractProcessor.process(element, autoSerialize);
+                }
 
-        return Optional.empty();
+                return classProcessor.process(element, autoSerialize);
+            }
+
+            return Unverified.brokenElement("Unsupported type, expected class or interface", element);
+        });
+    }
+
+    @Data
+    public static class Processed {
+        final Unverified<SerializedType> type;
+        final DeferredProcessing processing;
     }
 }

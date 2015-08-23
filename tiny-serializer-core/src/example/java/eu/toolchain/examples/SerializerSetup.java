@@ -1,7 +1,6 @@
 package eu.toolchain.examples;
 
 import eu.toolchain.serializer.TinySerializer;
-import eu.toolchain.serializer.types.CompactVarIntSerializer;
 
 public class SerializerSetup {
     public static TinySerializer.Builder setup() {
