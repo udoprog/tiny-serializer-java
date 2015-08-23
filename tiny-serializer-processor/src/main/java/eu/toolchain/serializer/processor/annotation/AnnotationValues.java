@@ -73,6 +73,16 @@ public class AnnotationValues {
         return new Value<>(annotationValue, toString(annotationValue));
     }
 
+    public Value<Short> getShort(String key) {
+        final AnnotationValue annotationValue = values.get(key);
+
+        if (annotationValue == null) {
+            throw new IllegalArgumentException(key);
+        }
+
+        return new Value<>(annotationValue, toShort(annotationValue));
+    }
+
     public Value<Integer> getInteger(String key) {
         final AnnotationValue annotationValue = values.get(key);
 
@@ -121,11 +131,35 @@ public class AnnotationValues {
         }, null);
     }
 
+    public short toShort(final AnnotationValue annotationValue) {
+        return annotationValue.accept(new SimpleAnnotationValueVisitor8<Short, Void>() {
+            @Override
+            public Short visitInt(int i, Void p) {
+                return Integer.valueOf(i).shortValue();
+            }
+
+            @Override
+            public Short visitShort(short s, Void p) {
+                return s;
+            }
+
+            @Override
+            protected Short defaultAction(Object o, Void p) {
+                throw new IllegalArgumentException(String.format("Could not convert %s to Short", annotationValue));
+            }
+        }, null);
+    }
+
     public int toInteger(final AnnotationValue annotationValue) {
         return annotationValue.accept(new SimpleAnnotationValueVisitor8<Integer, Void>() {
             @Override
             public Integer visitInt(int i, Void p) {
                 return i;
+            }
+
+            @Override
+            public Integer visitShort(short s, Void p) {
+                return Short.valueOf(s).intValue();
             }
 
             @Override
