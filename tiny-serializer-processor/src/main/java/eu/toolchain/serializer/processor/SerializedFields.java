@@ -7,14 +7,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.tools.Diagnostic;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.squareup.javapoet.FieldSpec;
@@ -70,17 +68,19 @@ class SerializedFields {
      *
      * @return This instance.
      */
-    boolean isValid(final Element root, final Messager messager) {
-        boolean valid = true;
+    public List<SerializedTypeError> validate(final Element root) {
+        final ImmutableList.Builder<SerializedTypeError> errors = ImmutableList.builder();
 
         for (final SerializedField field : fields) {
-            if (!accessorMethodExists(root, field.getAccessor(), field.getFieldType().getFieldType())) {
-                messager.printMessage(Diagnostic.Kind.WARNING, String.format("No accessor found for field: %s", field));
-                valid = false;
+            if (!accessorMethodExists(root, field.getAccessor(), field.getType().getTypeName())) {
+                errors.add();
+                final String message = String.format("No matching accessor found, expected %s %s()",
+                        field.getType().getTypeName(), field.getAccessor());
+                errors.add(new SerializedTypeError(Diagnostic.Kind.ERROR, message, Optional.of(field.getElement())));
             }
         }
 
-        return valid;
+        return errors.build();
     }
 
     public static SerializedFields build(final AutoSerializeUtils utils, final Element element, final Set<ElementKind> kinds) {
@@ -133,7 +133,7 @@ class SerializedFields {
                 types.add(type);
             }
 
-            fields.add(new SerializedField(type, f.getFieldName(), f.getAccessor(), variableName(f.getFieldName()),
+            fields.add(new SerializedField(f.getElement(), type, f.getFieldName(), f.getAccessor(), variableName(f.getFieldName()),
                     f.getId(), f.getConstructorOrder()));
         }
 

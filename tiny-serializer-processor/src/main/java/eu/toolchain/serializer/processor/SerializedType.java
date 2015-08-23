@@ -1,13 +1,14 @@
 package eu.toolchain.serializer.processor;
 
-import javax.annotation.processing.Messager;
-import javax.lang.model.element.Element;
+import java.util.List;
 
-import lombok.Data;
+import javax.lang.model.element.Element;
 
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+
+import lombok.Data;
 
 @Data
 class SerializedType {
@@ -23,7 +24,7 @@ class SerializedType {
         return JavaFile.builder(packageName, type).skipJavaLangImports(true).indent("    ").build();
     }
 
-    public boolean isValid(Messager messager) {
-        return fields.isValid(root, messager);
+    public List<SerializedTypeError> validate() {
+        return fields.validate(root);
     }
 }

@@ -13,8 +13,8 @@ import lombok.Data;
 @Data
 class SerializedFieldType {
     private final SerializedFieldTypeIdentifier identifier;
-    private final TypeMirror fieldTypeMirror;
-    private final TypeName fieldType;
+    private final TypeMirror typeMirror;
+    private final TypeName typeName;
     private final FieldSpec fieldSpec;
     private final Optional<ParameterSpec> providedParameterSpec;
     private final Optional<Integer> id;

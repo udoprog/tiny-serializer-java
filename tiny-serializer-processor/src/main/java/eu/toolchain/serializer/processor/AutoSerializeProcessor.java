@@ -47,7 +47,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         super.init(env);
 
         filer = env.getFiler();
-        messager = new PrefixingMessager(AutoSerializeProcessor.class.getCanonicalName(), env.getMessager());
+        messager = new PrefixingMessager("@AutoSerialize", env.getMessager());
 
         final Elements elements = env.getElementUtils();
         final Types types = env.getTypeUtils();
@@ -76,16 +76,9 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         if (env.processingOver()) {
             for (final DeferredProcessing d : deferred) {
-                final ImmutableList.Builder<String> errorMessages = ImmutableList.builder();
-
-                int i = 1;
-
-                for (final Throwable t : d.getErrors()) {
-                    errorMessages.add(String.format("Exception #%d:", i++) + "\n" + Throwables.getStackTraceAsString(t));
+                for (final SerializedTypeError t : d.getLastError()) {
+                    messager.printMessage(Diagnostic.Kind.ERROR, t.getMessage(), t.getElement().orElse(d.getElement()));
                 }
-
-                messager.printMessage(Diagnostic.Kind.ERROR,
-                        "Failed to process Element:\n" + lineJoiner.join(errorMessages.build()), d.getElement());
             }
 
             return false;
@@ -109,11 +102,6 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         final List<SerializedType> processed = processElements(elementsToProcess.build());
 
         for (final SerializedType p : processed) {
-            if (!p.isValid(messager)) {
-                messager.printMessage(Diagnostic.Kind.WARNING,
-                        String.format("Might not be valid: %s", p.getElementType()), p.getRoot());
-            }
-
             final JavaFile output = p.asJavaFile();
 
             messager.printMessage(Diagnostic.Kind.NOTE,
@@ -151,12 +139,21 @@ public class AutoSerializeProcessor extends AbstractProcessor {
             try {
                 result = processElement(processing.getElement());
             } catch(Exception e) {
-                deferred.add(processing.withError(e));
+                deferred.add(processing.withError(SerializedTypeError.fromException(e)));
                 continue;
             }
 
             if (result.isPresent()) {
-                processed.add(result.get());
+                final SerializedType s = result.get();
+
+                final List<SerializedTypeError> errors = s.validate();
+
+                if (!errors.isEmpty()) {
+                    deferred.add(processing.withErrors(errors));
+                    continue;
+                }
+
+                processed.add(s);
             }
         }
 

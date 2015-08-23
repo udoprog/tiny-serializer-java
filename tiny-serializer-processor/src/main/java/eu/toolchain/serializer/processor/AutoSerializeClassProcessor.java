@@ -114,7 +114,7 @@ public class AutoSerializeClassProcessor {
                 }
             };
 
-            statements.resolveStatement(utils.boxedIfNeeded(fieldType.getFieldTypeMirror()), framework).writeTo(
+            statements.resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework).writeTo(
                     builder);
         }
 
@@ -127,7 +127,7 @@ public class AutoSerializeClassProcessor {
         final MethodSpec.Builder b = utils.serializeMethod(buffer, value);
 
         for (final SerializedField field : serialized.getOrderedFields()) {
-            b.addStatement("$N.serialize($N, $N.$L())", field.getFieldType().getFieldSpec(), buffer, value,
+            b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer, value,
                     field.getAccessor());
         }
 
@@ -140,8 +140,8 @@ public class AutoSerializeClassProcessor {
         final MethodSpec.Builder b = utils.deserializeMethod(returnType, buffer);
 
         for (final SerializedField field : serializedType.getOrderedFields()) {
-            final TypeName fieldType = field.getFieldType().getFieldType();
-            final FieldSpec fieldSpec = field.getFieldType().getFieldSpec();
+            final TypeName fieldType = field.getType().getTypeName();
+            final FieldSpec fieldSpec = field.getType().getFieldSpec();
             b.addStatement("final $T $L = $N.deserialize($N)", fieldType, field.getVariableName(), fieldSpec, buffer);
         }
 

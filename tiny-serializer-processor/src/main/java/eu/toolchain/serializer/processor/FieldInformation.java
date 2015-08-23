@@ -13,6 +13,7 @@ import lombok.Data;
 
 @Data
 public class FieldInformation {
+    final Element element;
     final TypeMirror fieldType;
     final String fieldName;
     final boolean provided;
@@ -44,7 +45,7 @@ public class FieldInformation {
         final Optional<Integer> id = getId(e);
         final Optional<String> providerName = getProviderName(e);
 
-        return new FieldInformation(fieldType, e.getSimpleName().toString(), provided, accessor, constructorOrder, id, providerName);
+        return new FieldInformation(e, fieldType, e.getSimpleName().toString(), provided, accessor, constructorOrder, id, providerName);
     }
 
     static boolean isProvided(Element e) {
