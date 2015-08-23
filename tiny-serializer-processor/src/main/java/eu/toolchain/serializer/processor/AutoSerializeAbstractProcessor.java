@@ -20,12 +20,12 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.SerializerFramework.TypeMapping;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
+import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.RequiredArgsConstructor;
 
@@ -102,41 +102,33 @@ public class AutoSerializeAbstractProcessor {
                 .addStatement("return $N.deserialize($N)", serializer, buffer).build();
     }
 
-    List<Unverified<SerializedSubType>> buildSubTypes(Element element, final String defaultPackageName) {
-        final AutoSerialize.SubTypes annotation = element.getAnnotation(AutoSerialize.SubTypes.class);
+    Unverified<List<Unverified<SerializedSubType>>> buildSubTypes(Element element, final String defaultPackageName) {
+        return utils.subTypes(element).map((unverifiedSubTypes) -> {
+            return unverifiedSubTypes.map((List<SubTypeMirror> subTypes) -> {
+                final Set<Short> seenIds = new HashSet<>();
 
-        if (annotation == null) {
-            return ImmutableList.of();
-        }
+                int offset = 0;
+                final ShortIterator index = new ShortIterator();
 
-        final Set<Short> seenIds = new HashSet<>();
+                final ImmutableList.Builder<Unverified<SerializedSubType>> subtypes = ImmutableList.builder();
 
-        int offset = 0;
-        final ShortIterator index = new ShortIterator();
+                for (final SubTypeMirror s : subTypes.getSubTypes()) {
+                    final ClassName type = (ClassName)TypeName.get(s.getValue().get());
 
-        final ImmutableList.Builder<Unverified<SerializedSubType>> subtypes = ImmutableList.builder();
+                    final short id = s.getId().filter((i) -> i < Short.MAX_VALUE).map(Integer::shortValue)
+                            .orElseGet(index::next);
+g
+                    if (!seenIds.add(id)) {
+                        subtypes.add(Unverified.brokenElement(String.format("Conflicting subtype id (%d) defined for definition #%d", id, offset), element));
+                        continue;
+                    }
 
-        for (final AutoSerialize.SubType s : annotation.value()) {
-            final Optional<ClassName> optionalType = utils.pullMirroredClass(s::value, defaultPackageName);
+                    subtypes.add(Unverified.verified(new SerializedSubType(type, id)));
+                    offset++;
+                }
 
-            if (!optionalType.isPresent()) {
-                subtypes.add(Unverified.brokenElement("@AutoSerialize.SubType(value=<class>) does not reference a valid Class", element));
-                continue;
-            }
-
-            final ClassName type = optionalType.get();
-
-            final short id = s.id() < 0 ? index.next() : s.id();
-
-            if (!seenIds.add(id)) {
-                subtypes.add(Unverified.brokenElement(String.format("Conflicting subtype id (%d) defined for definition #%d", id, offset), element));
-                continue;
-            }
-
-            subtypes.add(Unverified.verified(new SerializedSubType(type, id)));
-            offset++;
-        }
-
-        return subtypes.build();
+                return (List<Unverified<SerializedSubType>>)subtypes.build();
+            });
+        }).orElse(Unverified.verified(ImmutableList.of()));
     }
 }

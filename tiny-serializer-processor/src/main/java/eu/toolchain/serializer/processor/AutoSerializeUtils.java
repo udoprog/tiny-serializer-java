@@ -33,6 +33,8 @@ import eu.toolchain.serializer.processor.annotation.AnnotationValues;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.BuilderMirror;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
+import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
+import eu.toolchain.serializer.processor.annotation.SubTypesMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.RequiredArgsConstructor;
 
@@ -179,6 +181,14 @@ public class AutoSerializeUtils {
         }
 
         return Optional.empty();
+    }
+
+    public Optional<Unverified<SubTypeMirror>> subType(Element element) {
+        return annotation(element, AutoSerialize.SubType.class).map((a) -> SubTypeMirror.getFor(this, element, a));
+    }
+
+    public Optional<Unverified<SubTypesMirror>> subTypes(Element element) {
+        return annotation(element, AutoSerialize.SubTypes.class).map((a) -> SubTypesMirror.getFor(this, element, a));
     }
 
     public Optional<Unverified<AutoSerializeMirror>> autoSerialize(Element element) {
