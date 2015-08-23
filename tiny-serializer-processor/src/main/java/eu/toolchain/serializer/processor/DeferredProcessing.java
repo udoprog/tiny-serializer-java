@@ -12,7 +12,7 @@ import lombok.Data;
 @Data
 public class DeferredProcessing {
     private final TypeElement element;
-    private final List<List<SerializedTypeError>> errors;
+    private final List<SerializedTypeError> errors;
 
     public static Function<DeferredProcessing, DeferredProcessing> refresh(AutoSerializeUtils utils) {
         return (d) -> new DeferredProcessing(utils.refetch(d.element), d.errors);
@@ -23,11 +23,6 @@ public class DeferredProcessing {
     }
 
     public DeferredProcessing withErrors(List<SerializedTypeError> errors) {
-        return new DeferredProcessing(element,
-                ImmutableList.<List<SerializedTypeError>> builder().addAll(this.errors).add(errors).build());
-    }
-
-    public List<SerializedTypeError> getLastError() {
-        return errors.get(errors.size() - 1);
+        return new DeferredProcessing(element, errors);
     }
 }

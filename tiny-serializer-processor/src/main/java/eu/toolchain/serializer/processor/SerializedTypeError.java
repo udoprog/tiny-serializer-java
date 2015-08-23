@@ -11,11 +11,10 @@ import lombok.Data;
 
 @Data
 public class SerializedTypeError {
-    private final Diagnostic.Kind kind;
     private final String message;
     private final Optional<Element> element;
 
     public static SerializedTypeError fromException(Throwable t) {
-        return new SerializedTypeError(Diagnostic.Kind.ERROR, Throwables.getStackTraceAsString(t), Optional.empty());
+        return new SerializedTypeError(Throwables.getStackTraceAsString(t), Optional.empty());
     }
 }

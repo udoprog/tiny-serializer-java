@@ -1,13 +1,12 @@
 package eu.toolchain.serializer.processor;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.lang.model.element.TypeElement;
 
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -44,28 +43,43 @@ public class SerializedTypeBuilder {
      */
     final String method;
 
-    public static Optional<SerializedTypeBuilder> build(final AutoSerializeUtils utils, final TypeElement element, final String defaultPackageName) {
+    public static Optional<SerializedTypeBuilder> build(final AutoSerializeUtils utils, final TypeElement element,
+            final String defaultPackageName) throws ElementException {
         final AutoSerialize autoSerialize = utils.requireAnnotation(element, AutoSerialize.class);
-        final AutoSerialize.Builder direct = element.getAnnotation(AutoSerialize.Builder.class);
-        return Optional.fromNullable(direct).or(providedFrom(autoSerialize.builder())).transform(build(utils, defaultPackageName));
+        final Optional<AutoSerialize.Builder> direct = Optional.ofNullable(element.getAnnotation(AutoSerialize.Builder.class));
+
+        if (direct.isPresent()) {
+            return Optional.of(build(direct.get(), element, utils, defaultPackageName));
+        }
+
+        final Optional<AutoSerialize.Builder> nested = providedFrom(autoSerialize.builder());
+
+        if (nested.isPresent()) {
+            return Optional.of(build(nested.get(), element, utils, defaultPackageName));
+        }
+
+        return Optional.empty();
     }
 
     static Optional<AutoSerialize.Builder> providedFrom(AutoSerialize.Builder[] builders) {
         if (builders.length == 0) {
-            return Optional.absent();
+            return Optional.empty();
         }
 
         return Optional.of(builders[0]);
     }
 
-    static Function<AutoSerialize.Builder, SerializedTypeBuilder> build(final AutoSerializeUtils utils, final String defaultPackageName) {
-        return (builder) -> {
-            final ClassName builderType = utils.pullMirroredClass(builder::type, defaultPackageName);
+    static SerializedTypeBuilder build(AutoSerialize.Builder builder, final TypeElement element,
+            final AutoSerializeUtils utils, final String defaultPackageName) throws ElementException {
+        final Optional<ClassName> optionalBuilderType = utils.pullMirroredClass(builder::type, defaultPackageName);
 
-            final boolean useConstructor = shouldUseConstructor(builderType, builder);
+        if (!optionalBuilderType.isPresent()) {
+            throw new ElementException("@AutoSerialize.Builder(type=<class>) does not reference a valid Class", element);
+        }
 
-            return new SerializedTypeBuilder(builderType, useConstructor, builder.useSetter(), builder.methodName());
-        };
+        final ClassName builderType = optionalBuilderType.get();
+        final boolean useConstructor = shouldUseConstructor(builderType, builder);
+        return new SerializedTypeBuilder(builderType, useConstructor, builder.useSetter(), builder.methodName());
     }
 
     private static boolean shouldUseConstructor(ClassName builderType, AutoSerialize.Builder builder) {

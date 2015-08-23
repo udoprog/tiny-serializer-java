@@ -3,6 +3,7 @@ package eu.toolchain.serializer.processor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -22,7 +23,6 @@ import javax.tools.Diagnostic;
 
 import com.google.auto.service.AutoService;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -76,7 +76,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         if (env.processingOver()) {
             for (final DeferredProcessing d : deferred) {
-                for (final SerializedTypeError t : d.getLastError()) {
+                for (final SerializedTypeError t : d.getErrors()) {
                     messager.printMessage(Diagnostic.Kind.ERROR, t.getMessage(), t.getElement().orElse(d.getElement()));
                 }
             }
@@ -138,29 +138,38 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
             try {
                 result = processElement(processing.getElement());
-            } catch(Exception e) {
+            } catch (ElementException e) {
+                for (final String message : e.getMessages()) {
+                    deferred.add(processing.withError(new SerializedTypeError(message, e.getElement())));
+                }
+
+                continue;
+            } catch (Exception e) {
                 deferred.add(processing.withError(SerializedTypeError.fromException(e)));
                 continue;
             }
 
-            if (result.isPresent()) {
-                final SerializedType s = result.get();
-
-                final List<SerializedTypeError> errors = s.validate();
-
-                if (!errors.isEmpty()) {
-                    deferred.add(processing.withErrors(errors));
-                    continue;
-                }
-
-                processed.add(s);
+            if (!result.isPresent()) {
+                messager.printMessage(Diagnostic.Kind.ERROR, String.format("Cannot process element (%s) of kind %s",
+                        processing.getElement(), processing.getElement().getKind()));
+                continue;
             }
+
+            final SerializedType serialized = result.get();
+            final List<SerializedTypeError> errors = serialized.validate();
+
+            if (!errors.isEmpty()) {
+                deferred.add(processing.withErrors(errors));
+                continue;
+            }
+
+            processed.add(serialized);
         }
 
         return processed;
     }
 
-    Optional<SerializedType> processElement(TypeElement element) {
+    Optional<SerializedType> processElement(TypeElement element) throws ElementException {
         if (element.getKind() == ElementKind.INTERFACE) {
             if (utils.useBuilder(element)) {
                 return Optional.of(classProcessor.process(element));
@@ -177,8 +186,6 @@ public class AutoSerializeProcessor extends AbstractProcessor {
             return Optional.of(classProcessor.process(element));
         }
 
-        messager.printMessage(Diagnostic.Kind.WARNING,
-                String.format("Cannot process element (%s) of kind %s", element.toString(), element.getKind()));
-        return Optional.absent();
+        return Optional.empty();
     }
 }

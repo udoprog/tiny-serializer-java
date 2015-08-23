@@ -2,6 +2,7 @@ package eu.toolchain.serializer.processor;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import javax.lang.model.element.Element;
@@ -90,20 +91,20 @@ public class AutoSerializeUtils {
         return type;
     }
 
-    public ClassName pullMirroredClass(Supplier<Class<?>> supplier, String defaultPackageName) {
+    public Optional<ClassName> pullMirroredClass(Supplier<Class<?>> supplier, String defaultPackageName) {
         try {
-            return ClassName.get(supplier.get());
+            return Optional.of(ClassName.get(supplier.get()));
         } catch (final MirroredTypeException e) {
             return buildClassName(e, e.getTypeMirror(), defaultPackageName);
         }
     }
 
-    private ClassName buildClassName(final MirroredTypeException e, final TypeMirror type, final String defaultPackageName) {
+    private Optional<ClassName> buildClassName(final MirroredTypeException e, final TypeMirror type, final String defaultPackageName) {
         if (type instanceof ErrorType) {
-            throw new IllegalArgumentException("Got ErroType when attempting to access Class", e);
+            return Optional.empty();
         }
 
-        return (ClassName)TypeName.get(type);
+        return Optional.of((ClassName)TypeName.get(type));
     }
 
     /**

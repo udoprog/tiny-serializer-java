@@ -3,6 +3,7 @@ package eu.toolchain.serializer.processor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
@@ -10,6 +11,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -31,7 +33,7 @@ public class AutoSerializeAbstractProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    SerializedType process(final TypeElement element) {
+    public SerializedType process(final TypeElement element) throws ElementException {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final String serializerName = statements.serializerName(element);
         final String name = utils.serializedName(element);
@@ -100,7 +102,7 @@ public class AutoSerializeAbstractProcessor {
                 .addStatement("return $N.deserialize($N)", serializer, buffer).build();
     }
 
-    List<SerializedSubType> buildSubTypes(Element element, final String defaultPackageName) {
+    List<SerializedSubType> buildSubTypes(Element element, final String defaultPackageName) throws ElementException {
         final AutoSerialize.SubTypes annotation = element.getAnnotation(AutoSerialize.SubTypes.class);
 
         if (annotation == null) {
@@ -113,17 +115,33 @@ public class AutoSerializeAbstractProcessor {
         int offset = 0;
         final ShortIterator index = new ShortIterator();
 
+        final ImmutableList.Builder<String> errors = ImmutableList.builder();
+
         for (final AutoSerialize.SubType s : annotation.value()) {
-            final ClassName type = utils.pullMirroredClass(s::value, defaultPackageName);
+            final Optional<ClassName> optionalType = utils.pullMirroredClass(s::value, defaultPackageName);
+
+            if (!optionalType.isPresent()) {
+                errors.add("@AutoSerialize.SubType(value=<class>) does not reference a valid Class");
+                continue;
+            }
+
+            final ClassName type = optionalType.get();
+
             final short id = s.id() < 0 ? index.next() : s.id();
 
             if (!seenIds.add(id)) {
-                throw new IllegalStateException(String.format("Conflicting subtype id (%d) defined for definition #%d",
-                        id, offset));
+                errors.add(String.format("Conflicting subtype id (%d) defined for definition #%d", id, offset));
+                continue;
             }
 
             subtypes.add(new SerializedSubType(type, id));
             offset++;
+        }
+
+        final List<String> e;
+
+        if (!(e = errors.build()).isEmpty()) {
+            throw new ElementException(e, element);
         }
 
         return subtypes.build();

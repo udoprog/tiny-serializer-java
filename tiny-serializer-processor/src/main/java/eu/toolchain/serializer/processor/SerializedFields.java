@@ -76,7 +76,7 @@ class SerializedFields {
                 errors.add();
                 final String message = String.format("No matching accessor found, expected %s %s()",
                         field.getType().getTypeName(), field.getAccessor());
-                errors.add(new SerializedTypeError(Diagnostic.Kind.ERROR, message, Optional.of(field.getElement())));
+                errors.add(new SerializedTypeError(message, Optional.of(field.getElement())));
             }
         }
 

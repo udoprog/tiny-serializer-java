@@ -1,6 +1,7 @@
 package eu.toolchain.serializer.processor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
@@ -10,7 +11,6 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -34,7 +34,7 @@ public class AutoSerializeClassProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    SerializedType process(final TypeElement element) {
+    public SerializedType process(final TypeElement element) throws ElementException {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final String name = utils.serializedName(element);
 
