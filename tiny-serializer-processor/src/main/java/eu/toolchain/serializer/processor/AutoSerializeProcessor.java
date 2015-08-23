@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.JavaFile;
 
 import eu.toolchain.serializer.AutoSerialize;
+import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 
 @AutoService(Processor.class)
 public class AutoSerializeProcessor extends AbstractProcessor {
@@ -170,20 +171,28 @@ public class AutoSerializeProcessor extends AbstractProcessor {
     }
 
     Optional<SerializedType> processElement(TypeElement element) throws ElementException {
+        final Optional<AutoSerializeMirror> annotation = utils.autoSerialize(element);
+
+        if (!annotation.isPresent()) {
+            throw new ElementException("@AutoSerialize annotation not present", element);
+        }
+
+        final AutoSerializeMirror autoSerialize = annotation.get();
+
         if (element.getKind() == ElementKind.INTERFACE) {
             if (utils.useBuilder(element)) {
-                return Optional.of(classProcessor.process(element));
+                return Optional.of(classProcessor.process(element, autoSerialize));
             } else {
-                return Optional.of(abstractProcessor.process(element));
+                return Optional.of(abstractProcessor.process(element, autoSerialize));
             }
         }
 
         if (element.getKind() == ElementKind.CLASS) {
             if (element.getModifiers().contains(Modifier.ABSTRACT) && !utils.useBuilder(element)) {
-                return Optional.of(abstractProcessor.process(element));
+                return Optional.of(abstractProcessor.process(element, autoSerialize));
             }
 
-            return Optional.of(classProcessor.process(element));
+            return Optional.of(classProcessor.process(element, autoSerialize));
         }
 
         return Optional.empty();

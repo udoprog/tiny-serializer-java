@@ -23,6 +23,7 @@ import com.squareup.javapoet.TypeSpec;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.SerializerFramework;
+import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -34,7 +35,7 @@ public class AutoSerializeClassProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    public SerializedType process(final TypeElement element) throws ElementException {
+    public SerializedType process(final TypeElement element, final AutoSerializeMirror autoSerialize) throws ElementException {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final String name = utils.serializedName(element);
 

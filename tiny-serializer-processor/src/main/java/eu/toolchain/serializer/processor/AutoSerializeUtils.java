@@ -2,10 +2,15 @@ package eu.toolchain.serializer.processor;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ErrorType;
@@ -15,6 +20,8 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -22,6 +29,9 @@ import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
+import eu.toolchain.serializer.processor.annotation.BuilderMirror;
+import eu.toolchain.serializer.processor.annotation.FieldMirror;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -133,5 +143,51 @@ public class AutoSerializeUtils {
      */
     public TypeElement refetch(TypeElement element) {
         return elements.getTypeElement(element.getQualifiedName());
+    }
+
+    public List<AnnotationMirror> getAnnotations(Element element, Class<? extends Annotation> annotationType) {
+        final String lookFor = annotationType.getCanonicalName();
+
+        final ImmutableList.Builder<AnnotationMirror> results = ImmutableList.builder();
+
+        for (final AnnotationMirror annotation : element.getAnnotationMirrors()) {
+            if (!annotation.getAnnotationType().toString().equals(lookFor)) {
+                continue;
+            }
+
+            results.add(annotation);
+        }
+
+        return results.build();
+    }
+
+    public AnnotationValues getElementValuesWithDefaults(AnnotationMirror a) {
+        final ImmutableMap.Builder<String, AnnotationValue> builder = ImmutableMap.builder();
+
+        for (Entry<? extends ExecutableElement, ? extends AnnotationValue> e : elements.getElementValuesWithDefaults(a).entrySet()) {
+            builder.put(e.getKey().getSimpleName().toString(), e.getValue());
+        }
+
+        return new AnnotationValues(builder.build());
+    }
+
+    public <T extends Annotation> Optional<AnnotationMirror> annotation(Element element, Class<T> annotationType) {
+        for (final AnnotationMirror a : getAnnotations(element, annotationType)) {
+            return Optional.of(a);
+        }
+
+        return Optional.empty();
+    }
+
+    public Optional<AutoSerializeMirror> autoSerialize(Element element) {
+        return annotation(element, AutoSerialize.class).map((a) -> AutoSerializeMirror.getFor(this, a));
+    }
+
+    public Optional<FieldMirror> field(Element element) {
+        return annotation(element, AutoSerialize.Field.class).map((a) -> FieldMirror.getFor(this, a));
+    }
+
+    public Optional<BuilderMirror> builder(Element element) {
+        return annotation(element, AutoSerialize.Builder.class).map((a) -> BuilderMirror.getFor(this, a));
     }
 }

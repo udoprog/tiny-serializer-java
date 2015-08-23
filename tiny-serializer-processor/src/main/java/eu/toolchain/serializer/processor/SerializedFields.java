@@ -11,7 +11,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.tools.Diagnostic;
+import javax.lang.model.element.TypeElement;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -20,6 +20,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
+import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -83,8 +84,15 @@ class SerializedFields {
         return errors.build();
     }
 
-    public static SerializedFields build(final AutoSerializeUtils utils, final Element element, final Set<ElementKind> kinds) {
-        final AutoSerialize autoSerialize = utils.requireAnnotation(element, AutoSerialize.class);
+    public static SerializedFields build(final AutoSerializeUtils utils, final TypeElement element, final Set<ElementKind> kinds) throws ElementException {
+        final Optional<AutoSerializeMirror> a = utils.autoSerialize(element);
+
+        if (!a.isPresent()) {
+            throw new ElementException("@AutoSerialize annotaiton not present", element);
+        }
+
+        final AutoSerializeMirror autoSerialize = a.get();
+        // final AutoSerialize autoSerialize = utils.requireAnnotation(element, AutoSerialize.class);
 
         final List<SerializedField> fields = new ArrayList<>();
 
@@ -93,7 +101,7 @@ class SerializedFields {
         final Naming fieldNaming = new Naming("s_");
         final Naming providerNaming = new Naming("p_");
 
-        for (final FieldInformation f : getFields(element, kinds, autoSerialize.useGetter())) {
+        for (final FieldInformation f : getFields(utils, element, kinds, autoSerialize.isUseGetter())) {
             final TypeName fieldType = TypeName.get(f.getFieldType());
             final TypeName serializerType = TypeName.get(utils.serializerFor(f.getFieldType()));
 
@@ -137,11 +145,11 @@ class SerializedFields {
                     f.getId(), f.getConstructorOrder()));
         }
 
-        return new SerializedFields(autoSerialize.orderById(), autoSerialize.orderConstructorById(),
+        return new SerializedFields(autoSerialize.isOrderById(), autoSerialize.isOrderConstructorById(),
                 ImmutableList.copyOf(fields), ImmutableList.copyOf(types));
     }
 
-    static Iterable<FieldInformation> getFields(final Element element, final Set<ElementKind> kinds, final boolean defaultUseGetter) {
+    static Iterable<FieldInformation> getFields(final AutoSerializeUtils utils, final TypeElement element, final Set<ElementKind> kinds, final boolean defaultUseGetter) {
         final ImmutableList.Builder<FieldInformation> builder = ImmutableList.builder();
 
         for (final Element e : element.getEnclosedElements()) {
@@ -158,7 +166,7 @@ class SerializedFields {
                 continue;
             }
 
-            builder.add(FieldInformation.build(e, defaultUseGetter));
+            builder.add(FieldInformation.build(utils, e, defaultUseGetter));
         }
 
         return builder.build();

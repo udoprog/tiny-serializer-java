@@ -14,6 +14,8 @@ import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.DefaultBuilderType;
+import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
+import eu.toolchain.serializer.processor.annotation.BuilderMirror;
 import lombok.Data;
 
 /**
@@ -23,10 +25,9 @@ import lombok.Data;
  */
 @Data
 public class SerializedTypeBuilder {
-    static final ClassName defaultBuilderType = ClassName.get(DefaultBuilderType.class);
     static final Joiner emptyJoiner = Joiner.on("");
 
-    final ClassName builderType;
+    final BuilderMirror builder;
 
     /**
      * If {@code true}, indicates that the constructor of the builder should be used when instantiating it.
@@ -45,14 +46,22 @@ public class SerializedTypeBuilder {
 
     public static Optional<SerializedTypeBuilder> build(final AutoSerializeUtils utils, final TypeElement element,
             final String defaultPackageName) throws ElementException {
-        final AutoSerialize autoSerialize = utils.requireAnnotation(element, AutoSerialize.class);
-        final Optional<AutoSerialize.Builder> direct = Optional.ofNullable(element.getAnnotation(AutoSerialize.Builder.class));
+
+        final Optional<AutoSerializeMirror> optionalAutoSerialize = utils.autoSerialize(element);
+
+        if (!optionalAutoSerialize.isPresent()) {
+            throw new ElementException("@AutoSerialize annotation is not present", element);
+        }
+
+        final AutoSerializeMirror autoSerialize = optionalAutoSerialize.get();
+
+        final Optional<BuilderMirror> direct = utils.builder(element);
 
         if (direct.isPresent()) {
             return Optional.of(build(direct.get(), element, utils, defaultPackageName));
         }
 
-        final Optional<AutoSerialize.Builder> nested = providedFrom(autoSerialize.builder());
+        final Optional<BuilderMirror> nested = autoSerialize.getBuilder().stream().findFirst();
 
         if (nested.isPresent()) {
             return Optional.of(build(nested.get(), element, utils, defaultPackageName));
@@ -61,44 +70,15 @@ public class SerializedTypeBuilder {
         return Optional.empty();
     }
 
-    static Optional<AutoSerialize.Builder> providedFrom(AutoSerialize.Builder[] builders) {
-        if (builders.length == 0) {
-            return Optional.empty();
-        }
-
-        return Optional.of(builders[0]);
-    }
-
-    static SerializedTypeBuilder build(AutoSerialize.Builder builder, final TypeElement element,
+    static SerializedTypeBuilder build(final BuilderMirror builder, final TypeElement element,
             final AutoSerializeUtils utils, final String defaultPackageName) throws ElementException {
-        final Optional<ClassName> optionalBuilderType = utils.pullMirroredClass(builder::type, defaultPackageName);
 
-        if (!optionalBuilderType.isPresent()) {
+        if (builder.isErrorType()) {
             throw new ElementException("@AutoSerialize.Builder(type=<class>) does not reference a valid Class", element);
         }
 
-        final ClassName builderType = optionalBuilderType.get();
-        final boolean useConstructor = shouldUseConstructor(builderType, builder);
-        return new SerializedTypeBuilder(builderType, useConstructor, builder.useSetter(), builder.methodName());
-    }
-
-    private static boolean shouldUseConstructor(ClassName builderType, AutoSerialize.Builder builder) {
-        // use explicitly ask to use method.
-        if (builder.useMethod()) {
-            return false;
-        }
-
-        // use explicitly ask to use constructor.
-        if (builder.useConstructor()) {
-            return true;
-        }
-
-        // by policy, if a type is specified, the constructor should be used.
-        if (!builderType.equals(defaultBuilderType)) {
-            return true;
-        }
-
-        return false;
+        final boolean useConstructor = builder.shouldUseConstructor();
+        return new SerializedTypeBuilder(builder, useConstructor, builder.isUseSetter(), builder.getMethodName());
     }
 
     public void writeTo(ClassName returnType, MethodSpec.Builder b, List<SerializedField> variables) {
@@ -129,19 +109,11 @@ public class SerializedTypeBuilder {
     }
 
     TypeName getBuilderTypeForConstructor(ClassName returnType) {
-        if (!builderType.equals(defaultBuilderType)) {
-            return builderType;
-        }
-
-        return returnType.nestedClass("Builder");
+        return builder.getType().map((t) -> TypeName.get(t)).orElse(returnType.nestedClass("Builder"));
     }
 
     TypeName getBuilderTypeForMethod(ClassName returnType) {
-        if (!builderType.equals(defaultBuilderType)) {
-            return builderType;
-        }
-
-        return returnType;
+        return builder.getType().map((t) -> TypeName.get(t)).orElse(returnType);
     }
 
     String builderSetter(final SerializedField f) {

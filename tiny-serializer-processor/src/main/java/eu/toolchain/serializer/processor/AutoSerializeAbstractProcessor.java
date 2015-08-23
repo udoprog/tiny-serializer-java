@@ -11,7 +11,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -25,6 +24,7 @@ import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.SerializerFramework.TypeMapping;
+import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class AutoSerializeAbstractProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    public SerializedType process(final TypeElement element) throws ElementException {
+    public SerializedType process(final TypeElement element, final AutoSerializeMirror autoSerialize) throws ElementException {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final String serializerName = statements.serializerName(element);
         final String name = utils.serializedName(element);
@@ -56,9 +56,7 @@ public class AutoSerializeAbstractProcessor {
         generated.addMethod(serializeMethod(elementType, serializer));
         generated.addMethod(deserializeMethod(elementType, serializer));
 
-        final AutoSerialize annotation = utils.requireAnnotation(element, AutoSerialize.class);
-
-        final SerializedFields fields = new SerializedFields(annotation.orderById(), annotation.orderConstructorById());
+        final SerializedFields fields = new SerializedFields(autoSerialize.isOrderById(), autoSerialize.isOrderConstructorById());
         return new SerializedType(element, packageName, name, generated.build(), elementType, supertype, fields);
     }
 
