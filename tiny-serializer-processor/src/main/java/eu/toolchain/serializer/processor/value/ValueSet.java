@@ -8,8 +8,13 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.AbstractElementVisitor8;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -84,6 +89,11 @@ public class ValueSet {
 
             // skip static fields.
             if (element.getModifiers().contains(Modifier.STATIC)) {
+                continue;
+            }
+
+            // ignore final field with constant value.
+            if (element instanceof VariableElement && ((VariableElement)element).getConstantValue() != null) {
                 continue;
             }
 

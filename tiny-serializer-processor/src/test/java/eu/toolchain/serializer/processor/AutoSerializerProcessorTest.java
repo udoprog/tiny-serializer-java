@@ -91,6 +91,11 @@ public class AutoSerializerProcessorTest {
     }
 
     @Test
+    public void testIgnoreFinalAssigned() {
+        verifySerializer("IgnoreFinalAssigned", "IgnoreFinalAssigned_Serializer");
+    }
+
+    @Test
     public void testInterfaceUsingBuilder() {
         verifySerializer("InterfaceUsingBuilder", "InterfaceUsingBuilder_Serializer");
     }
