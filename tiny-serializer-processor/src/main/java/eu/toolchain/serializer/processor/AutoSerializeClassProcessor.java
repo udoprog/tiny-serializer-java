@@ -26,6 +26,10 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
+import eu.toolchain.serializer.processor.value.Value;
+import eu.toolchain.serializer.processor.value.ValueSet;
+import eu.toolchain.serializer.processor.value.ValueType;
+import eu.toolchain.serializer.processor.value.ValueTypeBuilder;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -37,12 +41,12 @@ public class AutoSerializeClassProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    public Unverified<SerializedType> process(final TypeElement element, final AutoSerializeMirror autoSerialize) {
+    public Unverified<JavaFile> process(final TypeElement element, final AutoSerializeMirror autoSerialize) {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final Set<ElementKind> kinds = getKinds(element);
 
-        final Unverified<Optional<SerializedTypeBuilder>> unverifiedBuilder = SerializedTypeBuilder.build(utils, element, autoSerialize);
-        final Unverified<SerializedFields> unverifiedFields = SerializedFields.build(utils, element, kinds, autoSerialize);
+        final Unverified<Optional<ValueTypeBuilder>> unverifiedBuilder = ValueTypeBuilder.build(utils, element, autoSerialize);
+        final Unverified<ValueSet> unverifiedFields = ValueSet.build(utils, element, kinds, autoSerialize);
 
         final ClassName elementType = (ClassName) TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
@@ -50,30 +54,24 @@ public class AutoSerializeClassProcessor {
 
         final Unverified<?> combineDifferent = Unverified.combineDifferent(unverifiedFields, unverifiedBuilder);
 
-        return combineDifferent.<SerializedType> map((o) -> {
-            final SerializedFields fields = unverifiedFields.get();
-            final Optional<SerializedTypeBuilder> builder = unverifiedBuilder.get();
+        return combineDifferent.map((o) -> {
+            final ValueSet values = unverifiedFields.get();
+            final Optional<ValueTypeBuilder> builder = unverifiedBuilder.get();
 
-            return new SerializedType() {
-                @Override
-                public JavaFile asJavaFile() {
-                    final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
+            final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
 
-                    for (final SerializedFieldType t : fields.getFieldTypes()) {
-                        generated.addField(t.getFieldSpec());
-                    }
+            for (final ValueType t : values.getTypes()) {
+                generated.addField(t.getFieldSpec());
+            }
 
-                    generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
-                    generated.addSuperinterface(supertype);
+            generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+            generated.addSuperinterface(supertype);
 
-                    generated.addMethod(constructor(fields));
-                    generated.addMethod(serializeMethod(elementType, fields));
-                    generated.addMethod(deserializeMethod(elementType, fields, builder));
+            generated.addMethod(constructor(values));
+            generated.addMethod(serializeMethod(elementType, values));
+            generated.addMethod(deserializeMethod(elementType, values, builder));
 
-                    return JavaFile.builder(packageName, generated.build()).skipJavaLangImports(true).indent("    ")
-                            .build();
-                }
-            };
+            return JavaFile.builder(packageName, generated.build()).skipJavaLangImports(true).indent("    ").build();
         });
     }
 
@@ -101,7 +99,7 @@ public class AutoSerializeClassProcessor {
         return kinds.build();
     }
 
-    MethodSpec constructor(final SerializedFields serialized) {
+    MethodSpec constructor(final ValueSet values) {
         final ParameterSpec framework = ParameterSpec.builder(SerializerFramework.class, "framework")
                 .addModifiers(Modifier.FINAL).build();
 
@@ -109,13 +107,13 @@ public class AutoSerializeClassProcessor {
         b.addModifiers(Modifier.PUBLIC);
         b.addParameter(framework);
 
-        for (final SerializedFieldType t : serialized.getOrderedFieldTypes()) {
+        for (final ValueType t : values.getOrderedTypes()) {
             if (t.getProvidedParameterSpec().isPresent()) {
                 b.addParameter(t.getProvidedParameterSpec().get());
             }
         }
 
-        for (final SerializedFieldType fieldType : serialized.getOrderedFieldTypes()) {
+        for (final ValueType fieldType : values.getOrderedTypes()) {
             if (fieldType.getProvidedParameterSpec().isPresent()) {
                 b.addStatement("$N = $N", fieldType.getFieldSpec(), fieldType.getProvidedParameterSpec().get());
                 continue;
@@ -136,12 +134,12 @@ public class AutoSerializeClassProcessor {
         return b.build();
     }
 
-    MethodSpec serializeMethod(final TypeName valueType, final SerializedFields serialized) {
+    MethodSpec serializeMethod(final TypeName valueType, final ValueSet serialized) {
         final ParameterSpec buffer = utils.parameter(TypeName.get(SerialWriter.class), "buffer");
         final ParameterSpec value = utils.parameter(valueType, "value");
         final MethodSpec.Builder b = utils.serializeMethod(buffer, value);
 
-        for (final SerializedField field : serialized.getOrderedFields()) {
+        for (final Value field : serialized.getOrderedValues()) {
             b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer, value,
                     field.getAccessor());
         }
@@ -149,19 +147,19 @@ public class AutoSerializeClassProcessor {
         return b.build();
     }
 
-    MethodSpec deserializeMethod(ClassName returnType, SerializedFields serializedType,
-            Optional<SerializedTypeBuilder> typeBuilder) {
+    MethodSpec deserializeMethod(ClassName returnType, ValueSet serializedType,
+            Optional<ValueTypeBuilder> typeBuilder) {
         final ParameterSpec buffer = utils.parameter(TypeName.get(SerialReader.class), "buffer");
         final MethodSpec.Builder b = utils.deserializeMethod(returnType, buffer);
 
-        for (final SerializedField field : serializedType.getOrderedFields()) {
+        for (final Value field : serializedType.getOrderedValues()) {
             final TypeName fieldType = field.getType().getTypeName();
             final FieldSpec fieldSpec = field.getType().getFieldSpec();
             b.addStatement("final $T $L = $N.deserialize($N)", fieldType, field.getVariableName(), fieldSpec, buffer);
         }
 
         if (typeBuilder.isPresent()) {
-            typeBuilder.get().writeTo(returnType, b, serializedType.getFields());
+            typeBuilder.get().writeTo(returnType, b, serializedType.getValues());
         } else {
             b.addStatement("return new $T($L)", returnType,
                     parameterJoiner.join(serializedType.getConstructorVariables()));

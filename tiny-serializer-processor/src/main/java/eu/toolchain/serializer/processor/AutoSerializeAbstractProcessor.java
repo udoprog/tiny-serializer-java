@@ -3,7 +3,6 @@ package eu.toolchain.serializer.processor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
@@ -27,6 +26,7 @@ import eu.toolchain.serializer.SerializerFramework.TypeMapping;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
+import eu.toolchain.serializer.processor.value.ValueSubType;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -35,34 +35,31 @@ public class AutoSerializeAbstractProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    public Unverified<SerializedType> process(final TypeElement element, final AutoSerializeMirror autoSerialize) {
+    public Unverified<JavaFile> process(final TypeElement element, final AutoSerializeMirror autoSerialize) {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final String serializerName = statements.serializerName(element);
 
         final TypeName elementType = TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
 
-        return buildSubTypes(element, packageName).map((subtypes) -> 
-            () -> {
-                final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
+        return subTypes(element, packageName).map((subTypes) -> {
+            final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
 
-                generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
-                generated.addSuperinterface(supertype);
+            generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+            generated.addSuperinterface(supertype);
 
-                final FieldSpec serializer = FieldSpec.builder(supertype, "serializer", Modifier.FINAL).build();
-                generated.addField(serializer);
+            final FieldSpec serializer = FieldSpec.builder(supertype, "serializer", Modifier.FINAL).build();
+            generated.addField(serializer);
 
-                generated.addMethod(constructor(elementType, serializer, subtypes));
-                generated.addMethod(serializeMethod(elementType, serializer));
-                generated.addMethod(deserializeMethod(elementType, serializer));
+            generated.addMethod(constructor(elementType, serializer, subTypes));
+            generated.addMethod(serialize(elementType, serializer));
+            generated.addMethod(derialize(elementType, serializer));
 
-                return JavaFile.builder(packageName, generated.build()).skipJavaLangImports(true).indent("    ")
-                        .build();
-            }
-        );
+            return JavaFile.builder(packageName, generated.build()).skipJavaLangImports(true).indent("    ").build();
+        });
     }
 
-    MethodSpec constructor(TypeName elementType, FieldSpec serializer, final List<SerializedSubType> subtypes) {
+    MethodSpec constructor(final TypeName elementType, final FieldSpec serializer, final List<ValueSubType> subtypes) {
         final ClassName list = ClassName.get(List.class);
         final ClassName typeMapping = ClassName.get(TypeMapping.class);
         final ClassName arrayList = ClassName.get(ArrayList.class);
@@ -78,31 +75,31 @@ public class AutoSerializeAbstractProcessor {
         b.addStatement("final $T<$T<? extends $T, $T>> mappings = new $T<>()", list, typeMapping, elementType,
                 elementType, arrayList);
 
-        for (final SerializedSubType subtype : subtypes) {
-            final ClassName serializerType = statements.serializerClassFor(subtype.type);
+        for (final ValueSubType subtype : subtypes) {
+            final ClassName serializerType = statements.serializerClassFor(subtype.getType());
 
-            b.addStatement("mappings.add($N.<$T, $T>type($L, $T.class, new $T($N)))", framework, subtype.type,
-                    elementType, subtype.id, subtype.type, serializerType, framework);
+            b.addStatement("mappings.add($N.<$T, $T>type($L, $T.class, new $T($N)))", framework, subtype.getType(),
+                    elementType, subtype.getId(), subtype.getType(), serializerType, framework);
         }
 
         b.addStatement("$N = $N.subtypes(mappings)", serializer, framework);
         return b.build();
     }
 
-    MethodSpec serializeMethod(TypeName valueType, FieldSpec serializer) {
+    MethodSpec serialize(final TypeName valueType, final FieldSpec serializer) {
         final ParameterSpec buffer = utils.parameter(TypeName.get(SerialWriter.class), "buffer");
         final ParameterSpec value = utils.parameter(valueType, "value");
         return utils.serializeMethod(buffer, value).addStatement("$N.serialize($N, $N)", serializer, buffer, value)
                 .build();
     }
 
-    MethodSpec deserializeMethod(TypeName returnType, FieldSpec serializer) {
+    MethodSpec derialize(final TypeName returnType, final FieldSpec serializer) {
         final ParameterSpec buffer = utils.parameter(TypeName.get(SerialReader.class), "buffer");
         return utils.deserializeMethod(returnType, buffer)
                 .addStatement("return $N.deserialize($N)", serializer, buffer).build();
     }
 
-    Unverified<List<SerializedSubType>> buildSubTypes(Element element, final String defaultPackageName) {
+    Unverified<List<ValueSubType>> subTypes(Element element, final String defaultPackageName) {
         return utils.subTypes(element).map((unverifiedSubTypes) -> {
             return unverifiedSubTypes.transform((subTypes) -> {
                 final Set<Short> seenIds = new HashSet<>();
@@ -110,7 +107,7 @@ public class AutoSerializeAbstractProcessor {
                 int offset = 0;
                 final ShortIterator index = new ShortIterator();
 
-                final ImmutableList.Builder<Unverified<SerializedSubType>> results = ImmutableList.builder();
+                final ImmutableList.Builder<Unverified<ValueSubType>> results = ImmutableList.builder();
 
                 for (final SubTypeMirror s : subTypes.getSubTypes()) {
                     final ClassName type = (ClassName)TypeName.get(s.getValue().get());
@@ -122,7 +119,7 @@ public class AutoSerializeAbstractProcessor {
                         continue;
                     }
 
-                    results.add(Unverified.verified(new SerializedSubType(type, id)));
+                    results.add(Unverified.verified(new ValueSubType(type, id)));
                     offset++;
                 }
 

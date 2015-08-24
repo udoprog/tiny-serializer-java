@@ -23,6 +23,7 @@ import javax.tools.Diagnostic;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.JavaFile;
 
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
@@ -98,7 +99,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         final List<Processed> processed = processElements(elementsToProcess.build());
 
         for (final Processed p : processed) {
-            final Unverified<SerializedType> serializer = p.getType();
+            final Unverified<JavaFile> serializer = p.getFile();
 
             if (!serializer.isVerified()) {
                 deferred.add(p.processing.withBroken(serializer));
@@ -106,7 +107,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
             }
 
             try {
-                serializer.get().asJavaFile().writeTo(filer);
+                serializer.get().writeTo(filer);
             } catch (final Exception e) {
                 messager.printMessage(Diagnostic.Kind.ERROR, "Failed to write:\n" + Throwables.getStackTraceAsString(e), p.getProcessing().getElement());
             }
@@ -131,14 +132,14 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         for (final DeferredProcessing processing : elements) {
             messager.printMessage(Diagnostic.Kind.NOTE, String.format("Processing %s", processing.getElement()));
 
-            final Unverified<SerializedType> result = processElement(processing.getElement());
+            final Unverified<JavaFile> result = processElement(processing.getElement());
             processed.add(new Processed(result, processing));
         }
 
         return processed;
     }
 
-    Unverified<SerializedType> processElement(TypeElement element) {
+    Unverified<JavaFile> processElement(TypeElement element) {
         final Optional<Unverified<AutoSerializeMirror>> annotation = utils.autoSerialize(element);
 
         if (!annotation.isPresent()) {
@@ -147,7 +148,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         final Unverified<AutoSerializeMirror> unverifiedAutoSerialize = annotation.get();
 
-        return unverifiedAutoSerialize.<SerializedType> transform((autoSerialize) -> {
+        return unverifiedAutoSerialize.<JavaFile> transform((autoSerialize) -> {
             if (element.getKind() == ElementKind.INTERFACE) {
                 if (utils.useBuilder(element)) {
                     return classProcessor.process(element, autoSerialize);
@@ -170,7 +171,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
     @Data
     public static class Processed {
-        final Unverified<SerializedType> type;
+        final Unverified<JavaFile> file;
         final DeferredProcessing processing;
     }
 }

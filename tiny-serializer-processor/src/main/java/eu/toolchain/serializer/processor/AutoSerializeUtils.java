@@ -68,7 +68,7 @@ public class AutoSerializeUtils {
         return b;
     }
 
-    public ParameterSpec parameter(TypeName type, String name) {
+    public ParameterSpec parameter(final TypeName type, final String name) {
         return ParameterSpec.builder(type, name).addModifiers(Modifier.FINAL).build();
     }
 

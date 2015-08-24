@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.processor;
+package eu.toolchain.serializer.processor.value;
 
 import java.util.Optional;
 
@@ -7,10 +7,9 @@ import javax.lang.model.element.Element;
 import lombok.Data;
 
 @Data
-class SerializedField {
-    private final Element element;
-    private final SerializedFieldType type;
-    private final String fieldName;
+public class Value {
+    private final ValueType type;
+    private final String name;
     private final String accessor;
     private final String variableName;
     private final Optional<Integer> id;
