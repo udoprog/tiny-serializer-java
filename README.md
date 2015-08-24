@@ -2,13 +2,13 @@
 
 A small serialization framework for Java for Immutable objects.
 
-* Simple, compsable serializer interface with little fuzz.
-* Optionally removes boilerplate through reflection-free
+* Simple, composable serializer interface with little fuzz.
+* Optionally remove boilerplate through reflection-free
   [annotation processing](#generated-serializers).
 * No static components, the framework uses an instance of `SerializerFramework`
   as its main contact point.
   See the [Setup](#setup) section.
-* Encourages [immutable objects](#immutable-objects).
+* Works great with [immutable objects](#immutable-objects).
 
 Topics:
 
