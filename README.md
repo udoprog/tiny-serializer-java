@@ -1,6 +1,6 @@
 # TinySerializer
 
-A small serialization framework for Java for Immutable objects.
+A tiny serialization framework for Java.
 
 * Simple, composable serializer interface with little fuzz.
 * Optionally remove boilerplate through reflection-free
