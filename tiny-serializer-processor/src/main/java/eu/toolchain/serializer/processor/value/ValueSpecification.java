@@ -47,14 +47,15 @@ public class ValueSpecification {
             useGetter = field.map(FieldMirror::isUseGetter).orElse(defaultUseGetter);
         }
 
-        final String fieldName = element.getSimpleName().toString();
-
         final boolean provided = field.map(FieldMirror::isProvided).orElse(false);
-        final String accessor = field.map(FieldMirror::getAccessor).filter((a) -> !a.isEmpty())
-                .orElseGet(getDefaultAccessor(fieldName, useGetter));
-        final Optional<String> providerName = field.map(FieldMirror::getProviderName).filter((p) -> !p.isEmpty());
-        final Optional<Integer> constructorOrder = field.map(FieldMirror::getConstructorOrder).filter((o) -> o >= 0);
-        final Optional<Integer> id = field.map(FieldMirror::getId).filter((o) -> o >= 0);
+
+        final String name = field.map(FieldMirror::getName).filter(n -> !n.trim().isEmpty())
+                .orElse(element.getSimpleName().toString());
+        final String accessor = field.map(FieldMirror::getAccessor).filter(a -> !a.trim().isEmpty())
+                .orElseGet(getDefaultAccessor(name, useGetter));
+        final Optional<String> providerName = field.map(FieldMirror::getProviderName).filter(p -> !p.trim().isEmpty());
+        final Optional<Integer> constructorOrder = field.map(FieldMirror::getConstructorOrder).filter(o -> o >= 0);
+        final Optional<Integer> id = field.map(FieldMirror::getId).filter(o -> o >= 0);
 
         if (!accessorMethodExists(parent, accessor, TypeName.get(valueType))) {
             final String message = String.format(String.format("Missing accessor %s %s()", valueType, accessor));
@@ -63,7 +64,7 @@ public class ValueSpecification {
                     .orElseGet(() -> Unverified.brokenElement(message, element));
         }
 
-        return Unverified.verified(new ValueSpecification(element, valueType, fieldName, provided, accessor,
+        return Unverified.verified(new ValueSpecification(element, valueType, name, provided, accessor,
                 constructorOrder, id, providerName));
     }
 

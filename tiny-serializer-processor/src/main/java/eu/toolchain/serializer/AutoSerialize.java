@@ -96,6 +96,23 @@ public @interface AutoSerialize {
     @Target({ ElementType.PARAMETER, ElementType.FIELD, ElementType.METHOD })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Field {
+        /**
+         * Override field name.
+         *
+         * By default, the field name is derived from the name of the field or method.
+         *
+         * @return The configured field name, or empty string if none is configured.
+         */
+        String name() default "";
+
+        /**
+         * Override accessor name.
+         *
+         * By default, the accessor will be the same as the field name. If {@link #useGetter()} or
+         * {@link AutoSerialize#useGetter()} is {@code true}, will use a getter derived from the name.
+         *
+         * @return The configured accessor, or empty string if none is configured.
+         */
         String accessor() default "";
 
         /**
