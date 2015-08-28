@@ -25,7 +25,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.JavaFile;
 
-import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.Data;
@@ -87,7 +86,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
             deferred.clear();
         }
 
-        for (final Element e : env.getElementsAnnotatedWith(AutoSerialize.class)) {
+        for (final Element e : env.getElementsAnnotatedWith(utils.autoSerializeType())) {
             if (!(e instanceof TypeElement)) {
                 messager.printMessage(Diagnostic.Kind.WARNING, String.format("Skipping non-type element %s", e));
                 continue;
@@ -118,7 +117,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return ImmutableSet.of(AutoSerialize.class.getName());
+        return ImmutableSet.of(AutoSerializeUtils.AUTOSERIALIZE);
     }
 
     @Override
@@ -150,7 +149,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         return unverifiedAutoSerialize.<JavaFile> transform((autoSerialize) -> {
             if (element.getKind() == ElementKind.INTERFACE) {
-                if (utils.useBuilder(element)) {
+                if (autoSerialize.getBuilder().isPresent()) {
                     return classProcessor.process(element, autoSerialize);
                 } else {
                     return abstractProcessor.process(element, autoSerialize);
@@ -158,7 +157,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
             }
 
             if (element.getKind() == ElementKind.CLASS) {
-                if (element.getModifiers().contains(Modifier.ABSTRACT) && !utils.useBuilder(element)) {
+                if (element.getModifiers().contains(Modifier.ABSTRACT) && !autoSerialize.getBuilder().isPresent()) {
                     return abstractProcessor.process(element, autoSerialize);
                 }
 

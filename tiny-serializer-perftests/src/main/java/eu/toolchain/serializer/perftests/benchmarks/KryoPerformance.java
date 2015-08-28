@@ -14,6 +14,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import de.javakaffee.kryoserializers.guava.ImmutableListSerializer;
 import eu.toolchain.serializer.perftests.MutableSerializedObject;
 import eu.toolchain.serializer.perftests.ObjectHelper;
 import eu.toolchain.serializer.perftests.OutputStreamHelper;
@@ -24,6 +25,11 @@ public class KryoPerformance {
     final OutputStream nullStream = OutputStreamHelper.newNullStream();
 
     final Kryo kryo = new Kryo();
+
+    {
+        ImmutableListSerializer.registerSerializers(kryo);
+    }
+
     final Output kryoOutput = new Output(nullStream);
 
     final Supplier<InputStream> inputObject = ObjectHelper.supplyInputStreamFrom(() -> {

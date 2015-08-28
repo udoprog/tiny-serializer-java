@@ -11,9 +11,9 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
+import eu.toolchain.serializer.perftests.MutableSerializedObject;
 import eu.toolchain.serializer.perftests.ObjectHelper;
 import eu.toolchain.serializer.perftests.OutputStreamHelper;
-import eu.toolchain.serializer.perftests.MutableSerializedObject;
 
 @State(Scope.Benchmark)
 public class FSTPerformance {

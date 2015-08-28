@@ -10,16 +10,12 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.AbstractElementVisitor8;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 
-import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
@@ -70,7 +66,7 @@ public class ValueSet {
             final Set<ElementKind> kinds, final AutoSerializeMirror autoSerialize) {
         final ValueSetBuilder valueSet = new ValueSetBuilder(utils);
 
-        for (final Unverified<ValueSpecification> value : parseVAlueSgetValues(utils, element, kinds,
+        for (final Unverified<ValueSpecification> value : parseValues(utils, element, kinds,
                 autoSerialize.isUseGetter())) {
             valueSet.add(value);
         }
@@ -78,7 +74,7 @@ public class ValueSet {
         return valueSet.build(autoSerialize.isOrderById(), autoSerialize.isOrderConstructorById());
     }
 
-    static Iterable<Unverified<ValueSpecification>> parseVAlueSgetValues(final AutoSerializeUtils utils,
+    static Iterable<Unverified<ValueSpecification>> parseValues(final AutoSerializeUtils utils,
             final TypeElement enclosing, final Set<ElementKind> kinds, final boolean defaultUseGetter) {
         final ImmutableList.Builder<Unverified<ValueSpecification>> builder = ImmutableList.builder();
 
@@ -87,7 +83,7 @@ public class ValueSet {
                 continue;
             }
 
-            // skip static fields.
+            // skip static fields/methods.
             if (element.getModifiers().contains(Modifier.STATIC)) {
                 continue;
             }
@@ -97,8 +93,16 @@ public class ValueSet {
                 continue;
             }
 
-            if (element.getAnnotation(AutoSerialize.Ignore.class) != null) {
+            if (utils.ignore(element).isPresent()) {
                 continue;
+            }
+
+            if (element instanceof ExecutableElement) {
+                final ExecutableElement e = (ExecutableElement)element;
+
+                if (!e.getModifiers().contains(Modifier.ABSTRACT)) {
+                    continue;
+                }
             }
 
             builder.add(ValueSpecification.build(utils, enclosing, element, defaultUseGetter));

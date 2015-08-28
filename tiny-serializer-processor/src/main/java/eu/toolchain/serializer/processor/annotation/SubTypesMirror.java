@@ -1,15 +1,12 @@
 package eu.toolchain.serializer.processor.annotation;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 
 import com.google.common.collect.ImmutableList;
 
-import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.Data;

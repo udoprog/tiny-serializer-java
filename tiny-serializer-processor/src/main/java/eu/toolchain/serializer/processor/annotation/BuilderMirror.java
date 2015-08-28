@@ -6,14 +6,12 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 
-import eu.toolchain.serializer.DefaultBuilderType;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.Data;
 
 @Data
 public class BuilderMirror {
-    private static final String defaultBuilderType = DefaultBuilderType.class.getCanonicalName();
     private final AnnotationMirror annotation;
 
     private final boolean useSetter;
@@ -33,7 +31,7 @@ public class BuilderMirror {
         final Unverified<AnnotationValues.Value<TypeMirror>> unverifiedType = values.getTypeMirror("type");
 
         return unverifiedType.map((type) -> {
-            final Optional<AnnotationValues.Value<TypeMirror>> typeMirror = Optional.of(type).filter((t) -> !t.get().toString().equals(defaultBuilderType));
+            final Optional<AnnotationValues.Value<TypeMirror>> typeMirror = Optional.of(type).filter((t) -> !t.get().toString().equals(AutoSerializeUtils.DEFAULT_BUILDER_TYPE));
             return new BuilderMirror(a, useSetter, useMethod, useConstructor, typeMirror, methodName);
         });
     }

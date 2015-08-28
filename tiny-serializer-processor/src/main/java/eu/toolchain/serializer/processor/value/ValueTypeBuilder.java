@@ -49,7 +49,7 @@ public class ValueTypeBuilder {
                 return Optional.of(build(direct, element, utils));
             });
         }).orElseGet(() -> {
-            return Unverified.verified(autoSerialize.getBuilder().stream().findFirst().map((nested) -> {
+            return Unverified.verified(autoSerialize.getBuilder().map((nested) -> {
                 return Optional.of(build(nested, element, utils));
             }).orElse(Optional.empty()));
         });

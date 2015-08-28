@@ -19,10 +19,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import eu.toolchain.serializer.SerialReader;
-import eu.toolchain.serializer.SerialWriter;
-import eu.toolchain.serializer.SerializerFramework;
-import eu.toolchain.serializer.SerializerFramework.TypeMapping;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
@@ -44,11 +40,11 @@ public class AutoSerializeAbstractProcessor {
 
         return subTypes(element, packageName).map((subTypes) -> {
             final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
+            final FieldSpec serializer = FieldSpec.builder(supertype, "serializer", Modifier.FINAL).build();
 
             generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
             generated.addSuperinterface(supertype);
 
-            final FieldSpec serializer = FieldSpec.builder(supertype, "serializer", Modifier.FINAL).build();
             generated.addField(serializer);
 
             generated.addMethod(constructor(elementType, serializer, subTypes));
@@ -61,10 +57,10 @@ public class AutoSerializeAbstractProcessor {
 
     MethodSpec constructor(final TypeName elementType, final FieldSpec serializer, final List<ValueSubType> subtypes) {
         final ClassName list = ClassName.get(List.class);
-        final ClassName typeMapping = ClassName.get(TypeMapping.class);
+        final ClassName typeMapping = utils.typeMapping();
         final ClassName arrayList = ClassName.get(ArrayList.class);
 
-        final ParameterSpec framework = ParameterSpec.builder(SerializerFramework.class, "framework")
+        final ParameterSpec framework = ParameterSpec.builder(utils.serializerFramework(), "framework")
                 .addModifiers(Modifier.FINAL).build();
 
         final MethodSpec.Builder b = MethodSpec.constructorBuilder();
@@ -87,14 +83,14 @@ public class AutoSerializeAbstractProcessor {
     }
 
     MethodSpec serialize(final TypeName valueType, final FieldSpec serializer) {
-        final ParameterSpec buffer = utils.parameter(TypeName.get(SerialWriter.class), "buffer");
+        final ParameterSpec buffer = utils.parameter(utils.serialWriter(), "buffer");
         final ParameterSpec value = utils.parameter(valueType, "value");
         return utils.serializeMethod(buffer, value).addStatement("$N.serialize($N, $N)", serializer, buffer, value)
                 .build();
     }
 
     MethodSpec derialize(final TypeName returnType, final FieldSpec serializer) {
-        final ParameterSpec buffer = utils.parameter(TypeName.get(SerialReader.class), "buffer");
+        final ParameterSpec buffer = utils.parameter(utils.serialReader(), "buffer");
         return utils.deserializeMethod(returnType, buffer)
                 .addStatement("return $N.deserialize($N)", serializer, buffer).build();
     }

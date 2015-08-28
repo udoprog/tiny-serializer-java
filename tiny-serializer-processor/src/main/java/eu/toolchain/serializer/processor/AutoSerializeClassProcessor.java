@@ -21,9 +21,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import eu.toolchain.serializer.SerialReader;
-import eu.toolchain.serializer.SerialWriter;
-import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import eu.toolchain.serializer.processor.value.Value;
@@ -100,7 +97,7 @@ public class AutoSerializeClassProcessor {
     }
 
     MethodSpec constructor(final ValueSet values) {
-        final ParameterSpec framework = ParameterSpec.builder(SerializerFramework.class, "framework")
+        final ParameterSpec framework = ParameterSpec.builder(utils.serializerFramework(), "framework")
                 .addModifiers(Modifier.FINAL).build();
 
         final MethodSpec.Builder b = MethodSpec.constructorBuilder();
@@ -135,7 +132,7 @@ public class AutoSerializeClassProcessor {
     }
 
     MethodSpec serializeMethod(final TypeName valueType, final ValueSet serialized) {
-        final ParameterSpec buffer = utils.parameter(TypeName.get(SerialWriter.class), "buffer");
+        final ParameterSpec buffer = utils.parameter(utils.serialWriter(), "buffer");
         final ParameterSpec value = utils.parameter(valueType, "value");
         final MethodSpec.Builder b = utils.serializeMethod(buffer, value);
 
@@ -149,7 +146,7 @@ public class AutoSerializeClassProcessor {
 
     MethodSpec deserializeMethod(ClassName returnType, ValueSet serializedType,
             Optional<ValueTypeBuilder> typeBuilder) {
-        final ParameterSpec buffer = utils.parameter(TypeName.get(SerialReader.class), "buffer");
+        final ParameterSpec buffer = utils.parameter(utils.serialReader(), "buffer");
         final MethodSpec.Builder b = utils.deserializeMethod(returnType, buffer);
 
         for (final Value field : serializedType.getOrderedValues()) {

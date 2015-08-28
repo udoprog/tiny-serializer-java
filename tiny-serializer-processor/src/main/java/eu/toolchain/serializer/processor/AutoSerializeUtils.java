@@ -28,11 +28,17 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 
 import eu.toolchain.serializer.AutoSerialize;
+import eu.toolchain.serializer.DefaultBuilderType;
+import eu.toolchain.serializer.SerialReader;
+import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SerializerFramework;
+import eu.toolchain.serializer.SerializerFramework.TypeMapping;
 import eu.toolchain.serializer.processor.annotation.AnnotationValues;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.BuilderMirror;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
+import eu.toolchain.serializer.processor.annotation.IgnoreMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypesMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
@@ -40,8 +46,32 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AutoSerializeUtils {
+    public static final String SERIALIZER = Serializer.class.getCanonicalName();
+    public static final String AUTOSERIALIZE = AutoSerialize.class.getCanonicalName();
+    public static final String AUTOSERIALIZE_IGNORE = AutoSerialize.Ignore.class.getCanonicalName();
+    public static final String AUTOSERIALIZE_BUILDER = AutoSerialize.Builder.class.getCanonicalName();
+    public static final String AUTOSERIALIZE_SUBTYPE = AutoSerialize.SubType.class.getCanonicalName();
+    public static final String AUTOSERIALIZE_SUBTYPES = AutoSerialize.SubTypes.class.getCanonicalName();
+    public static final String AUTOSERIALIZE_FIELD = AutoSerialize.Field.class.getCanonicalName();
+
+    public static final String SERIALIZER_FRAMEWORK = SerializerFramework.class.getCanonicalName();
+    public static final String SERIAL_READER = SerialReader.class.getCanonicalName();
+    public static final String SERIAL_WRITER = SerialWriter.class.getCanonicalName();
+    public static final String TYPE_MAPPING = TypeMapping.class.getCanonicalName();
+    public static final Object DEFAULT_BUILDER_TYPE = DefaultBuilderType.class.getCanonicalName();
+
     final Types types;
     final Elements elements;
+
+    final TypeElement serializer;
+    final TypeElement autoSerializeType;
+
+    public AutoSerializeUtils(Types types, Elements elements) {
+        this.types = types;
+        this.elements = elements;
+        this.serializer = elements.getTypeElement(SERIALIZER);
+        this.autoSerializeType = elements.getTypeElement(AUTOSERIALIZE);
+    }
 
     public MethodSpec.Builder deserializeMethod(final TypeName returnType, final ParameterSpec buffer) {
         final MethodSpec.Builder b = MethodSpec.methodBuilder("deserialize");
@@ -72,28 +102,7 @@ public class AutoSerializeUtils {
         return ParameterSpec.builder(type, name).addModifiers(Modifier.FINAL).build();
     }
 
-    public String serializedName(Element element) {
-        final AutoSerialize annotation = requireAnnotation(element, AutoSerialize.class);
-
-        if (!"".equals(annotation.name())) {
-            return annotation.name();
-        }
-
-        return element.getSimpleName().toString();
-    }
-
-    public <T extends Annotation> T requireAnnotation(Element element, Class<T> annotationType) {
-        final T annotation = element.getAnnotation(annotationType);
-
-        if (annotation == null) {
-            throw new IllegalArgumentException(String.format("Type not annotated with @%s (%s)", annotationType.getSimpleName(), element));
-        }
-
-        return annotation;
-    }
-
     public TypeMirror serializerFor(TypeMirror type) {
-        final TypeElement serializer = elements.getTypeElement(Serializer.class.getCanonicalName());
         return types.getDeclaredType(serializer, boxedIfNeeded(type));
     }
 
@@ -122,22 +131,6 @@ public class AutoSerializeUtils {
     }
 
     /**
-     * Indicates if this type uses builders or not.
-     *
-     * @param element
-     * @return
-     */
-    public boolean useBuilder(TypeElement element) {
-        final AutoSerialize autoSerialize = requireAnnotation(element, AutoSerialize.class);
-
-        if (element.getAnnotation(AutoSerialize.Builder.class) != null) {
-            return true;
-        }
-
-        return autoSerialize.builder().length > 0;
-    }
-
-    /**
      * Re-fetch the given element from the environment.
      *
      * This might be necessary to update type information which was not available on previous rounds.
@@ -149,9 +142,7 @@ public class AutoSerializeUtils {
         return elements.getTypeElement(element.getQualifiedName());
     }
 
-    public List<AnnotationMirror> getAnnotations(Element element, Class<? extends Annotation> annotationType) {
-        final String lookFor = annotationType.getCanonicalName();
-
+    public List<AnnotationMirror> getAnnotations(Element element, String lookFor) {
         final ImmutableList.Builder<AnnotationMirror> results = ImmutableList.builder();
 
         for (final AnnotationMirror annotation : element.getAnnotationMirrors()) {
@@ -175,7 +166,7 @@ public class AutoSerializeUtils {
         return new AnnotationValues(element, a, builder.build());
     }
 
-    public <T extends Annotation> Optional<AnnotationMirror> annotation(Element element, Class<T> annotationType) {
+    public <T extends Annotation> Optional<AnnotationMirror> annotation(Element element, String annotationType) {
         for (final AnnotationMirror a : getAnnotations(element, annotationType)) {
             return Optional.of(a);
         }
@@ -183,23 +174,47 @@ public class AutoSerializeUtils {
         return Optional.empty();
     }
 
+    public Optional<Unverified<AutoSerializeMirror>> autoSerialize(Element element) {
+        return annotation(element, AUTOSERIALIZE).map((a) -> AutoSerializeMirror.getFor(this, element, a));
+    }
+
     public Optional<Unverified<SubTypeMirror>> subType(Element element) {
-        return annotation(element, AutoSerialize.SubType.class).map((a) -> SubTypeMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_SUBTYPE).map((a) -> SubTypeMirror.getFor(this, element, a));
     }
 
     public Optional<Unverified<SubTypesMirror>> subTypes(Element element) {
-        return annotation(element, AutoSerialize.SubTypes.class).map((a) -> SubTypesMirror.getFor(this, element, a));
-    }
-
-    public Optional<Unverified<AutoSerializeMirror>> autoSerialize(Element element) {
-        return annotation(element, AutoSerialize.class).map((a) -> AutoSerializeMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_SUBTYPES).map((a) -> SubTypesMirror.getFor(this, element, a));
     }
 
     public Optional<FieldMirror> field(Element element) {
-        return annotation(element, AutoSerialize.Field.class).map((a) -> FieldMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_FIELD).map((a) -> FieldMirror.getFor(this, element, a));
     }
 
     public Optional<Unverified<BuilderMirror>> builder(Element element) {
-        return annotation(element, AutoSerialize.Builder.class).map((a) -> BuilderMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_BUILDER).map((a) -> BuilderMirror.getFor(this, element, a));
+    }
+
+    public Optional<IgnoreMirror> ignore(Element element) {
+        return annotation(element, AUTOSERIALIZE_IGNORE).map((a) -> IgnoreMirror.getFor(this, element, a));
+    }
+
+    public TypeElement autoSerializeType() {
+        return autoSerializeType;
+    }
+
+    public ClassName serializerFramework() {
+        return ClassName.get(elements.getTypeElement(SERIALIZER_FRAMEWORK));
+    }
+
+    public ClassName serialReader() {
+        return ClassName.get(elements.getTypeElement(SERIAL_READER));
+    }
+
+    public ClassName serialWriter() {
+        return ClassName.get(elements.getTypeElement(SERIAL_WRITER));
+    }
+
+    public ClassName typeMapping() {
+        return ClassName.get(elements.getTypeElement(TYPE_MAPPING));
     }
 }
