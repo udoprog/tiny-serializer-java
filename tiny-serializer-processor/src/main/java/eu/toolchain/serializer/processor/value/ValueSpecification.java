@@ -18,14 +18,15 @@ import lombok.Data;
 
 @Data
 public class ValueSpecification {
-    final Element element;
-    final TypeMirror valueType;
-    final String valueName;
-    final boolean provided;
-    final String accessor;
-    final Optional<Integer> constructorOrder;
-    final Optional<Integer> id;
-    final Optional<String> providerName;
+    private final Element element;
+    private final TypeMirror valueType;
+    private final String valueName;
+    private final boolean provided;
+    private final boolean optional;
+    private final String accessor;
+    private final Optional<Integer> constructorOrder;
+    private final Optional<Integer> id;
+    private final Optional<String> providerName;
 
     public static Unverified<ValueSpecification> build(final AutoSerializeUtils utils, final Element parent,
             final Element element, boolean defaultUseGetter) {
@@ -48,11 +49,13 @@ public class ValueSpecification {
         }
 
         final boolean provided = field.map(FieldMirror::isProvided).orElse(false);
+        final boolean optional = utils.isOptional(valueType);
 
-        final String name = field.map(FieldMirror::getName).filter(n -> !n.trim().isEmpty())
+        final String fieldName = field.map(FieldMirror::getFieldName).filter(n -> !n.trim().isEmpty())
                 .orElse(element.getSimpleName().toString());
+        final String name = field.map(FieldMirror::getName).filter(n -> !n.trim().isEmpty()).orElse(fieldName);
         final String accessor = field.map(FieldMirror::getAccessor).filter(a -> !a.trim().isEmpty())
-                .orElseGet(getDefaultAccessor(name, useGetter));
+                .orElseGet(getDefaultAccessor(fieldName, useGetter));
         final Optional<String> providerName = field.map(FieldMirror::getProviderName).filter(p -> !p.trim().isEmpty());
         final Optional<Integer> constructorOrder = field.map(FieldMirror::getConstructorOrder).filter(o -> o >= 0);
         final Optional<Integer> id = field.map(FieldMirror::getId).filter(o -> o >= 0);
@@ -64,7 +67,7 @@ public class ValueSpecification {
                     .orElseGet(() -> Unverified.brokenElement(message, element));
         }
 
-        return Unverified.verified(new ValueSpecification(element, valueType, name, provided, accessor,
+        return Unverified.verified(new ValueSpecification(element, valueType, name, provided, optional, accessor,
                 constructorOrder, id, providerName));
     }
 

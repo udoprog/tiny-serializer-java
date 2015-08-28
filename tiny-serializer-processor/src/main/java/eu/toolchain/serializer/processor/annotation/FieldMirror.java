@@ -11,6 +11,7 @@ public class FieldMirror {
     private final AnnotationMirror annotation;
 
     private final String name;
+    private final String fieldName;
     private final String accessor;
     private final int id;
     private final int constructorOrder;
@@ -22,6 +23,7 @@ public class FieldMirror {
         final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
 
         final String name = values.getString("name").get();
+        final String fieldName = values.getString("fieldName").get();
         final String accessor = values.getString("accessor").get();
         final int id = values.getInteger("id").get();
         final int constructorOrder = values.getInteger("constructorOrder").get();
@@ -29,6 +31,6 @@ public class FieldMirror {
         final boolean provided = values.getBoolean("provided").get();
         final String providerName = values.getString("providerName").get();
 
-        return new FieldMirror(a, name, accessor, id, constructorOrder, useGetter, provided, providerName);
+        return new FieldMirror(a, name, fieldName, accessor, id, constructorOrder, useGetter, provided, providerName);
     }
 }

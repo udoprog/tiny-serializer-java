@@ -12,6 +12,7 @@ public class Value {
     private final String name;
     private final String accessor;
     private final String variableName;
+    private final String isSetVariableName;
     private final Optional<Integer> id;
     private final Optional<Integer> constructorOrder;
 }

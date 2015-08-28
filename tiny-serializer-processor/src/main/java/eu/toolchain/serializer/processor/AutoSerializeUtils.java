@@ -13,6 +13,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.PrimitiveType;
@@ -58,7 +59,11 @@ public class AutoSerializeUtils {
     public static final String SERIAL_READER = SerialReader.class.getCanonicalName();
     public static final String SERIAL_WRITER = SerialWriter.class.getCanonicalName();
     public static final String TYPE_MAPPING = TypeMapping.class.getCanonicalName();
-    public static final Object DEFAULT_BUILDER_TYPE = DefaultBuilderType.class.getCanonicalName();
+    public static final String DEFAULT_BUILDER_TYPE = DefaultBuilderType.class.getCanonicalName();
+
+    public static final String OPTIONAL = Optional.class.getCanonicalName();
+
+    public static final String IO_EXCEPTION = IOException.class.getCanonicalName();
 
     final Types types;
     final Elements elements;
@@ -216,5 +221,51 @@ public class AutoSerializeUtils {
 
     public ClassName typeMapping() {
         return ClassName.get(elements.getTypeElement(TYPE_MAPPING));
+    }
+
+    public ClassName optional() {
+        return ClassName.get(elements.getTypeElement(OPTIONAL));
+    }
+
+    public ClassName ioException() {
+        return ClassName.get(elements.getTypeElement(IO_EXCEPTION));
+    }
+
+    public boolean isOptional(TypeMirror valueType) {
+        if (!(valueType instanceof DeclaredType)) {
+            return false;
+        }
+
+        final DeclaredType d = (DeclaredType) valueType;
+        final TypeElement t = (TypeElement) d.asElement();
+        return t.getQualifiedName().toString().equals(Optional.class.getCanonicalName());
+    }
+
+    public String initLiteral(TypeMirror type) {
+        if (!(type instanceof PrimitiveType)) {
+            return "null";
+        }
+
+        final PrimitiveType p = (PrimitiveType) type;
+        switch (p.getKind()) {
+        case BOOLEAN:
+            return "false";
+        case SHORT:
+            return "0";
+        case INT:
+            return "0";
+        case LONG:
+            return "0L";
+        case FLOAT:
+            return "0f";
+        case DOUBLE:
+            return "0d";
+        case BYTE:
+            return "0";
+        case CHAR:
+            return "'\0'";
+        default:
+            throw new IllegalArgumentException("Unsupported primitive: " + type.toString());
+        }
     }
 }

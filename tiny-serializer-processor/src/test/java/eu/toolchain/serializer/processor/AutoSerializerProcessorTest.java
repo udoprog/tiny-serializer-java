@@ -91,6 +91,11 @@ public class AutoSerializerProcessorTest {
     }
 
     @Test
+    public void testFieldBased() {
+        verifySerializer("FieldBased", "FieldBased_Serializer");
+    }
+
+    @Test
     public void testIgnoreFinalAssigned() {
         verifySerializer("IgnoreFinalAssigned", "IgnoreFinalAssigned_Serializer");
     }

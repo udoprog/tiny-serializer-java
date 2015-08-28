@@ -18,4 +18,5 @@ public class ValueType {
     private final FieldSpec fieldSpec;
     private final Optional<ParameterSpec> providedParameterSpec;
     private final Optional<Integer> id;
+    private final boolean optional;
 }

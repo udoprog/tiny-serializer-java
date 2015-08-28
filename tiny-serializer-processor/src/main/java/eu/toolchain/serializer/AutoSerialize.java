@@ -11,6 +11,22 @@ public @interface AutoSerialize {
     String name() default "";
 
     /**
+     * Use field-based serialization which encodes the name of the field in the message stream.
+     *
+     * @return {@code true} if field-based serialization should be used.
+     */
+    boolean fieldBased() default false;
+
+    /**
+     * Fail during de-serialization if a field is seen that is not part of this object.
+     *
+     * The default behaviour is to fail.
+     *
+     * @return {@code true} if the de-serialize method should throws exception on missing fields.
+     */
+    boolean failOnMissing() default true;
+
+    /**
      * Use getter to access fields.
      *
      * @return {@code true} if getters should be used, {@code false} otherwise.
@@ -97,13 +113,20 @@ public @interface AutoSerialize {
     @Retention(RetentionPolicy.SOURCE)
     public @interface Field {
         /**
+         * Override serialized name.
+         *
+         * @return The configured name, or empty string if none is configured.
+         */
+        String name() default "";
+
+        /**
          * Override field name.
          *
          * By default, the field name is derived from the name of the field or method.
          *
          * @return The configured field name, or empty string if none is configured.
          */
-        String name() default "";
+        String fieldName() default "";
 
         /**
          * Override accessor name.

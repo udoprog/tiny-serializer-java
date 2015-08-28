@@ -15,22 +15,28 @@ public class AutoSerializeMirror {
 
     private final String name;
     private final boolean useGetter;
+    private final boolean fieldBased;
+    private final boolean failOnMissing;
     private final Optional<BuilderMirror> builder;
     private final boolean orderById;
     private final boolean orderConstructorById;
 
-    public static Unverified<AutoSerializeMirror> getFor(final AutoSerializeUtils utils, final Element element, final AnnotationMirror a) {
+    public static Unverified<AutoSerializeMirror> getFor(final AutoSerializeUtils utils, final Element element,
+            final AnnotationMirror a) {
         final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
 
-        final String useSetter = values.getString("name").get();
+        final String name = values.getString("name").get();
         final boolean useGetter = values.getBoolean("useGetter").get();
+        final boolean fieldBased = values.getBoolean("fieldBased").get();
+        final boolean failOnMissing = values.getBoolean("failOnMissing").get();
         final boolean orderById = values.getBoolean("orderById").get();
         final boolean orderConstructorById = values.getBoolean("orderConstructorById").get();
 
         final Unverified<Optional<BuilderMirror>> unverifiedBuilder = makeBuilder(utils, element, values);
 
         return unverifiedBuilder.map((builder) -> {
-            return new AutoSerializeMirror(a, useSetter, useGetter, builder, orderById, orderConstructorById);
+            return new AutoSerializeMirror(a, name, useGetter, fieldBased, failOnMissing, builder, orderById,
+                    orderConstructorById);
         });
     }
 
