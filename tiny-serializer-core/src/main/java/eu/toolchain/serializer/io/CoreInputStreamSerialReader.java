@@ -4,11 +4,15 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import lombok.RequiredArgsConstructor;
+import eu.toolchain.serializer.Serializer;
 
-@RequiredArgsConstructor
-public class InputStreamSerialReader extends AbstractSerialReader {
+public class CoreInputStreamSerialReader extends AbstractSerialReader {
     private final InputStream input;
+
+    public CoreInputStreamSerialReader(final Serializer<Integer> scopeSize, final InputStream input) {
+        super(scopeSize);
+        this.input = input;
+    }
 
     @Override
     public byte read() throws IOException {

@@ -1,6 +1,8 @@
 package eu.toolchain.serializer;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +11,9 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.UUID;
+
+import eu.toolchain.serializer.io.BytesSerialWriter;
+import eu.toolchain.serializer.io.StreamSerialWriter;
 
 public interface SerializerFramework {
     /**
@@ -266,6 +271,59 @@ public interface SerializerFramework {
      * @throws IOException If serialization fails.
      */
     public <T> T deserialize(Serializer<T> serializer, ByteBuffer buffer) throws IOException;
+
+    /**
+     * Write directly to the provided byte buffer.
+     *
+     * @param buffer Byte buffer to write to.
+     * @return A new {@link SerialWriter} writing to the provided {@link ByteBuffer}.
+     */
+    public SerialWriter writeByteBuffer(ByteBuffer buffer);
+
+    /**
+     * Read directly from the given ByteBuffer.
+     *
+     * @param buffer Buffer to read from.
+     * @return A new {@link SerialReader} reading directly from the given ByteBuffer.
+     */
+    public SerialReader readByteBuffer(ByteBuffer buffer);
+
+    /**
+     * Write to a growing byte array buffer.
+     *
+     * @return A new {@link SerialWriter} capable of growing as its being written to.
+     */
+    public BytesSerialWriter writeBytes();
+
+    /**
+     * Read directly from the given byte array.
+     *
+     * @param bytes Byte array to read from.
+     * @return A new {@link SerialReader} reading from the given byte array.
+     */
+    public SerialReader readByteArray(byte[] bytes);
+
+    /**
+     * Write to the given {@link OutputStream}.
+     *
+     * This returns a special writer implementation {@link StreamSerialWriter} which provides flushing capabilities. It
+     * is important to flush the underlying stream when you wish for any previously serialized objects to be written.
+     * Flushing is implied when closing the stream.
+     *
+     * @param output The output stream to write to.
+     * @return A new {@link SerialWriter} connected to the given {@link OutputStream}.
+     */
+    public StreamSerialWriter writeStream(OutputStream output);
+
+    /**
+     * Read from the given {@link InputStream}.
+     *
+     * Reading from input streams are very likely to block.
+     *
+     * @param input The input stream to read from.
+     * @return A new {@link SerialReader} connected to the given {@link InputStream}.
+     */
+    public SerialReader readStream(InputStream input);
 
     /**
      * Maps a specific ordinal id to a type (key), and a serializer for that type.

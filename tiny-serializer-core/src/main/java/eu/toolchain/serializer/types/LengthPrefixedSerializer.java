@@ -1,31 +1,30 @@
 package eu.toolchain.serializer.types;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import lombok.RequiredArgsConstructor;
 import eu.toolchain.serializer.LengthPolicy;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.io.ByteArraySerialReader;
-import eu.toolchain.serializer.io.OutputStreamSerialWriter;
+import eu.toolchain.serializer.SerializerFramework;
+import eu.toolchain.serializer.io.BytesSerialWriter;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class LengthPrefixedSerializer<T> implements Serializer<T> {
+    final SerializerFramework framework;
     final Serializer<Integer> length;
     final Serializer<T> element;
     final LengthPolicy policy;
 
     @Override
     public void serialize(SerialWriter buffer, T value) throws IOException {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final byte[] bytes;
 
-        try (final SerialWriter output = new OutputStreamSerialWriter(out)) {
+        try (final BytesSerialWriter output = framework.writeBytes()) {
             element.serialize(output, value);
+            bytes = output.toByteArray();
         }
-
-        final byte[] bytes = out.toByteArray();
 
         if (!policy.check(bytes.length)) {
             throw new IOException(String.format("Element violates policy %s", policy));
@@ -47,7 +46,7 @@ public class LengthPrefixedSerializer<T> implements Serializer<T> {
 
         buffer.read(bytes);
 
-        try (final ByteArraySerialReader reader = new ByteArraySerialReader(bytes)) {
+        try (final SerialReader reader = framework.readByteArray(bytes)) {
             return element.deserialize(reader);
         }
     }

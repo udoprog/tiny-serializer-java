@@ -14,7 +14,7 @@ public class SerializeCustomWriterExample {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        final SerialWriter writer = new AbstractSerialWriter() {
+        final SerialWriter writer = new AbstractSerialWriter(s.varint()) {
             @Override
             public void write(byte[] bytes, int offset, int length) throws IOException {
                 outputStream.write(bytes, offset, length);
@@ -23,11 +23,6 @@ public class SerializeCustomWriterExample {
             @Override
             public void write(int b) throws IOException {
                 outputStream.write(b);
-            }
-
-            @Override
-            public void flush() throws IOException {
-                outputStream.flush();
             }
 
             @Override

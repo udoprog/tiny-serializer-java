@@ -13,8 +13,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.google.common.collect.ImmutableList;
 
 import eu.toolchain.serializer.SerializerFramework.TypeMapping;
-import eu.toolchain.serializer.io.ByteArrayOutputStreamSerialWriter;
-import eu.toolchain.serializer.io.ByteArraySerialReader;
+import eu.toolchain.serializer.io.CoreBytesSerialWriter;
+import eu.toolchain.serializer.io.CoreByteArraySerialReader;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SubtypesSerializerTest {
@@ -46,14 +46,14 @@ public class SubtypesSerializerTest {
 
         Serializer<Parent> parent = s.subtypes(children.build());
 
-        final ByteArrayOutputStreamSerialWriter writer = new ByteArrayOutputStreamSerialWriter();
+        final CoreBytesSerialWriter writer = new CoreBytesSerialWriter();
         final A ref1 = new A(42);
         final B ref2 = new B();
 
         parent.serialize(writer, ref1);
         parent.serialize(writer, ref2);
 
-        final SerialReader reader = new ByteArraySerialReader(writer.toByteArray());
+        final SerialReader reader = new CoreByteArraySerialReader(writer.toByteArray());
         assertEquals(ref1, parent.deserialize(reader));
         assertEquals(ref2, parent.deserialize(reader));
     }

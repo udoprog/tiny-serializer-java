@@ -3,11 +3,15 @@ package eu.toolchain.serializer.io;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import lombok.RequiredArgsConstructor;
+import eu.toolchain.serializer.Serializer;
 
-@RequiredArgsConstructor
-public class ByteBufferSerialReader extends AbstractSerialReader {
+public class CoreByteBufferSerialReader extends AbstractSerialReader {
     private final ByteBuffer buffer;
+
+    public CoreByteBufferSerialReader(final Serializer<Integer> scopeSize, final ByteBuffer buffer) {
+        super(scopeSize);
+        this.buffer = buffer.asReadOnlyBuffer();
+    }
 
     @Override
     public byte read() throws IOException {

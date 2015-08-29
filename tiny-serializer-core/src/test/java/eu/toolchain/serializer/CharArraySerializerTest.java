@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import eu.toolchain.serializer.io.CharArraySerializer;
+import eu.toolchain.serializer.types.CharArraySerializer;
 import eu.toolchain.serializer.types.CompactVarIntSerializer;
 
 public class CharArraySerializerTest {

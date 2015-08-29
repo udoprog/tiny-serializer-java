@@ -6,11 +6,9 @@ import java.io.PipedOutputStream;
 import java.util.Optional;
 
 import eu.toolchain.serializer.SerialReader;
-import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
-import eu.toolchain.serializer.io.InputStreamSerialReader;
-import eu.toolchain.serializer.io.OutputStreamSerialWriter;
+import eu.toolchain.serializer.io.StreamSerialWriter;
 
 public class StreamCommunicationExample {
     public static void main(String[] argv) throws IOException, InterruptedException {
@@ -28,7 +26,7 @@ public class StreamCommunicationExample {
         final Thread t = new Thread() {
             @Override
             public void run() {
-                try (final SerialReader in = new InputStreamSerialReader(input)) {
+                try (final SerialReader in = s.readStream(input)) {
                     Optional<String> message;
 
                     while ((message = m.deserialize(in)).isPresent()) {
@@ -42,7 +40,7 @@ public class StreamCommunicationExample {
 
         t.start();
 
-        try (final SerialWriter out = new OutputStreamSerialWriter(output)) {
+        try (final StreamSerialWriter out = s.writeStream(output)) {
             for (int i = 0; i < 100; i++) {
                 m.serialize(out, Optional.of("message #" + i));
                 out.flush();

@@ -5,10 +5,10 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
-import eu.toolchain.serializer.io.ByteBufferSerialReader;
-import eu.toolchain.serializer.io.ByteBufferSerialWriter;
+import eu.toolchain.serializer.io.BytesSerialWriter;
 
 public class SerializeMap {
     public static void main(String argv[]) throws IOException {
@@ -21,14 +21,14 @@ public class SerializeMap {
 
         final ByteBuffer bytes;
 
-        try (final ByteBufferSerialWriter buffer = new ByteBufferSerialWriter()) {
+        try (final BytesSerialWriter buffer = s.writeBytes()) {
             map.serialize(buffer, serialized);
-            bytes = buffer.buffer();
+            bytes = buffer.toByteBuffer();
         }
 
         final Map<String, String> result;
 
-        try (final ByteBufferSerialReader buffer = new ByteBufferSerialReader(bytes)) {
+        try (final SerialReader buffer = s.readByteBuffer(bytes)) {
             result = map.deserialize(buffer);
         }
 

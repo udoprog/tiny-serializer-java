@@ -3,11 +3,20 @@ package eu.toolchain.serializer.io;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import lombok.RequiredArgsConstructor;
+import eu.toolchain.serializer.Serializer;
 
-@RequiredArgsConstructor
-public class OutputStreamSerialWriter extends AbstractSerialWriter {
+public class CoreOutputStreamSerialWriter extends AbstractSerialWriter implements StreamSerialWriter {
     private final OutputStream output;
+
+    public CoreOutputStreamSerialWriter(final OutputStream output) {
+        super();
+        this.output = output;
+    }
+
+    public CoreOutputStreamSerialWriter(final Serializer<Integer> scopeSize, final OutputStream output) {
+        super(scopeSize);
+        this.output = output;
+    }
 
     @Override
     public void write(int b) throws IOException {

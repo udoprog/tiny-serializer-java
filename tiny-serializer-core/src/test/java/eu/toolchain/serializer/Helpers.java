@@ -1,11 +1,11 @@
 package eu.toolchain.serializer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import org.junit.Assert;
 
-import eu.toolchain.serializer.io.OutputStreamSerialWriter;
+import eu.toolchain.serializer.io.BytesSerialWriter;
+import eu.toolchain.serializer.io.CoreBytesSerialWriter;
 
 public final class Helpers {
     public static <T> CapturingSerialWriter roundtrip(Serializer<T> serializer, T value) throws IOException {
@@ -27,8 +27,9 @@ public final class Helpers {
     }
 
     public static <T> byte[] serialize(Serializer<T> s, T value) throws IOException {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        s.serialize(new OutputStreamSerialWriter(out), value);
-        return out.toByteArray();
+        try (final BytesSerialWriter writer = new CoreBytesSerialWriter()) {
+            s.serialize(writer, value);
+            return writer.toByteArray();
+        }
     }
 }

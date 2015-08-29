@@ -3,13 +3,22 @@ package eu.toolchain.serializer.io;
 import java.io.EOFException;
 import java.io.IOException;
 
-import lombok.RequiredArgsConstructor;
+import eu.toolchain.serializer.Serializer;
 
-@RequiredArgsConstructor
-public class ByteArraySerialReader extends AbstractSerialReader {
+public class CoreByteArraySerialReader extends AbstractSerialReader {
     private final byte[] source;
 
     private int p = 0;
+
+    public CoreByteArraySerialReader(final byte[] source) {
+        super();
+        this.source = source;
+    }
+
+    public CoreByteArraySerialReader(final Serializer<Integer> scopeSize, final byte[] source) {
+        super(scopeSize);
+        this.source = source;
+    }
 
     @Override
     public byte read() throws IOException {

@@ -3,6 +3,8 @@ package eu.toolchain.serializer;
 import static java.util.Optional.ofNullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +15,17 @@ import java.util.SortedSet;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import eu.toolchain.serializer.io.ByteArraySerializer;
-import eu.toolchain.serializer.io.ByteBufferSerialReader;
-import eu.toolchain.serializer.io.ByteBufferSerialWriter;
-import eu.toolchain.serializer.io.CharArraySerializer;
+import eu.toolchain.serializer.io.BytesSerialWriter;
+import eu.toolchain.serializer.io.CoreByteArraySerialReader;
+import eu.toolchain.serializer.io.CoreBytesSerialWriter;
+import eu.toolchain.serializer.io.CoreByteBufferSerialReader;
+import eu.toolchain.serializer.io.CoreByteBufferSerialWriter;
+import eu.toolchain.serializer.io.CoreInputStreamSerialReader;
+import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
+import eu.toolchain.serializer.io.StreamSerialWriter;
 import eu.toolchain.serializer.types.BooleanSerializer;
+import eu.toolchain.serializer.types.ByteArraySerializer;
+import eu.toolchain.serializer.types.CharArraySerializer;
 import eu.toolchain.serializer.types.CompactVarIntSerializer;
 import eu.toolchain.serializer.types.CompactVarLongSerializer;
 import eu.toolchain.serializer.types.DoubleSerializer;
@@ -44,6 +52,7 @@ public class TinySerializer implements SerializerFramework {
     public static final Serializer<Integer> DEFAULT_INTEGER = new CompactVarIntSerializer();
     public static final LengthPolicy DEFAULT_LENGTH_POLICY = new MaxLengthPolicy(Integer.MAX_VALUE);
 
+    private final Serializer<Integer> scopeSize;
     private final Serializer<Integer> subTypeId;
     private final Serializer<Integer> enumOrdinal;
 
@@ -156,7 +165,7 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public <T> Serializer<T> lengthPrefixed(Serializer<T> serializer, LengthPolicy policy) {
-        return new LengthPrefixedSerializer<T>(varint(), serializer, policy);
+        return new LengthPrefixedSerializer<T>(this, varint(), serializer, policy);
     }
 
     @Override
@@ -250,16 +259,48 @@ public class TinySerializer implements SerializerFramework {
     /* utility functions */
 
     @Override
-    public <T> ByteBuffer serialize(Serializer<T> serializer, T value) throws IOException {
-        final ByteBufferSerialWriter buffer = new ByteBufferSerialWriter();
-        serializer.serialize(buffer, value);
-        buffer.flush();
-        return buffer.buffer();
+    public <T> ByteBuffer serialize(final Serializer<T> serializer, final T value) throws IOException {
+        try (final BytesSerialWriter writer = writeBytes()) {
+            serializer.serialize(writer, value);
+            return writer.toByteBuffer();
+        }
     }
 
     @Override
-    public <T> T deserialize(Serializer<T> serializer, ByteBuffer buffer) throws IOException {
-        return serializer.deserialize(new ByteBufferSerialReader(buffer));
+    public <T> T deserialize(final Serializer<T> serializer, final ByteBuffer buffer) throws IOException {
+        try (final SerialReader reader = readByteBuffer(buffer)) {
+            return serializer.deserialize(reader);
+        }
+    }
+
+    @Override
+    public SerialReader readByteBuffer(final ByteBuffer buffer) {
+        return new CoreByteBufferSerialReader(scopeSize, buffer);
+    }
+
+    @Override
+    public SerialWriter writeByteBuffer(ByteBuffer buffer) {
+        return new CoreByteBufferSerialWriter(scopeSize, buffer);
+    }
+
+    @Override
+    public BytesSerialWriter writeBytes() {
+        return new CoreBytesSerialWriter(scopeSize);
+    }
+
+    @Override
+    public SerialReader readByteArray(final byte[] bytes) {
+        return new CoreByteArraySerialReader(scopeSize, bytes);
+    }
+
+    @Override
+    public StreamSerialWriter writeStream(final OutputStream output) {
+        return new CoreOutputStreamSerialWriter(scopeSize, output);
+    }
+
+    @Override
+    public SerialReader readStream(final InputStream input) {
+        return new CoreInputStreamSerialReader(scopeSize, input);
     }
 
     /**
@@ -271,6 +312,7 @@ public class TinySerializer implements SerializerFramework {
 
     public static final class Builder {
         private Serializer<Integer> size;
+        private Serializer<Integer> scopeSize;
         private Serializer<Integer> subTypeId;
         private Serializer<Integer> enumOrdinal;
         private LengthPolicy defaultLengthPolicy;
@@ -362,10 +404,25 @@ public class TinySerializer implements SerializerFramework {
          */
         public Builder size(Serializer<Integer> size) {
             if (size == null) {
-                throw new NullPointerException("containerSize");
+                throw new NullPointerException("size");
             }
 
             this.size = size;
+            return this;
+        }
+
+        /**
+         * Configure serializer to use for scope sizes.
+         *
+         * @param scopeSize Scope size serializer to use.
+         * @return This builder.
+         */
+        public Builder scopeSize(Serializer<Integer> scopeSize) {
+            if (scopeSize == null) {
+                throw new NullPointerException("scopeSize");
+            }
+
+            this.scopeSize = scopeSize;
             return this;
         }
 
@@ -450,6 +507,7 @@ public class TinySerializer implements SerializerFramework {
          */
         public TinySerializer build() {
             final Serializer<Integer> size = ofNullable(this.size).orElseGet(this::defaultCollectionSize);
+            final Serializer<Integer> scopeSize = ofNullable(this.scopeSize).orElse(size);
             final Serializer<Integer> subTypeId = ofNullable(this.subTypeId).orElse(size);
             final Serializer<Integer> enumOrdinal = ofNullable(this.enumOrdinal).orElse(size);
             final LengthPolicy defaultLengthPolicy = ofNullable(this.defaultLengthPolicy).orElse(DEFAULT_LENGTH_POLICY);
@@ -474,9 +532,9 @@ public class TinySerializer implements SerializerFramework {
 
             final CollectionsProvider collections = ofNullable(this.collections).orElseGet(defaultCollections(size));
 
-            return new TinySerializer(subTypeId, enumOrdinal, defaultLengthPolicy, byteArray, charArray, string, bool,
-                    shortNumber, integer, longNumber, floatNumber, doubleNumber, varint, varlong, uuid, collections,
-                    useStringsForEnums);
+            return new TinySerializer(scopeSize, subTypeId, enumOrdinal, defaultLengthPolicy, byteArray, charArray,
+                    string, bool, shortNumber, integer, longNumber, floatNumber, doubleNumber, varint, varlong, uuid,
+                    collections, useStringsForEnums);
         }
 
         private Supplier<CollectionsProvider> defaultCollections(final Serializer<Integer> size) {

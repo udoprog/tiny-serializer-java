@@ -13,8 +13,8 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.TinySerializer;
-import eu.toolchain.serializer.io.ByteArraySerialReader;
-import eu.toolchain.serializer.io.OutputStreamSerialWriter;
+import eu.toolchain.serializer.io.CoreByteArraySerialReader;
+import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
 import lombok.Data;
 
 public class OneToAnother {
@@ -48,13 +48,13 @@ public class OneToAnother {
 
         final One o = new One("foo", "bar", "baz", Optional.of(Sets.newHashSet(12, 14, 15)));
 
-        try (final SerialWriter writer = new OutputStreamSerialWriter(out)) {
+        try (final SerialWriter writer = new CoreOutputStreamSerialWriter(out)) {
             one.serialize(writer, o);
         }
 
         final Another a;
 
-        try (final SerialReader reader = new ByteArraySerialReader(out.toByteArray())) {
+        try (final SerialReader reader = new CoreByteArraySerialReader(out.toByteArray())) {
             a = another.deserialize(reader);
         }
 

@@ -17,16 +17,21 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import eu.toolchain.serializer.Serializer;
+
 @RunWith(MockitoJUnitRunner.class)
 public class InputStreamSerialReaderTest {
     @Mock
     InputStream input;
 
-    InputStreamSerialReader reader;
+    @Mock
+    Serializer<Integer> scopeSize;
+
+    CoreInputStreamSerialReader reader;
 
     @Before
     public void setup() {
-        reader = new InputStreamSerialReader(input);
+        reader = new CoreInputStreamSerialReader(scopeSize, input);
     }
 
     @Test(expected = EOFException.class)

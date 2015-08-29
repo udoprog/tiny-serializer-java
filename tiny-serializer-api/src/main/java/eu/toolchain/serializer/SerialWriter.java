@@ -44,13 +44,6 @@ public interface SerialWriter extends Closeable {
     public void write(byte[] bytes, int offset, int length) throws IOException;
 
     /**
-     * Flush the underlying stream.
-     *
-     * @throws IOException When a flush could not be fully performed.
-     */
-    public void flush() throws IOException;
-
-    /**
      * Create a scoped writer.
      *
      * Scopes sections are sections that can be skipped. They are typically prefixed with the length of the section, but

@@ -2,9 +2,21 @@ package eu.toolchain.serializer.io;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-public class ByteArrayOutputStreamSerialWriter extends AbstractSerialWriter {
+import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.types.CompactVarIntSerializer;
+
+public class CoreBytesSerialWriter extends AbstractSerialWriter implements BytesSerialWriter {
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+    public CoreBytesSerialWriter() {
+        super();
+    }
+
+    public CoreBytesSerialWriter(final Serializer<Integer> scopeSize) {
+        super(scopeSize);
+    }
 
     @Override
     public void write(int b) throws IOException {
@@ -17,15 +29,16 @@ public class ByteArrayOutputStreamSerialWriter extends AbstractSerialWriter {
     }
 
     @Override
-    public void flush() throws IOException {
-        output.flush();
-    }
-
-    @Override
     public void close() throws IOException {
     }
 
+    @Override
     public byte[] toByteArray() {
         return output.toByteArray();
+    }
+
+    @Override
+    public ByteBuffer toByteBuffer() {
+        return ByteBuffer.wrap(toByteArray());
     }
 }

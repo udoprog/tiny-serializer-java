@@ -9,7 +9,7 @@ import lombok.Data;
 
 
 @Data
-@AutoSerialize(fieldBased = true, failOnMissing = true)
+@AutoSerialize
 public class ImmutableSerializedObject {
     final int version;
     final String field;
