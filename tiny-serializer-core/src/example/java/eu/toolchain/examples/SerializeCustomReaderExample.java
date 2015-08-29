@@ -15,7 +15,7 @@ public class SerializeCustomReaderExample {
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(source);
 
-        final SerialReader reader = new AbstractSerialReader(s.varint()) {
+        final SerialReader reader = new AbstractSerialReader() {
             @Override
             public void read(byte[] b, int offset, int length) throws IOException {
                 inputStream.read(b, offset, length);

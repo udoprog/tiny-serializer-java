@@ -30,7 +30,7 @@ public class InputStreamSerialReaderTest {
 
     @Before
     public void setup() {
-        reader = new CoreInputStreamSerialReader(scopeSize, input);
+        reader = new CoreInputStreamSerialReader(input);
     }
 
     @Test

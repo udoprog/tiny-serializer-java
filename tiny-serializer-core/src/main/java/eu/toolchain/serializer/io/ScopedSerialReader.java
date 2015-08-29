@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 
 class ScopedSerialReader extends AbstractSerialReader {
     private final SerialReader parent;
@@ -11,8 +12,8 @@ class ScopedSerialReader extends AbstractSerialReader {
 
     private int p = 0;
 
-    public ScopedSerialReader(final Serializer<Integer> scopeSize, final SerialReader parent, final int size) {
-        super(scopeSize);
+    public ScopedSerialReader(final SharedPool pool, final Serializer<Integer> scopeSize, final SerialReader parent, final int size) {
+        super(pool, scopeSize);
         this.parent = parent;
         this.size = size;
     }

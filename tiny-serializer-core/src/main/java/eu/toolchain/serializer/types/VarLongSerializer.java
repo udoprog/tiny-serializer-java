@@ -1,10 +1,12 @@
 package eu.toolchain.serializer.types;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 
 /**
  * Based on the same concept as {@link VarIntSerializer} expanded to 64 bits.
@@ -20,20 +22,26 @@ public class VarLongSerializer implements Serializer<Long> {
 
     @Override
     public void serialize(SerialWriter buffer, Long value) throws IOException {
-        final byte[] bytes = new byte[MAX_SIZE];
+        final SharedPool pool = buffer.pool();
 
-        int i = 0;
-        long v = value;
+        final ByteBuffer bytes = pool.allocate(MAX_SIZE);
 
-        long temp;
+        try {
+            long v = value;
 
-        while ((temp = (v >>> 7)) > 0) {
-            bytes[i++] = (byte)((v & MASK) | CONT);
-            v = temp;
+            long temp;
+
+            while ((temp = (v >>> 7)) > 0) {
+                bytes.put((byte) ((v & MASK) | CONT));
+                v = temp;
+            }
+
+            bytes.put((byte) v);
+            bytes.flip();
+            buffer.write(bytes);
+        } finally {
+            pool.release(MAX_SIZE);
         }
-
-        bytes[i++] = (byte)v;
-        buffer.write(bytes, 0, i);
     }
 
     @Override
@@ -47,7 +55,6 @@ public class VarLongSerializer implements Serializer<Long> {
 
         while (position++ < MAX_SIZE) {
             buffer.read(bytes);
-
             byte b = bytes[0];
 
             v += (b & MASK) * shift;

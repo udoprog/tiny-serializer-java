@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import lombok.RequiredArgsConstructor;
 import eu.toolchain.serializer.io.AbstractSerialReader;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class IteratorSerialReader extends AbstractSerialReader {
@@ -17,7 +17,11 @@ public class IteratorSerialReader extends AbstractSerialReader {
         int i = offset;
 
         while (i < offset + length) {
-            b[i++] = iterator.next().byteValue();
+            try {
+                b[i++] = iterator.next().byteValue();
+            } catch(NoSuchElementException e) {
+                throw new EOFException(String.format("End of iterator on offset #%d", i));
+            }
         }
     }
 

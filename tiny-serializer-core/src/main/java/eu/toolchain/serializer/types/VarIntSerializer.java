@@ -1,10 +1,12 @@
 package eu.toolchain.serializer.types;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 
 /**
  * Variable-length number encoding based on continuation bits.
@@ -36,21 +38,26 @@ public class VarIntSerializer implements Serializer<Integer> {
 
     @Override
     public void serialize(SerialWriter buffer, Integer value) throws IOException {
-        final byte[] bytes = new byte[MAX_SIZE];
+        final SharedPool pool = buffer.pool();
 
-        int i = 0;
-        int v = value;
+        final ByteBuffer bytes = pool.allocate(MAX_SIZE);
 
-        int temp;
+        try {
+            int v = value;
 
-        while ((temp = (v >>> 7)) > 0) {
-            bytes[i++] = (byte)((v & MASK) | CONT);
-            v = temp;
+            int temp;
+
+            while ((temp = (v >>> 7)) > 0) {
+                bytes.put((byte) ((v & MASK) | CONT));
+                v = temp;
+            }
+
+            bytes.put((byte) v);
+            bytes.flip();
+            buffer.write(bytes);
+        } finally {
+            pool.release(MAX_SIZE);
         }
-
-        bytes[i++] = (byte)v;
-        buffer.write(bytes, 0, i);
-        return;
     }
 
     @Override
@@ -64,7 +71,6 @@ public class VarIntSerializer implements Serializer<Integer> {
 
         while (position++ < MAX_SIZE) {
             buffer.read(bytes);
-
             final byte b = bytes[0];
 
             v += (b & MASK) * shift;

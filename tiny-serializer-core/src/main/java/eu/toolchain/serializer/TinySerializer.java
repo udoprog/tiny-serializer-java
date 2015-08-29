@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import eu.toolchain.serializer.io.BytesSerialWriter;
+import eu.toolchain.serializer.io.ContiniousSharedPool;
 import eu.toolchain.serializer.io.CoreByteArraySerialReader;
 import eu.toolchain.serializer.io.CoreByteBufferSerialReader;
 import eu.toolchain.serializer.io.CoreByteBufferSerialWriter;
@@ -26,6 +27,7 @@ import eu.toolchain.serializer.io.CoreByteChannelSerialWriter;
 import eu.toolchain.serializer.io.CoreBytesSerialWriter;
 import eu.toolchain.serializer.io.CoreInputStreamSerialReader;
 import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
+import eu.toolchain.serializer.io.ImmediateSharedPool;
 import eu.toolchain.serializer.io.StreamSerialWriter;
 import eu.toolchain.serializer.types.BooleanSerializer;
 import eu.toolchain.serializer.types.ByteArraySerializer;
@@ -55,6 +57,8 @@ import lombok.RequiredArgsConstructor;
 public class TinySerializer implements SerializerFramework {
     public static final Serializer<Integer> DEFAULT_INTEGER = new CompactVarIntSerializer();
     public static final LengthPolicy DEFAULT_LENGTH_POLICY = new MaxLengthPolicy(Integer.MAX_VALUE);
+
+    private final Supplier<SharedPool> pool;
 
     private final Serializer<Integer> scopeSize;
     private final Serializer<Integer> subTypeId;
@@ -279,42 +283,42 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public SerialReader readByteBuffer(final ByteBuffer buffer) {
-        return new CoreByteBufferSerialReader(scopeSize, buffer);
+        return new CoreByteBufferSerialReader(pool.get(), scopeSize, buffer);
     }
 
     @Override
     public SerialWriter writeByteBuffer(ByteBuffer buffer) {
-        return new CoreByteBufferSerialWriter(scopeSize, buffer);
+        return new CoreByteBufferSerialWriter(pool.get(), scopeSize, buffer);
     }
 
     @Override
     public BytesSerialWriter writeBytes() {
-        return new CoreBytesSerialWriter(scopeSize);
+        return new CoreBytesSerialWriter(pool.get(), scopeSize);
     }
 
     @Override
     public SerialReader readByteArray(final byte[] bytes) {
-        return new CoreByteArraySerialReader(scopeSize, bytes);
+        return new CoreByteArraySerialReader(pool.get(), scopeSize, bytes);
     }
 
     @Override
     public StreamSerialWriter writeStream(final OutputStream output) {
-        return new CoreOutputStreamSerialWriter(scopeSize, output);
+        return new CoreOutputStreamSerialWriter(pool.get(), scopeSize, output);
     }
 
     @Override
     public SerialReader readStream(final InputStream input) {
-        return new CoreInputStreamSerialReader(scopeSize, input);
+        return new CoreInputStreamSerialReader(pool.get(), scopeSize, input);
     }
 
     @Override
     public SerialWriter writeByteChannel(WritableByteChannel channel) {
-        return new CoreByteChannelSerialWriter(scopeSize, channel);
+        return new CoreByteChannelSerialWriter(pool.get(), scopeSize, channel);
     }
 
     @Override
     public SerialReader readByteChannel(ReadableByteChannel channel) {
-        return new CoreByteChannelSerialReader(scopeSize, channel);
+        return new CoreByteChannelSerialReader(pool.get(), scopeSize, channel);
     }
 
     /**
@@ -325,6 +329,8 @@ public class TinySerializer implements SerializerFramework {
     }
 
     public static final class Builder {
+        private boolean immediateSharedPool;
+
         private Serializer<Integer> size;
         private Serializer<Integer> scopeSize;
         private Serializer<Integer> subTypeId;
@@ -355,6 +361,17 @@ public class TinySerializer implements SerializerFramework {
         private boolean useImmutableCollections = false;
 
         /**
+         * Whether to use an immediate (non pooled) pool implementation or not.
+         *
+         * @param immediateSharedPool {@code true} if an immediate pool should be used, {@code false} otherwise.
+         * @return This builder.
+         */
+        public Builder immediateSharedPool(boolean immediateSharedPool) {
+            this.immediateSharedPool = immediateSharedPool;
+            return this;
+        }
+
+        /**
          * Prefer the 'simpler' variable length implementation over the more compact one.
          *
          * The simpler is beneficial when you are inspecting traffic by eye, since it performs a less esoteric encoding
@@ -363,7 +380,7 @@ public class TinySerializer implements SerializerFramework {
          * @see VarIntSerializer
          * @see CompactVarIntSerializer
          * @param useCompactVariableLength
-         * @return
+         * @return This builder.
          */
         public Builder useSimplerVariableLength(boolean useSimplerVariableLength) {
             this.useSimplerVariableLength = useSimplerVariableLength;
@@ -520,6 +537,8 @@ public class TinySerializer implements SerializerFramework {
          * @see #useImmutableCollections
          */
         public TinySerializer build() {
+            final Supplier<SharedPool> pool = buildPool();
+
             final Serializer<Integer> size = ofNullable(this.size).orElseGet(this::defaultCollectionSize);
             final Serializer<Integer> scopeSize = ofNullable(this.scopeSize).orElse(size);
             final Serializer<Integer> subTypeId = ofNullable(this.subTypeId).orElse(size);
@@ -546,9 +565,17 @@ public class TinySerializer implements SerializerFramework {
 
             final CollectionsProvider collections = ofNullable(this.collections).orElseGet(defaultCollections(size));
 
-            return new TinySerializer(scopeSize, subTypeId, enumOrdinal, defaultLengthPolicy, byteArray, charArray,
+            return new TinySerializer(pool, scopeSize, subTypeId, enumOrdinal, defaultLengthPolicy, byteArray, charArray,
                     string, bool, shortNumber, integer, longNumber, floatNumber, doubleNumber, varint, varlong, uuid,
                     collections, useStringsForEnums);
+        }
+
+        private Supplier<SharedPool> buildPool() {
+            if (immediateSharedPool) {
+                return () -> new ImmediateSharedPool();
+            }
+
+            return () -> new ContiniousSharedPool();
         }
 
         private Supplier<CollectionsProvider> defaultCollections(final Serializer<Integer> size) {

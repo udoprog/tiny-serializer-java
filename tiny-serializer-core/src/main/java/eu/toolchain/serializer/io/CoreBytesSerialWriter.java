@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 import eu.toolchain.serializer.types.CompactVarIntSerializer;
 
 public class CoreBytesSerialWriter extends AbstractSerialWriter implements BytesSerialWriter {
@@ -14,8 +15,8 @@ public class CoreBytesSerialWriter extends AbstractSerialWriter implements Bytes
         super();
     }
 
-    public CoreBytesSerialWriter(final Serializer<Integer> scopeSize) {
-        super(scopeSize);
+    public CoreBytesSerialWriter(final SharedPool pool, final Serializer<Integer> scopeSize) {
+        super(pool, scopeSize);
     }
 
     @Override

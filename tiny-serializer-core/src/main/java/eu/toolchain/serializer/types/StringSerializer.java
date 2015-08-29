@@ -1,7 +1,11 @@
 package eu.toolchain.serializer.types;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
@@ -16,16 +20,38 @@ public class StringSerializer implements Serializer<String> {
 
     @Override
     public void serialize(SerialWriter buffer, String value) throws IOException {
-        byte[] bytes = value.getBytes(UTF_8);
-        size.serialize(buffer, bytes.length);
-        buffer.write(bytes);
+        final CharsetEncoder encoder = UTF_8.newEncoder();
+
+        final int worst = (int)(value.length() * encoder.maxBytesPerChar());
+
+        /* allocate a worst-case buffer */
+        final ByteBuffer bytes = buffer.pool().allocate(worst);
+
+        try {
+            encoder.encode(CharBuffer.wrap(value), bytes, true);
+            bytes.flip();
+            this.size.serialize(buffer, bytes.limit());
+            buffer.write(bytes);
+        } finally {
+            buffer.pool().release(worst);
+        }
     }
 
     @Override
     public String deserialize(SerialReader buffer) throws IOException {
+        final CharsetDecoder decoder = UTF_8.newDecoder();
+
         final int length = size.deserialize(buffer);
-        byte[] bytes = new byte[length];
-        buffer.read(bytes);
-        return new String(bytes, UTF_8);
+
+        final ByteBuffer bytes = buffer.pool().allocate(length);
+
+        try {
+            buffer.read(bytes);
+            bytes.flip();
+
+            return decoder.decode(bytes).toString();
+        } finally {
+            buffer.pool().release(length);
+        }
     }
 }

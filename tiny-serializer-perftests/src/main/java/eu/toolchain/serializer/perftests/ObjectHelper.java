@@ -46,11 +46,13 @@ public class ObjectHelper {
     }
 
     private static Map<String, String> newMap() {
-        return ImmutableMap.of("hello", "world", "this", "sucks");
+        return ImmutableMap.of("hello", "world", "this", "sucks", "long string", "another long string",
+                "an even longer string with a twist", "ok");
     }
 
     private static List<String> newList() {
-        return ImmutableList.of("fee", "fii", "foo", "fum");
+        return ImmutableList.of("fee", "fii", "foo", "fum", "another long string",
+                "an even longer string with a twist");
     }
 
     private static Set<Long> newSet() {

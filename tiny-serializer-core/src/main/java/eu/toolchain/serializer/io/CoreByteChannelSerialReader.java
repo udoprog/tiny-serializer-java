@@ -5,14 +5,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 
 public class CoreByteChannelSerialReader extends AbstractSerialReader {
     public static final int SKIP_SIZE = 1024;
 
     final ReadableByteChannel channel;
 
-    public CoreByteChannelSerialReader(final Serializer<Integer> scopeSize, final ReadableByteChannel channel) {
-        super(scopeSize);
+    public CoreByteChannelSerialReader(final SharedPool pool, final Serializer<Integer> scopeSize, final ReadableByteChannel channel) {
+        super(pool, scopeSize);
         this.channel = channel;
     }
 

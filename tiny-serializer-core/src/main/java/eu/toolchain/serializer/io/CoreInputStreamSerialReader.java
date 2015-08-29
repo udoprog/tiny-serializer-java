@@ -5,12 +5,18 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 
 public class CoreInputStreamSerialReader extends AbstractSerialReader {
     private final InputStream input;
 
-    public CoreInputStreamSerialReader(final Serializer<Integer> scopeSize, final InputStream input) {
-        super(scopeSize);
+    public CoreInputStreamSerialReader(final InputStream input) {
+        super();
+        this.input = input;
+    }
+
+    public CoreInputStreamSerialReader(final SharedPool pool, final Serializer<Integer> scopeSize, final InputStream input) {
+        super(pool, scopeSize);
         this.input = input;
     }
 

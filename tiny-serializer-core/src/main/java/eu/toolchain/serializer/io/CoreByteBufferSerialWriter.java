@@ -4,12 +4,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 
 public class CoreByteBufferSerialWriter extends AbstractSerialWriter {
     private final ByteBuffer buffer;
 
-    public CoreByteBufferSerialWriter(final Serializer<Integer> scopeSize, final ByteBuffer buffer) {
-        super(scopeSize);
+    public CoreByteBufferSerialWriter(final SharedPool pool, final Serializer<Integer> scopeSize, final ByteBuffer buffer) {
+        super(pool, scopeSize);
         this.buffer = buffer;
     }
 

@@ -2,8 +2,11 @@ package eu.toolchain.serializer;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public interface SerialReader extends Closeable {
+    void read(ByteBuffer bytes) throws IOException;
+
     /**
      * Read an array of bytes.
      *
@@ -45,4 +48,6 @@ public interface SerialReader extends Closeable {
      * @see #skip() for how to skip scoped sections.
      */
     SerialReader scope() throws IOException;
+
+    SharedPool pool();
 }

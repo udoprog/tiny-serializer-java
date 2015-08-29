@@ -5,14 +5,15 @@ import java.io.IOException;
 
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 
 class ScopedSerialWriter extends AbstractSerialWriter implements SerialWriter.Scope {
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();
 
     private final SerialWriter parent;
 
-    public ScopedSerialWriter(final Serializer<Integer> scopeSize, final SerialWriter parent) {
-        super(scopeSize);
+    public ScopedSerialWriter(final SharedPool pool, final Serializer<Integer> scopeSize, final SerialWriter parent) {
+        super(pool, scopeSize);
         this.parent = parent;
     }
 

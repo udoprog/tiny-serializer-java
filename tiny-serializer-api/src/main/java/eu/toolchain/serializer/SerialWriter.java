@@ -2,6 +2,7 @@ package eu.toolchain.serializer;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public interface SerialWriter extends Closeable {
     public interface Scope extends SerialWriter {
@@ -13,6 +14,8 @@ public interface SerialWriter extends Closeable {
         @Override
         public void close() throws IOException;
     }
+
+    public void write(ByteBuffer buffer) throws IOException;
 
     /**
      * Write an array of bytes.
@@ -39,4 +42,6 @@ public interface SerialWriter extends Closeable {
      * the exact details are implementation specific.
      */
     public SerialWriter.Scope scope();
+
+    public SharedPool pool();
 }

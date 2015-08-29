@@ -5,14 +5,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 
 public class CoreByteChannelSerialWriter extends AbstractSerialWriter {
     final ByteBuffer singleByte = ByteBuffer.allocate(1);
 
     final WritableByteChannel channel;
 
-    public CoreByteChannelSerialWriter(final Serializer<Integer> scopeSize, final WritableByteChannel channel) {
-        super(scopeSize);
+    public CoreByteChannelSerialWriter(final SharedPool pool, final Serializer<Integer> scopeSize, final WritableByteChannel channel) {
+        super(pool, scopeSize);
         this.channel = channel;
     }
 

@@ -1,20 +1,32 @@
 package eu.toolchain.serializer.io;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
 import eu.toolchain.serializer.types.CompactVarIntSerializer;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 public abstract class AbstractSerialReader implements SerialReader {
     public static final CompactVarIntSerializer DEFAULT_SCOPE_SIZE = new CompactVarIntSerializer();
 
+    private final SharedPool pool;
     protected final Serializer<Integer> scopeSize;
 
     public AbstractSerialReader() {
-        this(DEFAULT_SCOPE_SIZE);
+        this(new ContiniousSharedPool(), DEFAULT_SCOPE_SIZE);
+    }
+
+    public AbstractSerialReader(SharedPool pool, Serializer<Integer> scopeSize) {
+        this.pool = pool;
+        this.scopeSize = scopeSize;
+    }
+
+    @Override
+    public void read(ByteBuffer bytes) throws IOException {
+        read(bytes.array(), bytes.arrayOffset(), bytes.remaining());
+        bytes.position(bytes.remaining());
     }
 
     @Override
@@ -31,10 +43,15 @@ public abstract class AbstractSerialReader implements SerialReader {
     @Override
     public SerialReader scope() throws IOException {
         final int size = scopeSize.deserialize(this);
-        return new ScopedSerialReader(scopeSize, this, size);
+        return new ScopedSerialReader(pool, scopeSize, this, size);
     }
 
     @Override
     public void close() throws IOException {
+    }
+
+    @Override
+    public SharedPool pool() {
+        return pool;
     }
 }
