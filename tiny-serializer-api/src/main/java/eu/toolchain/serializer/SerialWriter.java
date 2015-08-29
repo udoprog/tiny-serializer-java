@@ -15,17 +15,6 @@ public interface SerialWriter extends Closeable {
     }
 
     /**
-     * Write a single byte.
-     *
-     * The 24 most significant bits of the integer will be ignored, only the first 8 bits will be read as the input
-     * byte.
-     *
-     * @param b Byte to write.
-     * @throws IOException When a byte cannot be written.
-     */
-    public void write(int b) throws IOException;
-
-    /**
      * Write an array of bytes.
      *
      * @param bytes Array of bytes to write.

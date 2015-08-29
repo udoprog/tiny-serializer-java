@@ -14,11 +14,6 @@ public class CoreByteBufferSerialWriter extends AbstractSerialWriter {
     }
 
     @Override
-    public void write(int b) throws IOException {
-        buffer.put((byte) b);
-    }
-
-    @Override
     public void write(byte[] bytes) throws IOException {
         buffer.put(bytes);
     }

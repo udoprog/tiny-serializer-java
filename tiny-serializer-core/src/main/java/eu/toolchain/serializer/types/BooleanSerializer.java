@@ -7,8 +7,8 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 
 public class BooleanSerializer implements Serializer<Boolean> {
-    private final int TRUE = 0x1;
-    private final int FALSE = 0x0;
+    private static final byte TRUE[] = new byte[] { 0x1 };
+    private static final byte FALSE[] = new byte[] { 0x0 };
 
     @Override
     public void serialize(SerialWriter buffer, Boolean value) throws IOException {
@@ -17,6 +17,8 @@ public class BooleanSerializer implements Serializer<Boolean> {
 
     @Override
     public Boolean deserialize(SerialReader buffer) throws IOException {
-        return buffer.read() == TRUE;
+        final byte[] b = new byte[1];
+        buffer.read(b);
+        return b[0] == 0x1;
     }
 }

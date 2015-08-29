@@ -13,20 +13,11 @@ public class IteratorSerialReader extends AbstractSerialReader {
     final Iterator<Integer> iterator;
 
     @Override
-    public byte read() throws IOException {
-        try {
-            return iterator.next().byteValue();
-        } catch (NoSuchElementException e) {
-            throw new EOFException();
-        }
-    }
-
-    @Override
     public void read(byte[] b, int offset, int length) throws IOException {
-        int i = 0;
+        int i = offset;
 
-        while (i < b.length) {
-            b[i++] = read();
+        while (i < offset + length) {
+            b[i++] = iterator.next().byteValue();
         }
     }
 

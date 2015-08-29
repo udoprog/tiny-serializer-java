@@ -36,31 +36,42 @@ import eu.toolchain.serializer.Serializer;
  * @author udoprog
  */
 public class CompactVarIntSerializer implements Serializer<Integer> {
+    public static final int MAX_SIZE = 5;
+
     private static final int CONT = 0x80;
     private static final int MASK = (CONT ^ 0xff);
 
     @Override
     public void serialize(SerialWriter buffer, Integer value) throws IOException {
+        final byte[] bytes = new byte[MAX_SIZE];
+        int i = 0;
+
         int v = value;
 
-        while ((v >>> 7) > 0) {
-            buffer.write((v & MASK) | CONT);
-            v = (v >>> 7) - 1;
+        int temp;
+
+        while ((temp = (v >>> 7)) > 0) {
+            bytes[i++] = (byte)((v & MASK) | CONT);
+            v = temp - 1;
         }
 
-        buffer.write(v);
+        bytes[i++] = (byte)v;
+        buffer.write(bytes, 0, i);
         return;
     }
 
     @Override
     public Integer deserialize(SerialReader buffer) throws IOException {
+        final byte[] bytes = new byte[1];
         int v = 0;
         long shift = 1;
 
         int position = 0;
 
-        while (position++ < 5) {
-            byte b = buffer.read();
+        while (position++ < MAX_SIZE) {
+            buffer.read(bytes);
+
+            final byte b = bytes[0];
 
             v += (b & MASK) * shift;
 

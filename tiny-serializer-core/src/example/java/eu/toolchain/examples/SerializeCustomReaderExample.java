@@ -17,13 +17,8 @@ public class SerializeCustomReaderExample {
 
         final SerialReader reader = new AbstractSerialReader(s.varint()) {
             @Override
-            public byte read() throws IOException {
-                return (byte) inputStream.read();
-            }
-
-            @Override
-            public void read(byte[] b) throws IOException {
-                inputStream.read(b);
+            public void read(byte[] b, int offset, int length) throws IOException {
+                inputStream.read(b, offset, length);
             }
 
             @Override

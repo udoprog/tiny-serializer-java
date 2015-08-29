@@ -22,8 +22,8 @@ import eu.toolchain.serializer.Serializer;
  * </pre>
  */
 public class NullSerializer<T> implements Serializer<T> {
-    public static final int NULL = 0x7e;
-    public static final int NOT_NULL = 0x7f;
+    public static final byte[] NULL = new byte[] { 0x7e };
+    public static final byte[] NOT_NULL = new byte[] { 0x7f };
 
     private final Serializer<T> serializer;
 
@@ -44,7 +44,11 @@ public class NullSerializer<T> implements Serializer<T> {
 
     @Override
     public T deserialize(SerialReader buffer) throws IOException {
-        if (buffer.read() == NULL)
+        final byte[] bytes = new byte[1];
+
+        buffer.read(bytes);
+
+        if (bytes[0] == 0x7e)
             return null;
 
         return serializer.deserialize(buffer);

@@ -14,11 +14,6 @@ public class CoreByteBufferSerialReader extends AbstractSerialReader {
     }
 
     @Override
-    public byte read() throws IOException {
-        return buffer.get();
-    }
-
-    @Override
     public void read(byte[] bytes, int offset, int length) throws IOException {
         buffer.get(bytes, offset, length);
     }

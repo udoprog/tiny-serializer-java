@@ -14,8 +14,10 @@ public class CapturingSerialWriter extends AbstractSerialWriter {
     }
 
     @Override
-    public void write(int b) throws IOException {
-        captured.add(b);
+    public void write(byte[] bytes, int offset, int length) throws IOException {
+        for (int i = offset; i < offset + length; i++) {
+            captured.add((int)bytes[i]);
+        }
     }
 
     public List<Integer> getCaptured() {

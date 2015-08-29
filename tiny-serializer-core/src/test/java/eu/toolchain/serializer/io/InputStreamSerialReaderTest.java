@@ -1,6 +1,5 @@
 package eu.toolchain.serializer.io;
 
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
@@ -32,19 +31,6 @@ public class InputStreamSerialReaderTest {
     @Before
     public void setup() {
         reader = new CoreInputStreamSerialReader(scopeSize, input);
-    }
-
-    @Test(expected = EOFException.class)
-    public void testReadThrows() throws IOException {
-        doReturn(-1).when(input).read();
-        reader.read();
-    }
-
-    @Test
-    public void testRead() throws IOException {
-        doReturn(0xff).when(input).read();
-        assertTrue((byte) 0xff == reader.read());
-        verify(input).read();
     }
 
     @Test

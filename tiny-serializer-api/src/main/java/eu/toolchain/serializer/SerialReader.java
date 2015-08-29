@@ -5,14 +5,6 @@ import java.io.IOException;
 
 public interface SerialReader extends Closeable {
     /**
-     * Read a single byte.
-     *
-     * @return The read byte.
-     * @throws IOException When byte cannot be read.
-     */
-    byte read() throws IOException;
-
-    /**
      * Read an array of bytes.
      *
      * @param b Array to add read bytes to.

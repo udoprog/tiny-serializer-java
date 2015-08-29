@@ -15,17 +15,6 @@ public class CoreInputStreamSerialReader extends AbstractSerialReader {
     }
 
     @Override
-    public byte read() throws IOException {
-        final int r = input.read();
-
-        if (r == -1) {
-            throw new EOFException();
-        }
-
-        return (byte) r;
-    }
-
-    @Override
     public void read(byte[] b, int offset, int length) throws IOException {
         int index = 0;
 

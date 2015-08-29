@@ -19,11 +19,6 @@ public class CoreOutputStreamSerialWriter extends AbstractSerialWriter implement
     }
 
     @Override
-    public void write(int b) throws IOException {
-        output.write(b);
-    }
-
-    @Override
     public void write(byte[] bytes, int offset, int length) throws IOException {
         output.write(bytes, offset, length);
     }

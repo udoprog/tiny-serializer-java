@@ -18,13 +18,6 @@ class ScopedSerialReader extends AbstractSerialReader {
     }
 
     @Override
-    public byte read() throws IOException {
-        ++p;
-        checkScope();
-        return parent.read();
-    }
-
-    @Override
     public void read(byte[] b, int offset, int length) throws IOException {
         p += b.length;
         checkScope();

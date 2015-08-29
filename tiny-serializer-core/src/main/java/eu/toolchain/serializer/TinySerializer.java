@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,9 +19,11 @@ import java.util.function.Supplier;
 
 import eu.toolchain.serializer.io.BytesSerialWriter;
 import eu.toolchain.serializer.io.CoreByteArraySerialReader;
-import eu.toolchain.serializer.io.CoreBytesSerialWriter;
 import eu.toolchain.serializer.io.CoreByteBufferSerialReader;
 import eu.toolchain.serializer.io.CoreByteBufferSerialWriter;
+import eu.toolchain.serializer.io.CoreByteChannelSerialReader;
+import eu.toolchain.serializer.io.CoreByteChannelSerialWriter;
+import eu.toolchain.serializer.io.CoreBytesSerialWriter;
 import eu.toolchain.serializer.io.CoreInputStreamSerialReader;
 import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
 import eu.toolchain.serializer.io.StreamSerialWriter;
@@ -301,6 +305,16 @@ public class TinySerializer implements SerializerFramework {
     @Override
     public SerialReader readStream(final InputStream input) {
         return new CoreInputStreamSerialReader(scopeSize, input);
+    }
+
+    @Override
+    public SerialWriter writeByteChannel(WritableByteChannel channel) {
+        return new CoreByteChannelSerialWriter(scopeSize, channel);
+    }
+
+    @Override
+    public SerialReader readByteChannel(ReadableByteChannel channel) {
+        return new CoreByteChannelSerialReader(scopeSize, channel);
     }
 
     /**
