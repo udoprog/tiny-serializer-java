@@ -17,6 +17,7 @@ Topics:
 * [Basic Serialization](#basic-serialization)
 * [Generated Serializers](#generated-serializers)
 * [Performance](#performance)
+* [Examples](tiny-serializer-examples/src/main/java/eu/toolchain/examples/)
 
 # Setup
 
