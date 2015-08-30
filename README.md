@@ -46,7 +46,7 @@ There are quite a few configuration options available in the builder.
 
 Examples:
 
-* [Serializer Setup](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializerSetup.java)
+* [Serializer Setup](tiny-serializer-examples/src/main/java/eu/toolchain/examples/SerializerSetup.java)
 
 # Serialization Format
 
@@ -106,7 +106,7 @@ How to implement your own is documented further down in [Implementing a Writer/R
 
 Examples:
 
-* [Stream Communication](tiny-serializer-core/src/example/java/eu/toolchain/examples/StreamCommunicationExample.java)
+* [Stream Communication](tiny-serializer-examples/src/main/java/eu/toolchain/examples/StreamCommunicationExample.java)
 
 ## Serializing Values
 
@@ -135,8 +135,8 @@ in strings for which there are `TinySerializer#string()`.
 
 Examples:
 
-* [Primitive Example](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializePrimitiveExample.java)
-* [Serialize a Map](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializeMap.java)
+* [Primitive Example](tiny-serializer-examples/src/main/java/eu/toolchain/examples/SerializePrimitiveExample.java)
+* [Serialize a Map](tiny-serializer-examples/src/main/java/eu/toolchain/examples/SerializeMap.java)
 
 ## Implementing a Serial{Reader|Writer}
 
@@ -148,8 +148,8 @@ To implement a custom `SerialReader`, use the available [`AbstractSerialReader`]
 
 Examples:
 
-* [Custom reader example](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializeCustomReaderExample.java)
-* [Custom writer example](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializeCustomWriterExample.java)
+* [Custom reader example](tiny-serializer-examples/src/main/java/eu/toolchain/examples/SerializeCustomReaderExample.java)
+* [Custom writer example](tiny-serializer-examples/src/main/java/eu/toolchain/examples/SerializeCustomWriterExample.java)
 
 # Generated Serializers
 
@@ -292,7 +292,7 @@ will throw an exception at configuration time.
 
 Examples:
 
-* [Serialize an Immutable Map](tiny-serializer-core/src/example/java/eu/toolchain/examples/SerializeImmutableMap.java)
+* [Serialize an Immutable Map](tiny-serializer-examples/src/main/java/eu/toolchain/examples/SerializeImmutableMap.java)
 
 #### Immutable Objects
 
