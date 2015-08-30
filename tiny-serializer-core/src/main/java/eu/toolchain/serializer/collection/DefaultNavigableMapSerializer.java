@@ -3,7 +3,6 @@ package eu.toolchain.serializer.collection;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import eu.toolchain.serializer.SerialReader;

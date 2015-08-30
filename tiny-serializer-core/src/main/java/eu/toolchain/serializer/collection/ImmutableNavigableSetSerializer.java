@@ -2,7 +2,6 @@ package eu.toolchain.serializer.collection;
 
 import java.io.IOException;
 import java.util.NavigableSet;
-import java.util.SortedSet;
 
 import com.google.common.collect.ImmutableSortedSet;
 

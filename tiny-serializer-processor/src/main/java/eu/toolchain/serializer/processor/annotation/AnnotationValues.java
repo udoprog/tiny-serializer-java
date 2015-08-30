@@ -2,7 +2,6 @@ package eu.toolchain.serializer.processor.annotation;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;

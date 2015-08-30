@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
-import eu.toolchain.serializer.primitive.CompactVarIntSerializer;
 
 public class CoreBytesSerialWriter extends AbstractSerialWriter implements BytesSerialWriter {
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();

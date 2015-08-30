@@ -2,8 +2,6 @@ package eu.toolchain.serializer.processor.value;
 
 import java.util.Optional;
 
-import javax.lang.model.element.Element;
-
 import lombok.Data;
 
 @Data
