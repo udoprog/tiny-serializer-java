@@ -1,6 +1,8 @@
 package eu.toolchain.serializer.io;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 import eu.toolchain.serializer.Serializer;
@@ -15,12 +17,29 @@ public class CoreByteBufferSerialReader extends AbstractSerialReader {
     }
 
     @Override
+    public byte read() throws IOException {
+        try {
+            return buffer.get();
+        } catch (final BufferUnderflowException e) {
+            throw new EOFException();
+        }
+    }
+
+    @Override
     public void read(byte[] bytes, int offset, int length) throws IOException {
-        buffer.get(bytes, offset, length);
+        try {
+            buffer.get(bytes, offset, length);
+        } catch (final BufferUnderflowException e) {
+            throw new EOFException();
+        }
     }
 
     @Override
     public void skip(int length) throws IOException {
-        buffer.position(buffer.position() + length);
+        try {
+            buffer.position(buffer.position() + length);
+        } catch (final IllegalArgumentException e) {
+            throw new EOFException();
+        }
     }
 }

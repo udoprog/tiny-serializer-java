@@ -18,6 +18,11 @@ class ScopedSerialWriter extends AbstractSerialWriter implements SerialWriter.Sc
     }
 
     @Override
+    public void write(byte b) throws IOException {
+        output.write(b & 0xff);
+    }
+
+    @Override
     public void write(byte[] bytes, int offset, int length) throws IOException {
         output.write(bytes, offset, length);
     }

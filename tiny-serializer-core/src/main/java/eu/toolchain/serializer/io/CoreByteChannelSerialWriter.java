@@ -8,13 +8,21 @@ import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
 
 public class CoreByteChannelSerialWriter extends AbstractSerialWriter {
-    final ByteBuffer singleByte = ByteBuffer.allocate(1);
+    final ByteBuffer one = ByteBuffer.allocate(1);
 
     final WritableByteChannel channel;
 
     public CoreByteChannelSerialWriter(final SharedPool pool, final Serializer<Integer> scopeSize, final WritableByteChannel channel) {
         super(pool, scopeSize);
         this.channel = channel;
+    }
+
+    @Override
+    public void write(byte b) throws IOException {
+        one.put(b);
+        one.flip();
+        channel.write(one);
+        one.flip();
     }
 
     @Override

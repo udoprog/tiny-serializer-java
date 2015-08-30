@@ -20,6 +20,11 @@ public class CoreBytesSerialWriter extends AbstractSerialWriter implements Bytes
     }
 
     @Override
+    public void write(byte b) {
+        output.write(b & 0xff);
+    }
+
+    @Override
     public void write(byte[] bytes, int offset, int length) throws IOException {
         output.write(bytes, offset, length);
     }

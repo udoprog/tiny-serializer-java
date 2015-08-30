@@ -19,22 +19,29 @@ class ScopedSerialReader extends AbstractSerialReader {
     }
 
     @Override
+    public byte read() throws IOException {
+        retain(1);
+        return parent.read();
+    }
+
+    @Override
     public void read(byte[] b, int offset, int length) throws IOException {
-        p += b.length;
-        checkScope();
+        retain(b.length);
         parent.read(b, offset, length);
     }
 
     @Override
     public void skip(int length) throws IOException {
-        p += length;
-        checkScope();
+        retain(length);
         parent.skip(length);
     }
 
-    private void checkScope() throws IOException {
-        if (p > size) {
-            throw new IOException("end of scope reached (p: " + p + ", size: " + size + ")");
+    private void retain(int requested) throws IOException {
+        if (p + requested > size) {
+            throw new IOException(
+                    "end-of-scope reached (p: " + p + ", size: " + size + ", requested: " + requested + ")");
         }
+
+        p += requested;
     }
 }

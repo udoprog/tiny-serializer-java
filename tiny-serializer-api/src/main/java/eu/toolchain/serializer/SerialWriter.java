@@ -5,16 +5,16 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public interface SerialWriter extends Closeable {
-    public interface Scope extends SerialWriter {
-        /**
-         * Close the current scoped section.
-         *
-         * After this, the section should be guaranteed to have been written to its parent {@code SerialWriter}.
-         */
-        @Override
-        public void close() throws IOException;
-    }
+    /**
+     * Write a single byte.
+     */
+    public void write(byte b) throws IOException;
 
+    /**
+     * Write an array of bytes from the given buffer.
+     *
+     * Will write all {@link ByteBuffer#remaining()} bytes.
+     */
     public void write(ByteBuffer buffer) throws IOException;
 
     /**
@@ -44,4 +44,14 @@ public interface SerialWriter extends Closeable {
     public SerialWriter.Scope scope();
 
     public SharedPool pool();
+
+    public interface Scope extends SerialWriter {
+        /**
+         * Close the current scoped section.
+         *
+         * After this, the section should be guaranteed to have been written to its parent {@code SerialWriter}.
+         */
+        @Override
+        public void close() throws IOException;
+    }
 }

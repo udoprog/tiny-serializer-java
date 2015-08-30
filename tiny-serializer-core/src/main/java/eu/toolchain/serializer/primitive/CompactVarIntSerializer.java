@@ -70,16 +70,13 @@ public class CompactVarIntSerializer implements Serializer<Integer> {
 
     @Override
     public Integer deserialize(SerialReader buffer) throws IOException {
-        final byte[] bytes = new byte[1];
-
         int v = 0;
         long shift = 1;
 
         int position = 0;
 
         while (position++ < MAX_SIZE) {
-            buffer.read(bytes);
-            final byte b = bytes[0];
+            final byte b = buffer.read();
 
             v += (b & MASK) * shift;
 

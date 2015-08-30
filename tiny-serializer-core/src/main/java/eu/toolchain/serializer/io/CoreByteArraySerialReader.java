@@ -22,6 +22,17 @@ public class CoreByteArraySerialReader extends AbstractSerialReader {
     }
 
     @Override
+    public byte read() throws IOException {
+        if (p + 1 > source.length) {
+            throw new EOFException();
+        }
+
+        final byte b = source[p];
+        p += 1;
+        return b;
+    }
+
+    @Override
     public void read(byte[] b, int offset, int length) throws IOException {
         if (offset < 0 || length < 0 || offset + length > b.length) {
             throw new IndexOutOfBoundsException();

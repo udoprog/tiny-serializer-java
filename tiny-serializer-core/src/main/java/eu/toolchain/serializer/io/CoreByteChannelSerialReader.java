@@ -10,11 +10,21 @@ import eu.toolchain.serializer.SharedPool;
 public class CoreByteChannelSerialReader extends AbstractSerialReader {
     public static final int SKIP_SIZE = 1024;
 
+    final ByteBuffer one = ByteBuffer.allocate(1);
     final ReadableByteChannel channel;
 
     public CoreByteChannelSerialReader(final SharedPool pool, final Serializer<Integer> scopeSize, final ReadableByteChannel channel) {
         super(pool, scopeSize);
         this.channel = channel;
+    }
+
+    @Override
+    public byte read() throws IOException {
+        channel.read(one);
+        one.flip();
+        final byte b = one.get();
+        one.flip();
+        return b;
     }
 
     @Override

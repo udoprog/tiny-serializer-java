@@ -1,6 +1,8 @@
 package eu.toolchain.serializer.io;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
 import eu.toolchain.serializer.Serializer;
@@ -15,13 +17,30 @@ public class CoreByteBufferSerialWriter extends AbstractSerialWriter {
     }
 
     @Override
+    public void write(byte b) throws IOException {
+        try {
+            buffer.put(b);
+        } catch (final BufferOverflowException e) {
+            throw new EOFException();
+        }
+    }
+
+    @Override
     public void write(byte[] bytes) throws IOException {
-        buffer.put(bytes);
+        try {
+            buffer.put(bytes);
+        } catch (final BufferOverflowException e) {
+            throw new EOFException();
+        }
     }
 
     @Override
     public void write(byte[] bytes, int offset, int length) throws IOException {
-        buffer.put(bytes, offset, length);
+        try {
+            buffer.put(bytes, offset, length);
+        } catch (final BufferOverflowException e) {
+            throw new EOFException();
+        }
     }
 
     @Override

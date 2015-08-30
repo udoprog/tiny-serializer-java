@@ -47,15 +47,13 @@ public class CompactVarLongSerializer implements Serializer<Long> {
 
     @Override
     public Long deserialize(SerialReader buffer) throws IOException {
-        final byte[] bytes = new byte[1];
         long v = 0;
         long shift = 1;
 
         int position = 0;
 
         while (position++ < MAX_SIZE) {
-            buffer.read(bytes);
-            final byte b = bytes[0];
+            final byte b = buffer.read();
 
             v += (b & MASK) * shift;
 

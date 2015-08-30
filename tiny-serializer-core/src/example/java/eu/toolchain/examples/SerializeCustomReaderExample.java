@@ -1,6 +1,7 @@
 package eu.toolchain.examples;
 
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 
 import eu.toolchain.serializer.SerialReader;
@@ -16,6 +17,17 @@ public class SerializeCustomReaderExample {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(source);
 
         final SerialReader reader = new AbstractSerialReader() {
+            @Override
+            public byte read() throws IOException {
+                final int i = inputStream.read();
+
+                if (i < 0) {
+                    throw new EOFException();
+                }
+
+                return (byte)i;
+            }
+
             @Override
             public void read(byte[] b, int offset, int length) throws IOException {
                 inputStream.read(b, offset, length);

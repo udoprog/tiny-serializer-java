@@ -9,13 +9,11 @@ import eu.toolchain.serializer.Serializer;
 public class ByteSerializer implements Serializer<Byte> {
     @Override
     public void serialize(SerialWriter buffer, Byte value) throws IOException {
-        buffer.write(new byte[] { value });
+        buffer.write(value);
     }
 
     @Override
     public Byte deserialize(SerialReader buffer) throws IOException {
-        final byte[] bytes = new byte[1];
-        buffer.read(bytes);
-        return bytes[0];
+        return buffer.read();
     }
 }

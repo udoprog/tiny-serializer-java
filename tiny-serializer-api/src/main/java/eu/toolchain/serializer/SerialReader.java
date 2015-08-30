@@ -5,6 +5,14 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public interface SerialReader extends Closeable {
+    /**
+     * Read a single byte.
+     */
+    byte read() throws IOException;
+
+    /**
+     * Read an array of bytes into the given buffer.
+     */
     void read(ByteBuffer bytes) throws IOException;
 
     /**
