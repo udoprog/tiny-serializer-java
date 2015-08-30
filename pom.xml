@@ -3,7 +3,7 @@
 
   <groupId>eu.toolchain.serializer</groupId>
   <artifactId>tiny-serializer-parent</artifactId>
-  <version>1.4.2-SNAPSHOT</version>
+  <version>1.4.2</version>
   <packaging>pom</packaging>
 
   <url>https://github.com/udoprog/tiny-serializer-java</url>
@@ -37,7 +37,7 @@
     <connection>scm:git:git@github.com:udoprog/tiny-serializer-java</connection>
     <developerConnection>scm:git:git@github.com:udoprog/tiny-serializer-java</developerConnection>
     <url>https://github.com/udoprog/tiny-serializer-java</url>
-    <tag>HEAD</tag>
+    <tag>1.4.2</tag>
   </scm>
 
   <developers>
