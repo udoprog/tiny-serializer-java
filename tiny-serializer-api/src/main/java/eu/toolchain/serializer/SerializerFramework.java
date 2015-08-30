@@ -17,62 +17,125 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.UUID;
 
-import eu.toolchain.serializer.io.BytesSerialWriter;
-import eu.toolchain.serializer.io.StreamSerialWriter;
-
+/**
+ * Serialization Framework.
+ *
+ * This type is the entry-point to everything regarding serialization.
+ *
+ * <h1>Fixed vs. Variable Width Serializers</h1>
+ *
+ * A fixed-width {@link Serializer} always marshalls the value into the same number of bytes.
+ *
+ * A variable-width {@link Serializer} encodes the value using a varying number of bytes, typically to reduce the size
+ * for more frequent numerals.
+ *
+ * @author udoprog
+ */
 public interface SerializerFramework {
     /**
-     * A {@code Serializer} for strings.
+     * A fixed-length {@link Serializer} for {@link String}s.
      */
     public Serializer<String> string();
 
+    /**
+     * A fixed-length {@link Serializer} for {@link Byte}s.
+     */
     public Serializer<Byte> fixedByte();
 
-    public Serializer<Character> fixedCharacter();
-
     /**
-     * A {@code Serializer} for booleans.
+     * A fixed-length {@link Serializer} for {@link Boolean}s.
      */
     public Serializer<Boolean> fixedBoolean();
 
     /**
-     * A {@code Serializer} for 16 bit signed integers (short).
+     * A fixed-length {@link Serializer} for {@link Short}s.
      */
     public Serializer<Short> fixedShort();
 
     /**
-     * A {@code Serializer} for 32 bit signed integers (int).
+     * A fixed-length {@code Serializer} for {@link Integer}s.
      */
     public Serializer<Integer> fixedInteger();
 
     /**
-     * A {@code Serializer} for 64 bit signed integers (long)..
-     *
-     * @return
+     * A fixed-length {@link Serializer} for {@link Long}s.
      */
     public Serializer<Long> fixedLong();
 
     /**
-     * A {@code Serializer} for 32 bit floating point numbers (float).
+     * A fixed-length {@link Serializer} for {@link Float}s.
      */
     public Serializer<Float> fixedFloat();
 
     /**
-     * A {@code Serializer} for 64 bit floating point numbers (double).
+     * A fixed-length {@link Serializer} for {@link Double}s.
      */
     public Serializer<Double> fixedDouble();
 
     /**
-     * A {@code Serializer} for integers that uses a variable length encoding that is more space-efficient at encoding
-     * smaller values than the naive approach.
+     * A fixed-length {@link Serializer} for {@link Character}s.
+     */
+    public Serializer<Character> fixedCharacter();
+
+    /**
+     * A variable-length {@link Serializer} for {@link Integer}s.
      */
     public Serializer<Integer> variableInteger();
 
     /**
-     * A {@code Serializer} for longs that uses a variable length encoding that is more space-efficient at encoding
-     * smaller values than the naive approach.
+     * A variable-length {@link Serializer} for {@link Long}s.
      */
     public Serializer<Long> variableLong();
+
+    /* deprecated */
+
+    /**
+     * @see #fixedBoolean()
+     */
+    @Deprecated
+    public Serializer<Boolean> bool();
+
+    /**
+     * @see #fixedShort()
+     */
+    @Deprecated
+    public Serializer<Short> shortNumber();
+
+    /**
+     * @see #fixedInteger()
+     */
+    @Deprecated
+    public Serializer<Integer> integer();
+
+    /**
+     * @see #fixedLong()
+     */
+    @Deprecated
+    public Serializer<Long> longNumber();
+
+    /**
+     * @see #fixedFloat()
+     */
+    @Deprecated
+    public Serializer<Float> floatNumber();
+
+    /**
+     * @see #fixedDouble()
+     */
+    @Deprecated
+    public Serializer<Double> doubleNumber();
+
+    /**
+     * @see #variableInteger()
+     */
+    @Deprecated
+    public Serializer<Integer> varint();
+
+    /**
+     * @see #variableLong()
+     */
+    @Deprecated
+    public Serializer<Long> varlong();
 
     /* more fancy things */
 

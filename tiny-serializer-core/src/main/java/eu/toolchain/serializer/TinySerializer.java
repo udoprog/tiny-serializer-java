@@ -29,7 +29,6 @@ import eu.toolchain.serializer.array.FloatArraySerializer;
 import eu.toolchain.serializer.array.IntegerArraySerializer;
 import eu.toolchain.serializer.array.LongArraySerializer;
 import eu.toolchain.serializer.array.ShortArraySerializer;
-import eu.toolchain.serializer.io.BytesSerialWriter;
 import eu.toolchain.serializer.io.ContiniousSharedPool;
 import eu.toolchain.serializer.io.CoreByteArraySerialReader;
 import eu.toolchain.serializer.io.CoreByteBufferSerialReader;
@@ -40,7 +39,6 @@ import eu.toolchain.serializer.io.CoreBytesSerialWriter;
 import eu.toolchain.serializer.io.CoreInputStreamSerialReader;
 import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
 import eu.toolchain.serializer.io.ImmediateSharedPool;
-import eu.toolchain.serializer.io.StreamSerialWriter;
 import eu.toolchain.serializer.primitive.BooleanSerializer;
 import eu.toolchain.serializer.primitive.ByteSerializer;
 import eu.toolchain.serializer.primitive.CharacterSerializer;
@@ -67,7 +65,7 @@ import eu.toolchain.serializer.type.UUIDSerializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class TinySerializer implements SerializerFramework {
+public class TinySerializer extends AbstractSerializerFramework {
     public static final Serializer<Integer> DEFAULT_INTEGER = new CompactVarIntSerializer();
     public static final LengthPolicy DEFAULT_LENGTH_POLICY = new MaxLengthPolicy(Integer.MAX_VALUE);
 

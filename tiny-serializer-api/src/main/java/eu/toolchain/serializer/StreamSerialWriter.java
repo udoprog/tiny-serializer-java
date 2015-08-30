@@ -1,8 +1,6 @@
-package eu.toolchain.serializer.io;
+package eu.toolchain.serializer;
 
 import java.io.IOException;
-
-import eu.toolchain.serializer.SerialWriter;
 
 public interface StreamSerialWriter extends SerialWriter {
     /**

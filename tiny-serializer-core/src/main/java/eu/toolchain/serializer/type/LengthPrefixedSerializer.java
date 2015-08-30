@@ -2,12 +2,12 @@ package eu.toolchain.serializer.type;
 
 import java.io.IOException;
 
+import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.LengthPolicy;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
-import eu.toolchain.serializer.io.BytesSerialWriter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

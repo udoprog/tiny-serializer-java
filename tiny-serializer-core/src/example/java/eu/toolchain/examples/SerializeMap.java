@@ -5,10 +5,10 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
-import eu.toolchain.serializer.io.BytesSerialWriter;
 
 public class SerializeMap {
     public static void main(String argv[]) throws IOException {

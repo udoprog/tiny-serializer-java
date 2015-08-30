@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
 import eu.toolchain.serializer.primitive.CompactVarIntSerializer;

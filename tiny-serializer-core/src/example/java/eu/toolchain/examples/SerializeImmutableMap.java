@@ -6,10 +6,10 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 
+import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
-import eu.toolchain.serializer.io.BytesSerialWriter;
 
 public class SerializeImmutableMap {
     public static void main(String argv[]) throws IOException {

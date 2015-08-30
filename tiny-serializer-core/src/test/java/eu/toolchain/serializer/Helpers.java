@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.junit.Assert;
 import org.junit.internal.ExactComparisonCriteria;
 
-import eu.toolchain.serializer.io.BytesSerialWriter;
 import eu.toolchain.serializer.io.CoreBytesSerialWriter;
 
 public final class Helpers {

@@ -5,6 +5,7 @@ import java.io.OutputStream;
 
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
+import eu.toolchain.serializer.StreamSerialWriter;
 
 public class CoreOutputStreamSerialWriter extends AbstractSerialWriter implements StreamSerialWriter {
     private final OutputStream output;

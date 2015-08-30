@@ -9,11 +9,11 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
+import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
-import eu.toolchain.serializer.io.BytesSerialWriter;
 import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
 import eu.toolchain.serializer.perftests.AutoMatterSerializedObject;
 import eu.toolchain.serializer.perftests.AutoMatterSerializedObject_Serializer;

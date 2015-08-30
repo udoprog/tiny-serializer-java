@@ -7,8 +7,8 @@ import java.util.Optional;
 
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.StreamSerialWriter;
 import eu.toolchain.serializer.TinySerializer;
-import eu.toolchain.serializer.io.StreamSerialWriter;
 
 public class StreamCommunicationExample {
     public static void main(String[] argv) throws IOException, InterruptedException {

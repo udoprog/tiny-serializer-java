@@ -1,8 +1,6 @@
-package eu.toolchain.serializer.io;
+package eu.toolchain.serializer;
 
 import java.nio.ByteBuffer;
-
-import eu.toolchain.serializer.SerialWriter;
 
 public interface BytesSerialWriter extends SerialWriter {
     /**
