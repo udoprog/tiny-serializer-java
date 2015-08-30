@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -21,6 +22,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
@@ -47,6 +49,9 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AutoSerializeUtils {
+    public static final String SERIALIZER_NAME_FORMAT = "%s_Serializer";
+    public static final Joiner underscoreJoiner = Joiner.on('_');
+
     public static final String SERIALIZER = Serializer.class.getCanonicalName();
     public static final String AUTOSERIALIZE = AutoSerialize.class.getCanonicalName();
     public static final String AUTOSERIALIZE_IGNORE = AutoSerialize.Ignore.class.getCanonicalName();
@@ -271,5 +276,32 @@ public class AutoSerializeUtils {
         default:
             throw new IllegalArgumentException("Unsupported primitive: " + type.toString());
         }
+    }
+
+    public String serializerName(final Element root) {
+        final ImmutableList.Builder<String> parts = ImmutableList.builder();
+
+        Element element = root;
+
+        do {
+            if (element.getKind() != ElementKind.CLASS && element.getKind() != ElementKind.INTERFACE) {
+                throw new IllegalArgumentException(String.format("Element is not interface or class (%s)", element));
+            }
+
+            if (element.getEnclosingElement().getKind() == ElementKind.CLASS && !element.getModifiers().contains(Modifier.STATIC)) {
+                throw new IllegalArgumentException(String.format("Nested element must be static (%s)", element));
+            }
+
+            parts.add(element.getSimpleName().toString());
+            element = element.getEnclosingElement();
+        } while (element.getKind() != ElementKind.PACKAGE);
+
+        return String.format(SERIALIZER_NAME_FORMAT, underscoreJoiner.join(parts.build().reverse()));
+    }
+
+    public ClassName serializerClassFor(final DeclaredType type) {
+        final String pkg = elements.getPackageOf(type.asElement()).getQualifiedName().toString();
+        final String name = serializerName(type.asElement());
+        return ClassName.get(pkg, name);
     }
 }

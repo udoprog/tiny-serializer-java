@@ -111,7 +111,7 @@ public class AutoSerializerProcessorTest {
     }
 
     static void verifySerializer(String name) {
-        verifySerializer(name, String.format(FrameworkStatements.SERIALIZER_NAME_FORMAT, name));
+        verifySerializer(name, String.format(AutoSerializeUtils.SERIALIZER_NAME_FORMAT, name));
     }
 
     static void verifySerializer(String sourceName, String first, String... rest) {

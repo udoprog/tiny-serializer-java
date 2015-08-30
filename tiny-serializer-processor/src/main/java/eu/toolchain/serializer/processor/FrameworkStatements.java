@@ -35,9 +35,6 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FrameworkStatements {
-    public static final String SERIALIZER_NAME_FORMAT = "%s_Serializer";
-    public static final Joiner underscoreJoiner = Joiner.on('_');
-
     static final Map<TypeName, String> direct = new HashMap<>();
 
     static {
@@ -75,31 +72,6 @@ public class FrameworkStatements {
     }
 
     private final AutoSerializeUtils utils;
-
-    public String serializerName(final Element root) {
-        final ImmutableList.Builder<String> parts = ImmutableList.builder();
-
-        Element element = root;
-
-        do {
-            if (element.getKind() != ElementKind.CLASS && element.getKind() != ElementKind.INTERFACE) {
-                throw new IllegalArgumentException(String.format("Element is not interface or class (%s)", element));
-            }
-
-            if (element.getEnclosingElement().getKind() == ElementKind.CLASS && !element.getModifiers().contains(Modifier.STATIC)) {
-                throw new IllegalArgumentException(String.format("Nested element must be static (%s)", element));
-            }
-
-            parts.add(element.getSimpleName().toString());
-            element = element.getEnclosingElement();
-        } while (element.getKind() != ElementKind.PACKAGE);
-
-        return String.format(SERIALIZER_NAME_FORMAT, underscoreJoiner.join(parts.build().reverse()));
-    }
-
-    public ClassName serializerClassFor(ClassName type) {
-        return ClassName.get(type.packageName(), String.format(SERIALIZER_NAME_FORMAT, type.simpleName()));
-    }
 
     public FrameworkStatement resolveStatement(TypeMirror type, final Object framework) {
         final String statement = direct.get(TypeName.get(type));
@@ -238,8 +210,7 @@ public class FrameworkStatements {
     FrameworkStatement resolveCustomSerializer(final DeclaredType type, final Object framework) {
         final String statement = "new $T($N)";
 
-        final ClassName className = ClassName.get((TypeElement) type.asElement());
-        final List<Object> arguments = ImmutableList.of(serializerClassFor(className), framework);
+        final List<Object> arguments = ImmutableList.of(utils.serializerClassFor(type), framework);
 
         return new FrameworkStatement() {
             @Override

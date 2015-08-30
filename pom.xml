@@ -23,6 +23,7 @@
     <module>tiny-serializer-core</module>
     <module>tiny-serializer-processor</module>
     <module>tiny-serializer-perftests</module>
+    <module>tiny-serializer-examples</module>
   </modules>
 
   <licenses>

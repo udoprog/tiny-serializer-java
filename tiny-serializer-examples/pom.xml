@@ -8,28 +8,16 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <properties>
-    <guava.version>18.0</guava.version>
-  </properties>
-
-  <artifactId>tiny-serializer-core</artifactId>
+  <artifactId>tiny-serializer-examples</artifactId>
   <packaging>jar</packaging>
 
-  <name>A tiny serialization framework for Java (Core)</name>
+  <name>A tiny serialization framework for Java (Examples)</name>
+
+  <description>
+    Examples for TinySerializer.
+  </description>
 
   <dependencies>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>eu.toolchain.serializer</groupId>
-      <artifactId>tiny-serializer-api</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -37,15 +25,20 @@
     </dependency>
 
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <scope>test</scope>
+      <groupId>eu.toolchain.serializer</groupId>
+      <artifactId>tiny-serializer-processor</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
+      <groupId>eu.toolchain.serializer</groupId>
+      <artifactId>tiny-serializer-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>18.0</version>
     </dependency>
   </dependencies>
 </project>

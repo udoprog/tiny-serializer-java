@@ -47,7 +47,7 @@ public class AutoSerializeClassProcessor {
 
         final ClassName elementType = (ClassName) TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
-        final String serializerName = statements.serializerName(element);
+        final String serializerName = utils.serializerName(element);
 
         final Unverified<?> combineDifferent = Unverified.combineDifferent(unverifiedFields, unverifiedBuilder);
 

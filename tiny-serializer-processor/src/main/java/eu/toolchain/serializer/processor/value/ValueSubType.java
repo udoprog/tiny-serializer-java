@@ -1,11 +1,11 @@
 package eu.toolchain.serializer.processor.value;
 
-import lombok.Data;
+import javax.lang.model.type.DeclaredType;
 
-import com.squareup.javapoet.ClassName;
+import lombok.Data;
 
 @Data
 public class ValueSubType {
-    final ClassName type;
+    final DeclaredType type;
     final short id;
 }

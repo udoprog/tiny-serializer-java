@@ -8,6 +8,7 @@ import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 
 import com.google.common.collect.ImmutableList;
@@ -33,7 +34,7 @@ public class AutoSerializeAbstractProcessor {
 
     public Unverified<JavaFile> process(final TypeElement element, final AutoSerializeMirror autoSerialize) {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
-        final String serializerName = statements.serializerName(element);
+        final String serializerName = utils.serializerName(element);
 
         final TypeName elementType = TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
@@ -72,7 +73,7 @@ public class AutoSerializeAbstractProcessor {
                 elementType, arrayList);
 
         for (final ValueSubType subtype : subtypes) {
-            final ClassName serializerType = statements.serializerClassFor(subtype.getType());
+            final ClassName serializerType = utils.serializerClassFor(subtype.getType());
 
             b.addStatement("mappings.add($N.<$T, $T>type($L, $T.class, new $T($N)))", framework, subtype.getType(),
                     elementType, subtype.getId(), subtype.getType(), serializerType, framework);
@@ -106,7 +107,7 @@ public class AutoSerializeAbstractProcessor {
                 final ImmutableList.Builder<Unverified<ValueSubType>> results = ImmutableList.builder();
 
                 for (final SubTypeMirror s : subTypes.getSubTypes()) {
-                    final ClassName type = (ClassName)TypeName.get(s.getValue().get());
+                    final DeclaredType type = (DeclaredType)s.getValue().get();
 
                     final short id = s.getId().orElseGet(index::next);
 
