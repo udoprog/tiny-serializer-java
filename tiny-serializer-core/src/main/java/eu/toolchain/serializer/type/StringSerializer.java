@@ -30,7 +30,6 @@ public class StringSerializer implements Serializer<String> {
             bytes.flip();
 
             this.size.serialize(buffer, bytes.remaining());
-            this.size.serialize(buffer, value.length());
 
             buffer.write(bytes);
         } finally {
@@ -43,17 +42,13 @@ public class StringSerializer implements Serializer<String> {
         final CharsetDecoder decoder = UTF_8.newDecoder();
 
         final int length = this.size.deserialize(buffer);
-        final int size = this.size.deserialize(buffer);
 
         final ByteBuffer bytes = buffer.pool().allocate(length);
 
         try {
             buffer.read(bytes);
             bytes.flip();
-
-            final char chars[] = new char[size];
-            decoder.decode(bytes, CharBuffer.wrap(chars), true);
-            return new String(chars);
+            return decoder.decode(bytes).toString();
         } finally {
             buffer.pool().release(length);
         }

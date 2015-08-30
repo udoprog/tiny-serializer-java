@@ -15,7 +15,7 @@ public abstract class AbstractSerialReader implements SerialReader {
     protected final Serializer<Integer> scopeSize;
 
     public AbstractSerialReader() {
-        this(new ContiniousSharedPool(), DEFAULT_SCOPE_SIZE);
+        this(new ContinuousSharedPool(), DEFAULT_SCOPE_SIZE);
     }
 
     public AbstractSerialReader(SharedPool pool, Serializer<Integer> scopeSize) {

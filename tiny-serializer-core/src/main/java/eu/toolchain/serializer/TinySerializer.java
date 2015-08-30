@@ -23,13 +23,13 @@ import java.util.function.Supplier;
 import eu.toolchain.serializer.array.ArraySerializer;
 import eu.toolchain.serializer.array.BooleanArraySerializer;
 import eu.toolchain.serializer.array.ByteArraySerializer;
-import eu.toolchain.serializer.array.CharArraySerializer;
+import eu.toolchain.serializer.array.CharacterArraySerializer;
 import eu.toolchain.serializer.array.DoubleArraySerializer;
 import eu.toolchain.serializer.array.FloatArraySerializer;
 import eu.toolchain.serializer.array.IntegerArraySerializer;
 import eu.toolchain.serializer.array.LongArraySerializer;
 import eu.toolchain.serializer.array.ShortArraySerializer;
-import eu.toolchain.serializer.io.ContiniousSharedPool;
+import eu.toolchain.serializer.io.ContinuousSharedPool;
 import eu.toolchain.serializer.io.CoreByteArraySerialReader;
 import eu.toolchain.serializer.io.CoreByteBufferSerialReader;
 import eu.toolchain.serializer.io.CoreByteBufferSerialWriter;
@@ -693,7 +693,7 @@ public class TinySerializer extends AbstractSerializerFramework {
                 return () -> new ImmediateSharedPool();
             }
 
-            return () -> new ContiniousSharedPool();
+            return () -> new ContinuousSharedPool();
         }
 
         private Supplier<CollectionsProvider> defaultCollections(final Serializer<Integer> size) {
@@ -720,7 +720,7 @@ public class TinySerializer extends AbstractSerializerFramework {
         }
 
         private Supplier<? extends Serializer<char[]>> defaultCharArray(Serializer<Integer> size) {
-            return () -> new CharArraySerializer(size);
+            return () -> new CharacterArraySerializer(size);
         }
 
         private Supplier<Serializer<String>> defaultString(Serializer<Integer> size) {

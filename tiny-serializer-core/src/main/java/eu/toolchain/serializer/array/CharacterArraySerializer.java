@@ -13,7 +13,7 @@ import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CharArraySerializer implements Serializer<char[]> {
+public class CharacterArraySerializer implements Serializer<char[]> {
     final Charset UTF8 = Charset.forName("UTF-8");
 
     private final Serializer<Integer> size;
@@ -28,9 +28,7 @@ public class CharArraySerializer implements Serializer<char[]> {
             encoder.encode(CharBuffer.wrap(value), target, true);
             target.flip();
 
-            this.size.serialize(buffer, value.length);
             this.size.serialize(buffer, target.remaining());
-
             buffer.write(target);
         } finally {
             buffer.pool().release(expected);
@@ -41,7 +39,6 @@ public class CharArraySerializer implements Serializer<char[]> {
     public char[] deserialize(SerialReader buffer) throws IOException {
         final CharsetDecoder decoder = UTF8.newDecoder();
 
-        final int length = this.size.deserialize(buffer);
         final int size = this.size.deserialize(buffer);
 
         final ByteBuffer target = buffer.pool().allocate(size);
@@ -50,9 +47,11 @@ public class CharArraySerializer implements Serializer<char[]> {
             buffer.read(target);
             target.flip();
 
-            final char[] chars = new char[length];
-            decoder.decode(target, CharBuffer.wrap(chars), true);
-            return chars;
+            final CharBuffer chars = decoder.decode(target);
+
+            final char output[] = new char[chars.remaining()];
+            chars.get(output);
+            return output;
         } finally {
             buffer.pool().release(size);
         }

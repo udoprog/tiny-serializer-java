@@ -14,20 +14,23 @@ import eu.toolchain.serializer.primitive.CompactVarIntSerializer;
 public class ArraySerializerTest {
     private Serializer<boolean[]> booleanArray;
     private Serializer<short[]> shortArray;
-    private Serializer<int[]> integerArray;
+    private Serializer<int[]> intArray;
     private Serializer<long[]> longArray;
     private Serializer<float[]> floatArray;
     private Serializer<double[]> doubleArray;
+    private Serializer<char[]> charArray;
 
     @Before
     public void setup() {
         booleanArray = new BooleanArraySerializer(new CompactVarIntSerializer());
         shortArray = new ShortArraySerializer(new CompactVarIntSerializer());
-        integerArray = new IntegerArraySerializer(new CompactVarIntSerializer());
+        intArray = new IntegerArraySerializer(new CompactVarIntSerializer());
         longArray = new LongArraySerializer(new CompactVarIntSerializer());
 
         floatArray = new FloatArraySerializer(new CompactVarIntSerializer());
         doubleArray = new DoubleArraySerializer(new CompactVarIntSerializer());
+
+        charArray = new CharacterArraySerializer(new CompactVarIntSerializer());
     }
 
     @Test
@@ -52,10 +55,10 @@ public class ArraySerializerTest {
 
     @Test
     public void testInteger() throws IOException {
-        assertEquals(1, Helpers.roundtripArray(integerArray, new int[] {}).getCaptured().size());
-        assertEquals(5, Helpers.roundtripArray(integerArray, new int[] { -1 }).getCaptured().size());
-        assertEquals(5, Helpers.roundtripArray(integerArray, new int[] { Integer.MIN_VALUE }).getCaptured().size());
-        assertEquals(5, Helpers.roundtripArray(integerArray, new int[] { Integer.MAX_VALUE }).getCaptured().size());
+        assertEquals(1, Helpers.roundtripArray(intArray, new int[] {}).getCaptured().size());
+        assertEquals(5, Helpers.roundtripArray(intArray, new int[] { -1 }).getCaptured().size());
+        assertEquals(5, Helpers.roundtripArray(intArray, new int[] { Integer.MIN_VALUE }).getCaptured().size());
+        assertEquals(5, Helpers.roundtripArray(intArray, new int[] { Integer.MAX_VALUE }).getCaptured().size());
     }
 
     @Test
@@ -81,5 +84,12 @@ public class ArraySerializerTest {
         assertEquals(9, Helpers.roundtripArray(doubleArray, new double[] { -1.0d }).getCaptured().size());
         assertEquals(9, Helpers.roundtripArray(doubleArray, new double[] { Double.MIN_VALUE }).getCaptured().size());
         assertEquals(9, Helpers.roundtripArray(doubleArray, new double[] { Double.MAX_VALUE }).getCaptured().size());
+    }
+
+    @Test
+    public void testChar() throws IOException {
+        assertEquals(1, Helpers.roundtripArray(charArray, new char[] {}).getCaptured().size());
+        assertEquals(2, Helpers.roundtripArray(charArray, new char[] { 'a' }).getCaptured().size());
+        assertEquals(3, Helpers.roundtripArray(charArray, new char[] { 'å' }).getCaptured().size());
     }
 }

@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 import eu.toolchain.serializer.SharedPool;
 
-public class ContiniousSharedPool implements SharedPool {
+public class ContinuousSharedPool implements SharedPool {
     public static final int MIN_BUFFER_SIZE = 64;
 
     private int offset = 0;

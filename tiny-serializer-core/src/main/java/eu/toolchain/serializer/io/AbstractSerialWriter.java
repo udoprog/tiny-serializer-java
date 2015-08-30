@@ -15,7 +15,7 @@ public abstract class AbstractSerialWriter implements SerialWriter {
     protected final Serializer<Integer> scopeSize;
 
     public AbstractSerialWriter() {
-        this(new ContiniousSharedPool(), DEFAULT_SCOPE_SIZE);
+        this(new ContinuousSharedPool(), DEFAULT_SCOPE_SIZE);
     }
 
     public AbstractSerialWriter(SharedPool pool, Serializer<Integer> scopeSize) {
