@@ -27,7 +27,7 @@ public class SerializeCustomReaderExample {
             }
         };
 
-        int value = s.integer().deserialize(reader);
+        int value = s.fixedInteger().deserialize(reader);
 
         System.out.println("result: " + value);
         System.out.println("equals?: " + (value == 0xf07f0000));

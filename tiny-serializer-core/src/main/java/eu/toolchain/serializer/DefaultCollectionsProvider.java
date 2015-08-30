@@ -2,12 +2,16 @@ package eu.toolchain.serializer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
 import eu.toolchain.serializer.collections.DefaultListSerializer;
 import eu.toolchain.serializer.collections.DefaultMapSerializer;
+import eu.toolchain.serializer.collections.DefaultNavigableMapSerializer;
+import eu.toolchain.serializer.collections.DefaultNavigableSetSerializer;
 import eu.toolchain.serializer.collections.DefaultSetSerializer;
 import eu.toolchain.serializer.collections.DefaultSortedMapSerializer;
 import eu.toolchain.serializer.collections.DefaultSortedSetSerializer;
@@ -33,6 +37,12 @@ public class DefaultCollectionsProvider implements CollectionsProvider {
     }
 
     @Override
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key,
+            Serializer<V> value) {
+        return new DefaultNavigableMapSerializer<K, V>(size, key, value);
+    }
+
+    @Override
     public <T> Serializer<Set<T>> set(Serializer<T> value) {
         return new DefaultSetSerializer<T>(size, value);
     }
@@ -40,5 +50,10 @@ public class DefaultCollectionsProvider implements CollectionsProvider {
     @Override
     public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> value) {
         return new DefaultSortedSetSerializer<T>(size, value);
+    }
+
+    @Override
+    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(Serializer<T> serializer) {
+        return new DefaultNavigableSetSerializer<T>(size, serializer);
     }
 }

@@ -26,7 +26,7 @@ public class SerializeCustomWriterExample {
             }
         };
 
-        s.integer().serialize(writer, 0xf07f0000);
+        s.fixedInteger().serialize(writer, 0xf07f0000);
         final byte[] result = outputStream.toByteArray();
 
         System.out.println("result: " + HexUtils.toHex(result));

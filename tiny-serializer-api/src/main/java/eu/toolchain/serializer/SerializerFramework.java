@@ -8,6 +8,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
@@ -23,49 +25,53 @@ public interface SerializerFramework {
      */
     public Serializer<String> string();
 
+    public Serializer<Byte> fixedByte();
+
+    public Serializer<Character> fixedCharacter();
+
     /**
      * A {@code Serializer} for booleans.
      */
-    public Serializer<Boolean> bool();
-
-    /**
-     * A {@code Serializer} for integers that uses a variable length encoding that is more space-efficient at encoding
-     * smaller values than the naive approach.
-     */
-    public Serializer<Integer> varint();
-
-    /**
-     * A {@code Serializer} for longs that uses a variable length encoding that is more space-efficient at encoding
-     * smaller values than the naive approach.
-     */
-    public Serializer<Long> varlong();
+    public Serializer<Boolean> fixedBoolean();
 
     /**
      * A {@code Serializer} for 16 bit signed integers (short).
      */
-    public Serializer<Short> shortNumber();
+    public Serializer<Short> fixedShort();
 
     /**
      * A {@code Serializer} for 32 bit signed integers (int).
      */
-    public Serializer<Integer> integer();
+    public Serializer<Integer> fixedInteger();
 
     /**
      * A {@code Serializer} for 64 bit signed integers (long)..
      *
      * @return
      */
-    public Serializer<Long> longNumber();
+    public Serializer<Long> fixedLong();
 
     /**
      * A {@code Serializer} for 32 bit floating point numbers (float).
      */
-    public Serializer<Float> floatNumber();
+    public Serializer<Float> fixedFloat();
 
     /**
      * A {@code Serializer} for 64 bit floating point numbers (double).
      */
-    public Serializer<Double> doubleNumber();
+    public Serializer<Double> fixedDouble();
+
+    /**
+     * A {@code Serializer} for integers that uses a variable length encoding that is more space-efficient at encoding
+     * smaller values than the naive approach.
+     */
+    public Serializer<Integer> variableInteger();
+
+    /**
+     * A {@code Serializer} for longs that uses a variable length encoding that is more space-efficient at encoding
+     * smaller values than the naive approach.
+     */
+    public Serializer<Long> variableLong();
 
     /* more fancy things */
 
@@ -144,6 +150,8 @@ public interface SerializerFramework {
      */
     public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value);
 
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key, Serializer<V> value);
+
     /**
      * Build a {@code Serializer} that can serialize a set.
      *
@@ -165,6 +173,8 @@ public interface SerializerFramework {
      * @return A new set {@code Serializer}.
      */
     public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer);
+
+    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(Serializer<T> serializer);
 
     /**
      * Create a new serializer for the given array.

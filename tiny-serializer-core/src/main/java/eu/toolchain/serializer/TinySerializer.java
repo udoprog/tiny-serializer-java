@@ -10,6 +10,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
@@ -39,6 +41,8 @@ import eu.toolchain.serializer.io.ImmediateSharedPool;
 import eu.toolchain.serializer.io.StreamSerialWriter;
 import eu.toolchain.serializer.types.ArraySerializer;
 import eu.toolchain.serializer.types.BooleanSerializer;
+import eu.toolchain.serializer.types.ByteSerializer;
+import eu.toolchain.serializer.types.CharacterSerializer;
 import eu.toolchain.serializer.types.CompactVarIntSerializer;
 import eu.toolchain.serializer.types.CompactVarLongSerializer;
 import eu.toolchain.serializer.types.DoubleSerializer;
@@ -87,15 +91,17 @@ public class TinySerializer implements SerializerFramework {
 
     private final Serializer<String> string;
 
-    private final Serializer<Boolean> bool;
-    private final Serializer<Short> shortNumber;
-    private final Serializer<Integer> integer;
-    private final Serializer<Long> longNumber;
-    private final Serializer<Float> floatNumber;
-    private final Serializer<Double> doubleNumber;
+    private final Serializer<Byte> fixedByte;
+    private final Serializer<Character> fixedCharacter;
+    private final Serializer<Boolean> fixedBoolean;
+    private final Serializer<Short> fixedShort;
+    private final Serializer<Integer> fixedInteger;
+    private final Serializer<Long> fixedLong;
+    private final Serializer<Float> fixedFloat;
+    private final Serializer<Double> fixedDouble;
 
-    private final Serializer<Integer> varint;
-    private final Serializer<Long> varlong;
+    private final Serializer<Integer> variableInteger;
+    private final Serializer<Long> variableLong;
     private final Serializer<UUID> uuid;
 
     private final CollectionsProvider collections;
@@ -122,43 +128,53 @@ public class TinySerializer implements SerializerFramework {
     }
 
     @Override
-    public Serializer<Boolean> bool() {
-        return bool;
+    public Serializer<Byte> fixedByte() {
+        return fixedByte;
     }
 
     @Override
-    public Serializer<Integer> varint() {
-        return varint;
+    public Serializer<Character> fixedCharacter() {
+        return fixedCharacter;
     }
 
     @Override
-    public Serializer<Long> varlong() {
-        return varlong;
+    public Serializer<Boolean> fixedBoolean() {
+        return fixedBoolean;
     }
 
     @Override
-    public Serializer<Integer> integer() {
-        return integer;
+    public Serializer<Integer> fixedInteger() {
+        return fixedInteger;
     }
 
     @Override
-    public Serializer<Short> shortNumber() {
-        return shortNumber;
+    public Serializer<Short> fixedShort() {
+        return fixedShort;
     }
 
     @Override
-    public Serializer<Long> longNumber() {
-        return longNumber;
+    public Serializer<Long> fixedLong() {
+        return fixedLong;
     }
 
     @Override
-    public Serializer<Float> floatNumber() {
-        return floatNumber;
+    public Serializer<Float> fixedFloat() {
+        return fixedFloat;
     }
 
     @Override
-    public Serializer<Double> doubleNumber() {
-        return doubleNumber;
+    public Serializer<Double> fixedDouble() {
+        return fixedDouble;
+    }
+
+    @Override
+    public Serializer<Integer> variableInteger() {
+        return variableInteger;
+    }
+
+    @Override
+    public Serializer<Long> variableLong() {
+        return variableLong;
     }
 
     /* more fancy things */
@@ -190,7 +206,7 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public <T> Serializer<T> lengthPrefixed(Serializer<T> serializer, LengthPolicy policy) {
-        return new LengthPrefixedSerializer<T>(this, varint(), serializer, policy);
+        return new LengthPrefixedSerializer<T>(this, variableInteger(), serializer, policy);
     }
 
     @Override
@@ -209,6 +225,11 @@ public class TinySerializer implements SerializerFramework {
     }
 
     @Override
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key, Serializer<V> value) {
+        return collections.navigableMap(key, value);
+    }
+
+    @Override
     public <T> Serializer<Set<T>> set(Serializer<T> serializer) {
         return collections.set(serializer);
     }
@@ -216,6 +237,11 @@ public class TinySerializer implements SerializerFramework {
     @Override
     public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer) {
         return collections.sortedSet(serializer);
+    }
+
+    @Override
+    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(Serializer<T> serializer) {
+        return collections.navigableSet(serializer);
     }
 
     @Override
@@ -270,7 +296,7 @@ public class TinySerializer implements SerializerFramework {
 
     @Override
     public <T> Serializer<Optional<T>> optional(Serializer<T> element) {
-        return new OptionalSerializer<T>(bool, element);
+        return new OptionalSerializer<T>(fixedBoolean, element);
     }
 
     @Override
@@ -395,10 +421,12 @@ public class TinySerializer implements SerializerFramework {
         private Serializer<String> string;
         private Serializer<Integer> stringSize;
 
-        private Serializer<Boolean> bool;
-        private Serializer<Short> shortNumber;
+        private Serializer<Character> fixedCharacter;
+        private Serializer<Byte> fixedByte;
+        private Serializer<Boolean> fixedBoolean;
+        private Serializer<Short> fixedShort;
         private Serializer<Integer> integer;
-        private Serializer<Long> longNumber;
+        private Serializer<Long> fixedLong;
         private Serializer<Float> floatNumber;
         private Serializer<Double> doubleNumber;
 
@@ -628,25 +656,26 @@ public class TinySerializer implements SerializerFramework {
             final Serializer<String> string = ofNullable(this.string)
                     .orElseGet(defaultString(ofNullable(this.stringSize).orElse(size)));
 
-            final Serializer<Boolean> bool = ofNullable(this.bool).orElseGet(() -> new BooleanSerializer());
-            final Serializer<Short> shortNumber = ofNullable(this.shortNumber).orElseGet(() -> new ShortSerializer());
-            final Serializer<Integer> integer = ofNullable(this.integer).orElseGet(() -> new IntegerSerializer());
-            final Serializer<Long> longNumber = ofNullable(this.longNumber).orElseGet(() -> new LongSerializer());
-            final Serializer<Float> floatNumber = ofNullable(this.floatNumber)
-                    .orElseGet(() -> new FloatSerializer(integer));
-            final Serializer<Double> doubleNumber = ofNullable(this.doubleNumber)
-                    .orElseGet(() -> new DoubleSerializer(longNumber));
+            final Serializer<Byte> fixedByte = ofNullable(this.fixedByte).orElseGet(ByteSerializer::new);
+            final Serializer<Character> fixedCharacter = ofNullable(this.fixedCharacter)
+                    .orElseGet(CharacterSerializer::new);
+            final Serializer<Boolean> fixedBoolean = ofNullable(this.fixedBoolean).orElseGet(BooleanSerializer::new);
+            final Serializer<Short> fixedShort = ofNullable(this.fixedShort).orElseGet(ShortSerializer::new);
+            final Serializer<Integer> fixedInteger = ofNullable(this.integer).orElseGet(IntegerSerializer::new);
+            final Serializer<Long> fixedLong = ofNullable(this.fixedLong).orElseGet(LongSerializer::new);
+            final Serializer<Float> fixedFloat = ofNullable(this.floatNumber).orElseGet(FloatSerializer::new);
+            final Serializer<Double> fixedDouble = ofNullable(this.doubleNumber).orElseGet(DoubleSerializer::new);
 
-            final Serializer<Integer> varint = ofNullable(this.varint).orElseGet(this::defaultVarInt);
-            final Serializer<Long> varlong = ofNullable(this.varlong).orElseGet(this::defaultVarLong);
-            final Serializer<UUID> uuid = ofNullable(this.uuid).orElseGet(this.defaultUUID(longNumber));
+            final Serializer<Integer> variableInteger = ofNullable(this.varint).orElseGet(this::defaultVarInt);
+            final Serializer<Long> variableLong = ofNullable(this.varlong).orElseGet(this::defaultVarLong);
+            final Serializer<UUID> uuid = ofNullable(this.uuid).orElseGet(this.defaultUUID(fixedLong));
 
             final CollectionsProvider collections = ofNullable(this.collections).orElseGet(defaultCollections(size));
 
             return new TinySerializer(pool, arraySize, scopeSize, subTypeId, enumOrdinal, defaultLengthPolicy,
                     booleanArray, shortArray, intArray, longArray, floatArray, doubleArray, byteArray, charArray,
-                    string, bool, shortNumber, integer, longNumber, floatNumber, doubleNumber, varint, varlong, uuid,
-                    collections, useStringsForEnums);
+                    string, fixedByte, fixedCharacter, fixedBoolean, fixedShort, fixedInteger, fixedLong, fixedFloat,
+                    fixedDouble, variableInteger, variableLong, uuid, collections, useStringsForEnums);
         }
 
         private Supplier<SharedPool> buildPool() {
@@ -704,8 +733,8 @@ public class TinySerializer implements SerializerFramework {
             return new CompactVarLongSerializer();
         }
 
-        private Supplier<Serializer<UUID>> defaultUUID(Serializer<Long> longNumber) {
-            return () ->  new UUIDSerializer(longNumber);
+        private Supplier<Serializer<UUID>> defaultUUID(Serializer<Long> fixedLong) {
+            return () ->  new UUIDSerializer(fixedLong);
         }
     }
 }

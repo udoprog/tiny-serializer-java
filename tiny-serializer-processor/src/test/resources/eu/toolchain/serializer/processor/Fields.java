@@ -10,28 +10,32 @@ public class Fields {
 
     private final String string;
     private final Interface requiredCustom;
+    private final boolean bool;
+    private final byte byteNumber;
     private final short shortNumber;
     private final int integer;
     private final long longNumber;
     private final float floatNumber;
     private final double doubleNumber;
-    private final boolean bool;
+    private final char character;
     private final UUID uuid;
     private final byte[] byteArray;
     private final char[] charArray;
     private final Values enumValue;
 
-    public Fields(String string, Interface requiredCustom,
-            short shortNumber, int integer, long longNumber, float floatNumber, double doubleNumber, boolean bool,
-            UUID uuid, byte[] byteArray, char[] charArray, Values enumValue) {
+    public Fields(String string, Interface requiredCustom, boolean bool, byte byteNumber, short shortNumber,
+            int integer, long longNumber, float floatNumber, double doubleNumber, char character, UUID uuid,
+            byte[] byteArray, char[] charArray, Values enumValue) {
         this.string = string;
         this.requiredCustom = requiredCustom;
+        this.bool = bool;
+        this.byteNumber = byteNumber;
         this.shortNumber = shortNumber;
         this.integer = integer;
         this.longNumber = longNumber;
         this.floatNumber = floatNumber;
         this.doubleNumber = doubleNumber;
-        this.bool = bool;
+        this.character = character;
         this.uuid = uuid;
         this.byteArray = byteArray;
         this.charArray = charArray;
@@ -44,6 +48,14 @@ public class Fields {
 
     public Interface requiredCustom() {
         return requiredCustom;
+    }
+
+    public boolean bool() {
+        return bool;
+    }
+
+    public byte byteNumber() {
+        return byteNumber;
     }
 
     public short shortNumber() {
@@ -62,12 +74,12 @@ public class Fields {
         return floatNumber;
     }
 
-    public double doubleNumber() {
-        return doubleNumber;
+    public char character() {
+        return character;
     }
 
-    public boolean bool() {
-        return bool;
+    public double doubleNumber() {
+        return doubleNumber;
     }
 
     public UUID uuid() {

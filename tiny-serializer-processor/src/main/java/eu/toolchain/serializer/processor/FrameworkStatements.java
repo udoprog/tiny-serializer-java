@@ -3,12 +3,17 @@ package eu.toolchain.serializer.processor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import javax.lang.model.element.Element;
@@ -17,6 +22,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleTypeVisitor6;
 
@@ -36,32 +42,36 @@ public class FrameworkStatements {
 
     static {
         direct.put(ClassName.get(String.class), "$N.string()");
-        direct.put(ClassName.get(Short.class), "$N.shortNumber()");
-        direct.put(ClassName.get(Integer.class), "$N.integer()");
-        direct.put(ClassName.get(Long.class), "$N.longNumber()");
-        direct.put(ClassName.get(Float.class), "$N.floatNumber()");
-        direct.put(ClassName.get(Double.class), "$N.doubleNumber()");
-        direct.put(ClassName.get(Boolean.class), "$N.bool()");
+        direct.put(ClassName.get(Byte.class), "$N.fixedByte()");
+        direct.put(ClassName.get(Short.class), "$N.fixedShort()");
+        direct.put(ClassName.get(Integer.class), "$N.fixedInteger()");
+        direct.put(ClassName.get(Long.class), "$N.fixedLong()");
+        direct.put(ClassName.get(Float.class), "$N.fixedFloat()");
+        direct.put(ClassName.get(Double.class), "$N.fixedDouble()");
+        direct.put(ClassName.get(Character.class), "$N.fixedCharacter()");
+        direct.put(ClassName.get(Boolean.class), "$N.fixedBoolean()");
         direct.put(ClassName.get(UUID.class), "$N.uuid()");
         direct.put(TypeName.get(boolean[].class), "$N.booleanArray()");
+        direct.put(TypeName.get(byte[].class), "$N.byteArray()");
         direct.put(TypeName.get(short[].class), "$N.shortArray()");
         direct.put(TypeName.get(int[].class), "$N.intArray()");
         direct.put(TypeName.get(long[].class), "$N.longArray()");
         direct.put(TypeName.get(float[].class), "$N.floatArray()");
         direct.put(TypeName.get(double[].class), "$N.doubleArray()");
-        direct.put(TypeName.get(byte[].class), "$N.byteArray()");
         direct.put(TypeName.get(char[].class), "$N.charArray()");
     }
 
-    static final List<ParameterizedTypeStatement> parameterized = new ArrayList<>();
+    static final Map<TypeName, Parameterized> parameterized = new HashMap<>();
 
     static {
-        parameterized.add(new ParameterizedTypeStatement(ClassName.get(List.class), "$N.list", 1));
-        parameterized.add(new ParameterizedTypeStatement(ClassName.get(Map.class), "$N.map", 2));
-        parameterized.add(new ParameterizedTypeStatement(ClassName.get(SortedMap.class), "$N.sortedMap", 2));
-        parameterized.add(new ParameterizedTypeStatement(ClassName.get(Set.class), "$N.set", 1));
-        parameterized.add(new ParameterizedTypeStatement(ClassName.get(SortedSet.class), "$N.sortedSet", 1));
-        parameterized.add(new ParameterizedTypeStatement(ClassName.get(Optional.class), "$N.optional", 1));
+        parameterized.put(ClassName.get(List.class), new Parameterized("$N.list", 1));
+        parameterized.put(ClassName.get(Map.class), new Parameterized("$N.map", 2));
+        parameterized.put(ClassName.get(SortedMap.class), new Parameterized("$N.sortedMap", 2, 2));
+        parameterized.put(ClassName.get(NavigableMap.class), new Parameterized("$N.navigableMap", 2, 2));
+        parameterized.put(ClassName.get(Set.class), new Parameterized("$N.set", 1));
+        parameterized.put(ClassName.get(SortedSet.class), new Parameterized("$N.sortedSet", 1, 2));
+        parameterized.put(ClassName.get(NavigableSet.class), new Parameterized("$N.navigableSet", 1, 2));
+        parameterized.put(ClassName.get(Optional.class), new Parameterized("$N.optional", 1));
     }
 
     private final AutoSerializeUtils utils;
@@ -106,6 +116,10 @@ public class FrameworkStatements {
         if (type instanceof ArrayType) {
             final ArrayType a = (ArrayType) type;
             return resolveArrayType(a, framework);
+        }
+
+        if (type.getKind() != TypeKind.DECLARED) {
+            throw new IllegalArgumentException("Cannot handle type: " + type);
         }
 
         final DeclaredType d = (DeclaredType) type;
@@ -235,33 +249,77 @@ public class FrameworkStatements {
         };
     }
 
-    FrameworkStatement resolveParameterizedType(DeclaredType type, Object framework) {
-        for (final ParameterizedTypeStatement p : parameterized) {
+    private ParameterizedMatch findBestMatch(DeclaredType type) {
+        final Queue<TypeMirror> types = new LinkedList<>();
 
-            if (p.rawType.equals(ClassName.get((TypeElement)type.asElement()))) {
-                final Iterator<? extends TypeMirror> types = type.getTypeArguments().iterator();
-                final ImmutableList.Builder<FrameworkStatement> statements = ImmutableList.builder();
+        types.add(type);
 
-                for (int i = 0; i < p.parameterCount; i++) {
-                    statements.add(resolveStatement(types.next(), framework));
-                }
+        final SortedSet<ParameterizedMatch> matches = new TreeSet<>();
 
-                return resolveGeneric(p.statement, ImmutableList.of(framework), statements.build());
+        while (!types.isEmpty()) {
+            final DeclaredType t = (DeclaredType) types.poll();
+
+            final TypeElement e = (TypeElement) t.asElement();
+            final ClassName c = ClassName.get(e);
+
+            final Parameterized p = parameterized.get(c);
+
+            if (p == null) {
+                break;
             }
+
+            matches.add(new ParameterizedMatch(p, t));
         }
 
-        throw new IllegalArgumentException("Unsupported type: " + type.toString());
+        if (matches.isEmpty()) {
+            throw new IllegalArgumentException("Type not supported: " + type);
+        }
+
+        return matches.last();
     }
 
-    static class ParameterizedTypeStatement {
-        final ClassName rawType;
+    private FrameworkStatement resolveParameterizedType(DeclaredType type, Object framework) {
+        final ParameterizedMatch p = findBestMatch(type);
+
+        final Iterator<? extends TypeMirror> typeArguments = p.type.getTypeArguments().iterator();
+        final ImmutableList.Builder<FrameworkStatement> statements = ImmutableList.builder();
+
+        for (int i = 0; i < p.parameterized.parameterCount; i++) {
+            statements.add(resolveStatement(typeArguments.next(), framework));
+        }
+
+        return resolveGeneric(p.parameterized.statement, ImmutableList.of(framework), statements.build());
+    }
+
+    static class Parameterized implements Comparable<Parameterized> {
         final String statement;
         final int parameterCount;
+        final int priority;
 
-        public ParameterizedTypeStatement(ClassName rawType, String statement, int parameterCount) {
-            this.rawType = rawType;
+        public Parameterized(String statement, int parameterCount) {
+            this(statement, parameterCount, 0);
+        }
+
+        public Parameterized(String statement, int parameterCount, int priority) {
             this.statement = statement;
             this.parameterCount = parameterCount;
+            this.priority = priority;
+        }
+
+        @Override
+        public int compareTo(Parameterized o) {
+            return Integer.compare(priority, o.priority);
+        }
+    }
+
+    @RequiredArgsConstructor
+    static class ParameterizedMatch implements Comparable<ParameterizedMatch> {
+        final Parameterized parameterized;
+        final DeclaredType type;
+
+        @Override
+        public int compareTo(ParameterizedMatch o) {
+            return parameterized.compareTo(o.parameterized);
         }
     }
 

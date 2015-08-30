@@ -17,11 +17,11 @@ public final class FieldBased_Serializer implements Serializer<FieldBased> {
     final Serializer<Optional<String>> s_OptionalString;
 
     public FieldBased_Serializer(final SerializerFramework framework) {
-        count = framework.varint();
+        count = framework.variableInteger();
         name = framework.string();
 
         s_String = framework.string();
-        s_Boolean = framework.bool();
+        s_Boolean = framework.fixedBoolean();
         s_OptionalString = framework.optional(framework.string());
     }
 

@@ -9,8 +9,8 @@ public class SerializePrimitiveExample {
     public static void main(String[] argv) throws IOException {
         final TinySerializer s = SerializerSetup.setup().build();
 
-        final Serializer<Integer> i = s.integer();
-        final Serializer<Long> l = s.longNumber();
+        final Serializer<Integer> i = s.fixedInteger();
+        final Serializer<Long> l = s.fixedLong();
 
         System.out.println("result: " + s.deserialize(i, s.serialize(i, Integer.MIN_VALUE)));
         System.out.println("result: " + s.deserialize(i, s.serialize(i, Integer.MAX_VALUE)));

@@ -7,16 +7,18 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 
 public class LongSerializer implements Serializer<Long> {
+    public static final int BYTES = 8;
+
     @Override
     public void serialize(SerialWriter buffer, Long value) throws IOException {
-        final byte[] bytes = new byte[8];
+        final byte[] bytes = new byte[BYTES];
         toBytes(value, bytes, 0);
         buffer.write(bytes);
     }
 
     @Override
     public Long deserialize(SerialReader buffer) throws IOException {
-        final byte[] b = new byte[8];
+        final byte[] b = new byte[BYTES];
         buffer.read(b);
         return fromBytes(b, 0);
     }

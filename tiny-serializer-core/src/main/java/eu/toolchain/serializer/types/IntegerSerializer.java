@@ -7,16 +7,18 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 
 public class IntegerSerializer implements Serializer<Integer> {
+    public static final int BYTES = 4;
+
     @Override
     public void serialize(SerialWriter buffer, Integer value) throws IOException {
-        final byte[] bytes = new byte[4];
+        final byte[] bytes = new byte[BYTES];
         toBytes(value, bytes, 0);
         buffer.write(bytes);
     }
 
     @Override
     public Integer deserialize(SerialReader buffer) throws IOException {
-        final byte[] b = new byte[4];
+        final byte[] b = new byte[BYTES];
         buffer.read(b);
         return fromBytes(b, 0);
     }

@@ -21,7 +21,7 @@ public class SubtypesSerializerTest {
     final SerializerFramework s = TinySerializer.builder().build();
 
     final Serializer<A> a = new Serializer<A>() {
-        final Serializer<Integer> number = s.integer();
+        final Serializer<Integer> number = s.fixedInteger();
 
         @Override
         public void serialize(SerialWriter buffer, A value) throws IOException {

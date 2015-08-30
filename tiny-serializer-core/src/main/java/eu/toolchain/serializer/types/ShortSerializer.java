@@ -7,16 +7,18 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 
 public class ShortSerializer implements Serializer<Short> {
+    public static final int BYTES = 2;
+
     @Override
     public void serialize(SerialWriter buffer, Short value) throws IOException {
-        final byte[] bytes = new byte[2];
+        final byte[] bytes = new byte[BYTES];
         toBytes(value, bytes, 0);
         buffer.write(bytes);
     }
 
     @Override
     public Short deserialize(SerialReader buffer) throws IOException {
-        final byte[] b = new byte[2];
+        final byte[] b = new byte[BYTES];
         buffer.read(b);
         return fromBytes(b, 0);
     }

@@ -3,12 +3,16 @@ package eu.toolchain.serializer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
 import eu.toolchain.serializer.collections.ImmutableListSerializer;
 import eu.toolchain.serializer.collections.ImmutableMapSerializer;
+import eu.toolchain.serializer.collections.ImmutableNavigableMapSerializer;
+import eu.toolchain.serializer.collections.ImmutableNavigableSetSerializer;
 import eu.toolchain.serializer.collections.ImmutableSetSerializer;
 import eu.toolchain.serializer.collections.ImmutableSortedMapSerializer;
 import eu.toolchain.serializer.collections.ImmutableSortedSetSerializer;
@@ -24,8 +28,10 @@ public class ImmutableCollectionsProvider implements CollectionsProvider {
         "ImmutableList",
         "ImmutableMap",
         "ImmutableSortedMap",
+        "ImmutableNavigableMap",
         "ImmutableSet",
         "ImmutableSortedSet",
+        "ImmutableNavigableSet"
     };
 
     public static void verifyGuavaAvailable() {
@@ -70,6 +76,11 @@ public class ImmutableCollectionsProvider implements CollectionsProvider {
     }
 
     @Override
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key, Serializer<V> value) {
+        return new ImmutableNavigableMapSerializer<K, V>(size, key, value);
+    }
+
+    @Override
     public <T> Serializer<Set<T>> set(Serializer<T> value) {
         return new ImmutableSetSerializer<T>(size, value);
     }
@@ -77,5 +88,10 @@ public class ImmutableCollectionsProvider implements CollectionsProvider {
     @Override
     public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> value) {
         return new ImmutableSortedSetSerializer<T>(size, value);
+    }
+
+    @Override
+    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(Serializer<T> value) {
+        return new ImmutableNavigableSetSerializer<T>(size, value);
     }
 }

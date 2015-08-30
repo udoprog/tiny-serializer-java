@@ -163,7 +163,7 @@ public class AutoSerializeClassProcessor {
         b.addModifiers(Modifier.PUBLIC);
         b.addParameter(framework);
 
-        b.addStatement("$N = $N.varint()", count, framework);
+        b.addStatement("$N = $N.variableInteger()", count, framework);
         b.addStatement("$N = $N.string()", name, framework);
 
         for (final ValueType t : values.getOrderedTypes()) {
