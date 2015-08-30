@@ -111,7 +111,11 @@ public class AutoSerializeUtils {
         return types.getDeclaredType(serializer, boxedIfNeeded(type));
     }
 
-    TypeMirror boxedIfNeeded(TypeMirror type) {
+    public boolean isPrimitive(TypeMirror type) {
+        return type instanceof PrimitiveType;
+    }
+
+    public TypeMirror boxedIfNeeded(TypeMirror type) {
         if (type instanceof PrimitiveType) {
             return types.boxedClass((PrimitiveType) type).asType();
         }

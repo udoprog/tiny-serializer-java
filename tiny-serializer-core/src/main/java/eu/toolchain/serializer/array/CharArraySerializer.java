@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.types;
+package eu.toolchain.serializer.array;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,17 +21,15 @@ public class CharArraySerializer implements Serializer<char[]> {
     @Override
     public void serialize(SerialWriter buffer, char[] value) throws IOException {
         final CharsetEncoder encoder = UTF8.newEncoder();
-
         final int expected = value.length * (int) encoder.maxBytesPerChar();
-
         final ByteBuffer target = buffer.pool().allocate(expected);
 
         try {
             encoder.encode(CharBuffer.wrap(value), target, true);
             target.flip();
 
-            size.serialize(buffer, value.length);
-            size.serialize(buffer, target.remaining());
+            this.size.serialize(buffer, value.length);
+            this.size.serialize(buffer, target.remaining());
 
             buffer.write(target);
         } finally {
@@ -43,10 +41,10 @@ public class CharArraySerializer implements Serializer<char[]> {
     public char[] deserialize(SerialReader buffer) throws IOException {
         final CharsetDecoder decoder = UTF8.newDecoder();
 
-        final int length = size.deserialize(buffer);
-        final int limit = size.deserialize(buffer);
+        final int length = this.size.deserialize(buffer);
+        final int size = this.size.deserialize(buffer);
 
-        final ByteBuffer target = buffer.pool().allocate(limit);
+        final ByteBuffer target = buffer.pool().allocate(size);
 
         try {
             buffer.read(target);
@@ -56,7 +54,7 @@ public class CharArraySerializer implements Serializer<char[]> {
             decoder.decode(target, CharBuffer.wrap(chars), true);
             return chars;
         } finally {
-            buffer.pool().release(limit);
+            buffer.pool().release(size);
         }
     }
 }

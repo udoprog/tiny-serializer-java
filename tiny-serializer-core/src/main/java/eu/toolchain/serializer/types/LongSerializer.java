@@ -9,38 +9,41 @@ import eu.toolchain.serializer.Serializer;
 public class LongSerializer implements Serializer<Long> {
     @Override
     public void serialize(SerialWriter buffer, Long value) throws IOException {
-        long v = value;
-
-        // @formatter:off
-        buffer.write(new byte[] {
-            (byte) (v >> 56),
-            (byte) (v >>> 48),
-            (byte) (v >>> 40),
-            (byte) (v >>> 32),
-            (byte) (v >>> 24),
-            (byte) (v >>> 16),
-            (byte) (v >>> 8),
-            (byte) (v)
-        });
-        // @formatter:on
+        final byte[] bytes = new byte[8];
+        toBytes(value, bytes, 0);
+        buffer.write(bytes);
     }
 
     @Override
     public Long deserialize(SerialReader buffer) throws IOException {
         final byte[] b = new byte[8];
         buffer.read(b);
+        return fromBytes(b, 0);
+    }
 
-        // @formatter:off
-        return (long) (
-            ((long)(b[0] & 0xff) << 56)
-          + ((long)(b[1] & 0xff) << 48)
-          + ((long)(b[2] & 0xff) << 40)
-          + ((long)(b[3] & 0xff) << 32)
-          + ((long)(b[4] & 0xff) << 24)
-          + ((long)(b[5] & 0xff) << 16)
-          + ((long)(b[6] & 0xff) << 8)
-          + ((long)(b[7] & 0xff))
-        );
-        // @formatter:on
+    public static void toBytes(long v, byte[] b, int o) {
+        b[o + 0] = (byte) (v >> 56);
+        b[o + 1] = (byte) (v >>> 48);
+        b[o + 2] = (byte) (v >>> 40);
+        b[o + 3] = (byte) (v >>> 32);
+        b[o + 4] = (byte) (v >>> 24);
+        b[o + 5] = (byte) (v >>> 16);
+        b[o + 6] = (byte) (v >>> 8);
+        b[o + 7] = (byte) (v);
+    }
+
+    public static long fromBytes(final byte[] b, int o) {
+        long v = 0;
+
+        v += ((long)(b[o + 0] & 0xff) << 56);
+        v += ((long)(b[o + 1] & 0xff) << 48);
+        v += ((long)(b[o + 2] & 0xff) << 40);
+        v += ((long)(b[o + 3] & 0xff) << 32);
+        v += ((long)(b[o + 4] & 0xff) << 24);
+        v += ((long)(b[o + 5] & 0xff) << 16);
+        v += ((long)(b[o + 6] & 0xff) << 8);
+        v += ((long)(b[o + 7] & 0xff));
+
+        return v;
     }
 }

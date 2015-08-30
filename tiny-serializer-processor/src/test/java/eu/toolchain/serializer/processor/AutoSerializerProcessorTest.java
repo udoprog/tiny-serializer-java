@@ -86,6 +86,11 @@ public class AutoSerializerProcessorTest {
     }
 
     @Test
+    public void testArray() {
+        verifySerializer("Array");
+    }
+
+    @Test
     public void testNested() {
         verifySerializer("Nested", "Nested_Foo_Serializer");
     }

@@ -15,6 +15,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
@@ -30,19 +31,25 @@ public class FrameworkStatements {
     public static final String SERIALIZER_NAME_FORMAT = "%s_Serializer";
     public static final Joiner underscoreJoiner = Joiner.on('_');
 
-    static final Map<TypeName, String> frameworkSupported = new HashMap<>();
+    static final Map<TypeName, String> direct = new HashMap<>();
 
     static {
-        frameworkSupported.put(ClassName.get(String.class), "$N.string()");
-        frameworkSupported.put(ClassName.get(Short.class), "$N.shortNumber()");
-        frameworkSupported.put(ClassName.get(Integer.class), "$N.integer()");
-        frameworkSupported.put(ClassName.get(Long.class), "$N.longNumber()");
-        frameworkSupported.put(ClassName.get(Float.class), "$N.floatNumber()");
-        frameworkSupported.put(ClassName.get(Double.class), "$N.doubleNumber()");
-        frameworkSupported.put(ClassName.get(Boolean.class), "$N.bool()");
-        frameworkSupported.put(ClassName.get(UUID.class), "$N.uuid()");
-        frameworkSupported.put(TypeName.get(byte[].class), "$N.byteArray()");
-        frameworkSupported.put(TypeName.get(char[].class), "$N.charArray()");
+        direct.put(ClassName.get(String.class), "$N.string()");
+        direct.put(ClassName.get(Short.class), "$N.shortNumber()");
+        direct.put(ClassName.get(Integer.class), "$N.integer()");
+        direct.put(ClassName.get(Long.class), "$N.longNumber()");
+        direct.put(ClassName.get(Float.class), "$N.floatNumber()");
+        direct.put(ClassName.get(Double.class), "$N.doubleNumber()");
+        direct.put(ClassName.get(Boolean.class), "$N.bool()");
+        direct.put(ClassName.get(UUID.class), "$N.uuid()");
+        direct.put(TypeName.get(boolean[].class), "$N.booleanArray()");
+        direct.put(TypeName.get(short[].class), "$N.shortArray()");
+        direct.put(TypeName.get(int[].class), "$N.intArray()");
+        direct.put(TypeName.get(long[].class), "$N.longArray()");
+        direct.put(TypeName.get(float[].class), "$N.floatArray()");
+        direct.put(TypeName.get(double[].class), "$N.doubleArray()");
+        direct.put(TypeName.get(byte[].class), "$N.byteArray()");
+        direct.put(TypeName.get(char[].class), "$N.charArray()");
     }
 
     static final List<ParameterizedTypeStatement> parameterized = new ArrayList<>();
@@ -55,6 +62,8 @@ public class FrameworkStatements {
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(SortedSet.class), "$N.sortedSet", 1));
         parameterized.add(new ParameterizedTypeStatement(ClassName.get(Optional.class), "$N.optional", 1));
     }
+
+    private final AutoSerializeUtils utils;
 
     public String serializerName(final Element root) {
         final ImmutableList.Builder<String> parts = ImmutableList.builder();
@@ -82,7 +91,7 @@ public class FrameworkStatements {
     }
 
     public FrameworkStatement resolveStatement(TypeMirror type, final Object framework) {
-        final String statement = frameworkSupported.get(TypeName.get(type));
+        final String statement = direct.get(TypeName.get(type));
 
         if (statement != null) {
             return new FrameworkStatement() {
@@ -91,6 +100,11 @@ public class FrameworkStatements {
                     builder.assign(statement, ImmutableList.of(framework));
                 }
             };
+        }
+
+        if (type instanceof ArrayType) {
+            final ArrayType a = (ArrayType) type;
+            return resolveArrayType(a, framework);
         }
 
         final DeclaredType d = (DeclaredType) type;
@@ -104,6 +118,31 @@ public class FrameworkStatements {
         }
 
         return resolveParameterizedType(d, framework);
+    }
+
+    private FrameworkStatement resolveArrayType(ArrayType a, Object framework) {
+        final TypeMirror componentType = a.getComponentType();
+
+        if (utils.isPrimitive(componentType)) {
+            throw new IllegalArgumentException("Cannot serialize array with a primitive component type: " + a);
+        }
+
+        final FrameworkStatement component = resolveStatement(utils.boxedIfNeeded(componentType), framework);
+
+        return new FrameworkStatement() {
+            @Override
+            public void writeTo(FrameworkMethodBuilder builder) {
+                component.writeTo((cs, ca) -> {
+                    final List<Object> arguments = new ArrayList<>();
+
+                    arguments.add(framework);
+                    arguments.addAll(ca);
+                    arguments.add(TypeName.get(componentType));
+
+                    builder.assign(String.format("$N.array(%s, (s) -> new $T[s])", cs), arguments);
+                });
+            }
+        };
     }
 
     private FrameworkStatement resolveEnum(final TypeElement element, final Object framework) {
@@ -189,6 +228,16 @@ public class FrameworkStatements {
             this.rawType = rawType;
             this.statement = statement;
             this.parameterCount = parameterCount;
+        }
+    }
+
+    static class PrimitiveArrayStatement {
+        final TypeName type;
+        final String statement;
+
+        public PrimitiveArrayStatement(TypeName type, String statement) {
+            this.type = type;
+            this.statement = statement;
         }
     }
 }

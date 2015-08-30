@@ -9,30 +9,33 @@ import eu.toolchain.serializer.Serializer;
 public class IntegerSerializer implements Serializer<Integer> {
     @Override
     public void serialize(SerialWriter buffer, Integer value) throws IOException {
-        int v = value;
-
-        // @formatter:off
-        buffer.write(new byte[] {
-            (byte) (v >>> 24),
-            (byte) (v >>> 16),
-            (byte) (v >>> 8),
-            (byte) (v)
-        });
-        // @formatter:on
+        final byte[] bytes = new byte[4];
+        toBytes(value, bytes, 0);
+        buffer.write(bytes);
     }
 
     @Override
     public Integer deserialize(SerialReader buffer) throws IOException {
         final byte[] b = new byte[4];
         buffer.read(b);
+        return fromBytes(b, 0);
+    }
 
-        // @formatter:off
-        return (int) (
-            ((b[0] & 0xff) << 24)
-          + ((b[1] & 0xff) << 16)
-          + ((b[2] & 0xff) << 8)
-          + ((b[3] & 0xff))
-        );
-        // @formatter:on
+    public static void toBytes(long v, byte[] b, int o) {
+        b[o + 0] = (byte) (v >>> 24);
+        b[o + 1] = (byte) (v >>> 16);
+        b[o + 2] = (byte) (v >>> 8);
+        b[o + 3] = (byte) (v);
+    }
+
+    public static int fromBytes(final byte[] b, int o) {
+        int v = 0;
+
+        v += ((int)(b[o + 0] & 0xff) << 24);
+        v += ((int)(b[o + 1] & 0xff) << 16);
+        v += ((int)(b[o + 2] & 0xff) << 8);
+        v += ((int)(b[o + 3] & 0xff));
+
+        return v;
     }
 }

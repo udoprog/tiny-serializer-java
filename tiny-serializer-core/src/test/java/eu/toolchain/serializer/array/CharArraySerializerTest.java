@@ -1,4 +1,4 @@
-package eu.toolchain.serializer;
+package eu.toolchain.serializer.array;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -7,7 +7,10 @@ import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import eu.toolchain.serializer.types.CharArraySerializer;
+import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SerializerFramework;
+import eu.toolchain.serializer.TinySerializer;
+import eu.toolchain.serializer.array.CharArraySerializer;
 import eu.toolchain.serializer.types.CompactVarIntSerializer;
 
 public class CharArraySerializerTest {

@@ -167,6 +167,26 @@ public interface SerializerFramework {
     public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer);
 
     /**
+     * Create a new serializer for the given array.
+     * @param element The element serializer to use.
+     * @param constructor The array constructor to use.
+     * @return A new array serializer.
+     */
+    public <T> Serializer<T[]> array(Serializer<T> element, ArrayConstructor<T> constructor);
+
+    public Serializer<boolean[]> booleanArray();
+
+    public Serializer<short[]> shortArray();
+
+    public Serializer<int[]> intArray();
+
+    public Serializer<long[]> longArray();
+
+    public Serializer<float[]> floatArray();
+
+    public Serializer<double[]> doubleArray();
+
+    /**
      * A {@code Serializer} that can serialize a byte array.
      */
     public Serializer<byte[]> byteArray();

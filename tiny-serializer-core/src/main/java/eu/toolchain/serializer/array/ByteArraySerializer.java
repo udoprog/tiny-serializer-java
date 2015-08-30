@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.types;
+package eu.toolchain.serializer.array;
 
 import java.io.IOException;
 

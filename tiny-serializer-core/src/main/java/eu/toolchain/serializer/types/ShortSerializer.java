@@ -9,26 +9,29 @@ import eu.toolchain.serializer.Serializer;
 public class ShortSerializer implements Serializer<Short> {
     @Override
     public void serialize(SerialWriter buffer, Short value) throws IOException {
-        short v = value;
-
-        // @formatter:off
-        buffer.write(new byte[] {
-            (byte) (v >>> 8),
-            (byte) (v)
-        });
-        // @formatter:on
+        final byte[] bytes = new byte[2];
+        toBytes(value, bytes, 0);
+        buffer.write(bytes);
     }
 
     @Override
     public Short deserialize(SerialReader buffer) throws IOException {
         final byte[] b = new byte[2];
         buffer.read(b);
+        return fromBytes(b, 0);
+    }
 
-        // @formatter:off
-        return (short) (
-          + ((b[0] & 0xff) << 8)
-          + ((b[1] & 0xff))
-        );
-        // @formatter:on
+    public static void toBytes(short v, byte[] b, int o) {
+        b[o] = (byte) (v >>> 8);
+        b[o + 1] = (byte) v;
+    }
+
+    public static short fromBytes(final byte[] b, int o) {
+        int v = 0;
+
+        v = v + ((b[o] & 0xff) << 8);
+        v = v + ((b[o + 1] & 0xff));
+
+        return (short) v;
     }
 }

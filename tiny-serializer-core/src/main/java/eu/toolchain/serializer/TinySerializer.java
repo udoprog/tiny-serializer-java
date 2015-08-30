@@ -17,6 +17,14 @@ import java.util.SortedSet;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import eu.toolchain.serializer.array.BooleanArraySerializer;
+import eu.toolchain.serializer.array.ByteArraySerializer;
+import eu.toolchain.serializer.array.CharArraySerializer;
+import eu.toolchain.serializer.array.DoubleArraySerializer;
+import eu.toolchain.serializer.array.FloatArraySerializer;
+import eu.toolchain.serializer.array.IntegerArraySerializer;
+import eu.toolchain.serializer.array.LongArraySerializer;
+import eu.toolchain.serializer.array.ShortArraySerializer;
 import eu.toolchain.serializer.io.BytesSerialWriter;
 import eu.toolchain.serializer.io.ContiniousSharedPool;
 import eu.toolchain.serializer.io.CoreByteArraySerialReader;
@@ -29,9 +37,8 @@ import eu.toolchain.serializer.io.CoreInputStreamSerialReader;
 import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
 import eu.toolchain.serializer.io.ImmediateSharedPool;
 import eu.toolchain.serializer.io.StreamSerialWriter;
+import eu.toolchain.serializer.types.ArraySerializer;
 import eu.toolchain.serializer.types.BooleanSerializer;
-import eu.toolchain.serializer.types.ByteArraySerializer;
-import eu.toolchain.serializer.types.CharArraySerializer;
 import eu.toolchain.serializer.types.CompactVarIntSerializer;
 import eu.toolchain.serializer.types.CompactVarLongSerializer;
 import eu.toolchain.serializer.types.DoubleSerializer;
@@ -60,14 +67,24 @@ public class TinySerializer implements SerializerFramework {
 
     private final Supplier<SharedPool> pool;
 
+    private final Serializer<Integer> arraySize;
     private final Serializer<Integer> scopeSize;
     private final Serializer<Integer> subTypeId;
     private final Serializer<Integer> enumOrdinal;
 
     private final LengthPolicy defaultLengthPolicy;
 
+    private final Serializer<boolean[]> booleanArray;
+    private final Serializer<short[]> shortArray;
+    private final Serializer<int[]> intArray;
+    private final Serializer<long[]> longArray;
+
+    private final Serializer<float[]> floatArray;
+    private final Serializer<double[]> doubleArray;
+
     private final Serializer<byte[]> byteArray;
     private final Serializer<char[]> charArray;
+
     private final Serializer<String> string;
 
     private final Serializer<Boolean> bool;
@@ -202,6 +219,41 @@ public class TinySerializer implements SerializerFramework {
     }
 
     @Override
+    public <T> Serializer<T[]> array(Serializer<T> element, ArrayConstructor<T> constructor) {
+        return new ArraySerializer<T>(arraySize, element, constructor);
+    }
+
+    @Override
+    public Serializer<boolean[]> booleanArray() {
+        return booleanArray;
+    }
+
+    @Override
+    public Serializer<short[]> shortArray() {
+        return shortArray;
+    }
+
+    @Override
+    public Serializer<int[]> intArray() {
+        return intArray;
+    }
+
+    @Override
+    public Serializer<long[]> longArray() {
+        return longArray;
+    }
+
+    @Override
+    public Serializer<float[]> floatArray() {
+        return floatArray;
+    }
+
+    @Override
+    public Serializer<double[]> doubleArray() {
+        return doubleArray;
+    }
+
+    @Override
     public Serializer<byte[]> byteArray() {
         return byteArray;
     }
@@ -332,6 +384,7 @@ public class TinySerializer implements SerializerFramework {
         private boolean immediateSharedPool;
 
         private Serializer<Integer> size;
+        private Serializer<Integer> arraySize;
         private Serializer<Integer> scopeSize;
         private Serializer<Integer> subTypeId;
         private Serializer<Integer> enumOrdinal;
@@ -443,6 +496,21 @@ public class TinySerializer implements SerializerFramework {
         }
 
         /**
+         * Configure serializer to use for array sizes.
+         *
+         * @param arraySize Scope size serializer to use.
+         * @return This builder.
+         */
+        public Builder arraySize(Serializer<Integer> arraySize) {
+            if (arraySize == null) {
+                throw new NullPointerException("arraySize");
+            }
+
+            this.arraySize = arraySize;
+            return this;
+        }
+
+        /**
          * Configure serializer to use for scope sizes.
          *
          * @param scopeSize Scope size serializer to use.
@@ -540,13 +608,23 @@ public class TinySerializer implements SerializerFramework {
             final Supplier<SharedPool> pool = buildPool();
 
             final Serializer<Integer> size = ofNullable(this.size).orElseGet(this::defaultCollectionSize);
+            final Serializer<Integer> arraySize = ofNullable(this.arraySize).orElse(size);
             final Serializer<Integer> scopeSize = ofNullable(this.scopeSize).orElse(size);
             final Serializer<Integer> subTypeId = ofNullable(this.subTypeId).orElse(size);
             final Serializer<Integer> enumOrdinal = ofNullable(this.enumOrdinal).orElse(size);
             final LengthPolicy defaultLengthPolicy = ofNullable(this.defaultLengthPolicy).orElse(DEFAULT_LENGTH_POLICY);
 
+            final Serializer<boolean[]> booleanArray = new BooleanArraySerializer(arraySize);
+            final Serializer<short[]> shortArray = new ShortArraySerializer(arraySize);
+            final Serializer<int[]> intArray = new IntegerArraySerializer(arraySize);
+            final Serializer<long[]> longArray = new LongArraySerializer(arraySize);
+
+            final Serializer<float[]> floatArray = new FloatArraySerializer(arraySize);
+            final Serializer<double[]> doubleArray = new DoubleArraySerializer(arraySize);
+
             final Serializer<byte[]> byteArray = ofNullable(this.byteArray).orElseGet(defaultByteArray(size));
             final Serializer<char[]> charArray = ofNullable(this.charArray).orElseGet(defaultCharArray(size));
+
             final Serializer<String> string = ofNullable(this.string)
                     .orElseGet(defaultString(ofNullable(this.stringSize).orElse(size)));
 
@@ -565,7 +643,8 @@ public class TinySerializer implements SerializerFramework {
 
             final CollectionsProvider collections = ofNullable(this.collections).orElseGet(defaultCollections(size));
 
-            return new TinySerializer(pool, scopeSize, subTypeId, enumOrdinal, defaultLengthPolicy, byteArray, charArray,
+            return new TinySerializer(pool, arraySize, scopeSize, subTypeId, enumOrdinal, defaultLengthPolicy,
+                    booleanArray, shortArray, intArray, longArray, floatArray, doubleArray, byteArray, charArray,
                     string, bool, shortNumber, integer, longNumber, floatNumber, doubleNumber, varint, varlong, uuid,
                     collections, useStringsForEnums);
         }

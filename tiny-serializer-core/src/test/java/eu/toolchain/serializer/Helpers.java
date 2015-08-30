@@ -3,6 +3,7 @@ package eu.toolchain.serializer;
 import java.io.IOException;
 
 import org.junit.Assert;
+import org.junit.internal.ExactComparisonCriteria;
 
 import eu.toolchain.serializer.io.BytesSerialWriter;
 import eu.toolchain.serializer.io.CoreBytesSerialWriter;
@@ -13,6 +14,14 @@ public final class Helpers {
         serializer.serialize(out, value);
         final T result = serializer.deserialize(out.toSerialReader());
         Assert.assertEquals(value, result);
+        return out;
+    }
+
+    public static <T> CapturingSerialWriter roundtripArray(Serializer<T> serializer, T value) throws IOException {
+        final CapturingSerialWriter out = new CapturingSerialWriter();
+        serializer.serialize(out, value);
+        final T result = serializer.deserialize(out.toSerialReader());
+        new ExactComparisonCriteria().arrayEquals(null, value, result);
         return out;
     }
 

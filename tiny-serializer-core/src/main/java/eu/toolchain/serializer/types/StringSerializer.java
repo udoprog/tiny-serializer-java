@@ -21,16 +21,17 @@ public class StringSerializer implements Serializer<String> {
     @Override
     public void serialize(SerialWriter buffer, String value) throws IOException {
         final CharsetEncoder encoder = UTF_8.newEncoder();
-
-        final int worst = (int)(value.length() * encoder.maxBytesPerChar());
-
         /* allocate a worst-case buffer */
+        final int worst = (int) (value.length() * encoder.maxBytesPerChar());
         final ByteBuffer bytes = buffer.pool().allocate(worst);
 
         try {
             encoder.encode(CharBuffer.wrap(value), bytes, true);
             bytes.flip();
-            this.size.serialize(buffer, bytes.limit());
+
+            this.size.serialize(buffer, bytes.remaining());
+            this.size.serialize(buffer, value.length());
+
             buffer.write(bytes);
         } finally {
             buffer.pool().release(worst);
@@ -41,7 +42,8 @@ public class StringSerializer implements Serializer<String> {
     public String deserialize(SerialReader buffer) throws IOException {
         final CharsetDecoder decoder = UTF_8.newDecoder();
 
-        final int length = size.deserialize(buffer);
+        final int length = this.size.deserialize(buffer);
+        final int size = this.size.deserialize(buffer);
 
         final ByteBuffer bytes = buffer.pool().allocate(length);
 
@@ -49,7 +51,9 @@ public class StringSerializer implements Serializer<String> {
             buffer.read(bytes);
             bytes.flip();
 
-            return decoder.decode(bytes).toString();
+            final char chars[] = new char[size];
+            decoder.decode(bytes, CharBuffer.wrap(chars), true);
+            return new String(chars);
         } finally {
             buffer.pool().release(length);
         }
