@@ -13,7 +13,7 @@ import eu.toolchain.serializer.io.BytesSerialWriter;
 public class ArraySerializer {
     public static void main(String argv[]) throws IOException {
         final TinySerializer s = SerializerSetup.setup().build();
-        Serializer<int[]> a = s.intArray();
+        Serializer<int[][][]> aa = s.array(s.<int[]>array(s.intArray(), (size) -> new int[size][]), (size) -> new int[size][][]);
 
         final Serializer<Map<String, String>> map = s.map(s.string(), s.nullable(s.string()));
 

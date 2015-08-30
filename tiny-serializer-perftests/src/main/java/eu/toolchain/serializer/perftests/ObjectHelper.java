@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -22,7 +21,8 @@ public class ObjectHelper {
         final List<String> list = newList();
         final Map<String, List<String>> optionalMap = newOptionalMap();
         final Set<Long> set = newSet();
-        return new ImmutableSerializedObject(42, "hello world", map, list, optionalMap, set);
+        final int[][][] deeplyNested = newDeeplyNested();
+        return new ImmutableSerializedObject(42, "hello world", map, list, optionalMap, set, deeplyNested);
     }
 
     public static AutoMatterSerializedObject newAutoMatterSerializedObject() {
@@ -30,7 +30,8 @@ public class ObjectHelper {
         final List<String> list = newList();
         final Map<String, List<String>> optionalMap = newOptionalMap();
         final Set<Long> set = newSet();
-        return new AutoMatterSerializedObjectBuilder().version(42).field("hello world").map(map).list(list).optionalMap(optionalMap).set(set).build();
+        final int[][][] deeplyNested = newDeeplyNested();
+        return new AutoMatterSerializedObjectBuilder().version(42).field("hello world").map(map).list(list).optionalMap(optionalMap).set(set).deeplyNested(deeplyNested).build();
     }
 
     public static MutableSerializedObject newMutableSerializedObject() {
@@ -38,7 +39,8 @@ public class ObjectHelper {
         final List<String> list = new ArrayList<>(newList());
         final Map<String, List<String>> optionalMap = new HashMap<>(newOptionalMap());
         final Set<Long> set = new HashSet<>(newSet());
-        return new MutableSerializedObject(42, "hello world", map, list, optionalMap, set);
+        final int[][][] deeplyNested = newDeeplyNested();
+        return new MutableSerializedObject(42, "hello world", map, list, optionalMap, set, deeplyNested);
     }
 
     private static Map<String, List<String>> newOptionalMap() {
@@ -74,5 +76,9 @@ public class ObjectHelper {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static int[][][] newDeeplyNested() {
+        return new int[][][]{{{1, 2, 3}, {4, 5, 6}}};
     }
 }

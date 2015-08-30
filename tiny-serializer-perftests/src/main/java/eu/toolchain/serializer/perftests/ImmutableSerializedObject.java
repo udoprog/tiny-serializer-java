@@ -17,4 +17,5 @@ public class ImmutableSerializedObject {
     final List<String> list;
     final Map<String, List<String>> optionalMap;
     final Set<Long> set;
+    final int[][][] deeplyNested;
 }

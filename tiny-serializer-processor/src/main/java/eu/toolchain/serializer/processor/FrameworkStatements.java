@@ -18,6 +18,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.SimpleTypeVisitor6;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -120,7 +121,7 @@ public class FrameworkStatements {
         return resolveParameterizedType(d, framework);
     }
 
-    private FrameworkStatement resolveArrayType(ArrayType a, Object framework) {
+    private FrameworkStatement resolveArrayType(final ArrayType a, final Object framework) {
         final TypeMirror componentType = a.getComponentType();
 
         if (utils.isPrimitive(componentType)) {
@@ -129,6 +130,10 @@ public class FrameworkStatements {
 
         final FrameworkStatement component = resolveStatement(utils.boxedIfNeeded(componentType), framework);
 
+        final TypeName innerMost = TypeName.get(arrayInnerMost(componentType));
+        // Get parenthesis combination after the size parameter.
+        final String parens = arrayParensAfterSize(componentType);
+
         return new FrameworkStatement() {
             @Override
             public void writeTo(FrameworkMethodBuilder builder) {
@@ -136,13 +141,42 @@ public class FrameworkStatements {
                     final List<Object> arguments = new ArrayList<>();
 
                     arguments.add(framework);
+                    arguments.add(componentType);
                     arguments.addAll(ca);
-                    arguments.add(TypeName.get(componentType));
+                    arguments.add(innerMost);
 
-                    builder.assign(String.format("$N.array(%s, (s) -> new $T[s])", cs), arguments);
+                    builder.assign(String.format("$N.<$T>array(%s, (s) -> new $T[s]%s)", cs, parens), arguments);
                 });
             }
         };
+    }
+
+    private String arrayParensAfterSize(TypeMirror t) {
+        return t.accept(new SimpleTypeVisitor6<String, Void>() {
+            @Override
+            public String visitArray(ArrayType t, Void p) {
+                return "[]" + arrayParensAfterSize(t.getComponentType());
+            }
+
+            @Override
+            protected String defaultAction(TypeMirror e, Void p) {
+                return "";
+            }
+        }, null);
+    }
+
+    private TypeMirror arrayInnerMost(TypeMirror t) {
+        return t.accept(new SimpleTypeVisitor6<TypeMirror, Void>() {
+            @Override
+            public TypeMirror visitArray(ArrayType t, Void p) {
+                return arrayInnerMost(t.getComponentType());
+            }
+
+            @Override
+            protected TypeMirror defaultAction(TypeMirror e, Void p) {
+                return e;
+            }
+        }, null);
     }
 
     private FrameworkStatement resolveEnum(final TypeElement element, final Object framework) {

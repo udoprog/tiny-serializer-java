@@ -16,4 +16,5 @@ public interface AutoMatterSerializedObject {
     public List<String> list();
     public Map<String, List<String>> optionalMap();
     public Set<Long> set();
+    public int[][][] deeplyNested();
 }

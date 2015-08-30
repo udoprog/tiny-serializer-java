@@ -14,6 +14,7 @@ public final class Array_Serializer implements Serializer<Array> {
     final Serializer<float[]> s_FloatArray;
     final Serializer<double[]> s_DoubleArray;
     final Serializer<Interface[]> s_InterfaceArray;
+    final Serializer<int[][][]> s_IntegerArrayArrayArray;
 
     public Array_Serializer(final SerializerFramework framework) {
         s_BooleanArray = framework.booleanArray();
@@ -22,7 +23,8 @@ public final class Array_Serializer implements Serializer<Array> {
         s_LongArray = framework.longArray();
         s_FloatArray = framework.floatArray();
         s_DoubleArray = framework.doubleArray();
-        s_InterfaceArray = framework.array(new Interface_Serializer(framework), (s) -> new Interface[s]);
+        s_InterfaceArray = framework.<Interface> array(new Interface_Serializer(framework), (s) -> new Interface[s]);
+        s_IntegerArrayArrayArray = framework.<int[][]> array(framework.<int[]> array(framework.intArray(), (s) -> new int[s][]), (s) -> new int[s][][]);
     }
 
     @Override
@@ -34,6 +36,7 @@ public final class Array_Serializer implements Serializer<Array> {
         s_FloatArray.serialize(buffer, value.getFloats());
         s_DoubleArray.serialize(buffer, value.getDoubles());
         s_InterfaceArray.serialize(buffer, value.getInterfaces());
+        s_IntegerArrayArrayArray.serialize(buffer, value.getNested());
     }
 
     @Override
@@ -45,6 +48,7 @@ public final class Array_Serializer implements Serializer<Array> {
         final float[] v_floats = s_FloatArray.deserialize(buffer);
         final double[] v_doubles = s_DoubleArray.deserialize(buffer);
         final Interface[] v_interfaces = s_InterfaceArray.deserialize(buffer);
-        return new Array(v_booleans, v_shorts, v_ints, v_longs, v_floats, v_doubles, v_interfaces);
+        final int[][][] v_nested = s_IntegerArrayArrayArray.deserialize(buffer);
+        return new Array(v_booleans, v_shorts, v_ints, v_longs, v_floats, v_doubles, v_interfaces, v_nested);
     }
 }

@@ -11,9 +11,10 @@ public class Array {
     final float[] floats;
     final double[] doubles;
     final Interface[] interfaces;
+    final int[][][] nested;
 
     public Array(boolean[] booleans, short[] shorts, int[] ints, long[] longs, float[] floats, double[] doubles,
-            Interface[] interfaces) {
+            Interface[] interfaces, int[][][] nested) {
         this.booleans = booleans;
         this.shorts = shorts;
         this.ints = ints;
@@ -21,6 +22,7 @@ public class Array {
         this.floats = floats;
         this.doubles = doubles;
         this.interfaces = interfaces;
+        this.nested = nested;
     }
 
     boolean[] getBooleans() {
@@ -49,5 +51,9 @@ public class Array {
 
     Interface[] getInterfaces() {
         return interfaces;
+    }
+
+    int[][][] getNested() {
+        return nested;
     }
 }
