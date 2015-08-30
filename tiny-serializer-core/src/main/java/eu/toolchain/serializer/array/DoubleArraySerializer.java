@@ -5,7 +5,7 @@ import java.io.IOException;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.types.LongSerializer;
+import eu.toolchain.serializer.primitive.LongSerializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

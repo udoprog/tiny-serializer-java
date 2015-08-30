@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -19,6 +20,7 @@ import java.util.SortedSet;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import eu.toolchain.serializer.array.ArraySerializer;
 import eu.toolchain.serializer.array.BooleanArraySerializer;
 import eu.toolchain.serializer.array.ByteArraySerializer;
 import eu.toolchain.serializer.array.CharArraySerializer;
@@ -39,29 +41,29 @@ import eu.toolchain.serializer.io.CoreInputStreamSerialReader;
 import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
 import eu.toolchain.serializer.io.ImmediateSharedPool;
 import eu.toolchain.serializer.io.StreamSerialWriter;
-import eu.toolchain.serializer.types.ArraySerializer;
-import eu.toolchain.serializer.types.BooleanSerializer;
-import eu.toolchain.serializer.types.ByteSerializer;
-import eu.toolchain.serializer.types.CharacterSerializer;
-import eu.toolchain.serializer.types.CompactVarIntSerializer;
-import eu.toolchain.serializer.types.CompactVarLongSerializer;
-import eu.toolchain.serializer.types.DoubleSerializer;
-import eu.toolchain.serializer.types.FloatSerializer;
-import eu.toolchain.serializer.types.IntegerSerializer;
-import eu.toolchain.serializer.types.LengthPrefixedSerializer;
-import eu.toolchain.serializer.types.LongSerializer;
-import eu.toolchain.serializer.types.NullSerializer;
-import eu.toolchain.serializer.types.OptionalSerializer;
-import eu.toolchain.serializer.types.OrdinalEnumSerializer;
-import eu.toolchain.serializer.types.PrefixSerializer;
-import eu.toolchain.serializer.types.ShortSerializer;
-import eu.toolchain.serializer.types.SingletonSerializer;
-import eu.toolchain.serializer.types.StringEnumSerializer;
-import eu.toolchain.serializer.types.StringSerializer;
-import eu.toolchain.serializer.types.SubTypesSerializer;
-import eu.toolchain.serializer.types.UUIDSerializer;
-import eu.toolchain.serializer.types.VarIntSerializer;
-import eu.toolchain.serializer.types.VarLongSerializer;
+import eu.toolchain.serializer.primitive.BooleanSerializer;
+import eu.toolchain.serializer.primitive.ByteSerializer;
+import eu.toolchain.serializer.primitive.CharacterSerializer;
+import eu.toolchain.serializer.primitive.CompactVarIntSerializer;
+import eu.toolchain.serializer.primitive.CompactVarLongSerializer;
+import eu.toolchain.serializer.primitive.DoubleSerializer;
+import eu.toolchain.serializer.primitive.FloatSerializer;
+import eu.toolchain.serializer.primitive.IntegerSerializer;
+import eu.toolchain.serializer.primitive.LongSerializer;
+import eu.toolchain.serializer.primitive.ShortSerializer;
+import eu.toolchain.serializer.primitive.VarIntSerializer;
+import eu.toolchain.serializer.primitive.VarLongSerializer;
+import eu.toolchain.serializer.type.BitSetSerializer;
+import eu.toolchain.serializer.type.LengthPrefixedSerializer;
+import eu.toolchain.serializer.type.NullSerializer;
+import eu.toolchain.serializer.type.OptionalSerializer;
+import eu.toolchain.serializer.type.OrdinalEnumSerializer;
+import eu.toolchain.serializer.type.PrefixSerializer;
+import eu.toolchain.serializer.type.SingletonSerializer;
+import eu.toolchain.serializer.type.StringEnumSerializer;
+import eu.toolchain.serializer.type.StringSerializer;
+import eu.toolchain.serializer.type.SubTypesSerializer;
+import eu.toolchain.serializer.type.UUIDSerializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -102,7 +104,9 @@ public class TinySerializer implements SerializerFramework {
 
     private final Serializer<Integer> variableInteger;
     private final Serializer<Long> variableLong;
+
     private final Serializer<UUID> uuid;
+    private final Serializer<BitSet> bitSet;
 
     private final CollectionsProvider collections;
 
@@ -295,6 +299,11 @@ public class TinySerializer implements SerializerFramework {
     }
 
     @Override
+    public Serializer<BitSet> bitSet() {
+        return bitSet;
+    }
+
+    @Override
     public <T> Serializer<Optional<T>> optional(Serializer<T> element) {
         return new OptionalSerializer<T>(fixedBoolean, element);
     }
@@ -432,7 +441,9 @@ public class TinySerializer implements SerializerFramework {
 
         private Serializer<Integer> varint;
         private Serializer<Long> varlong;
+
         private Serializer<UUID> uuid;
+        private Serializer<BitSet> bitSet;
 
         private CollectionsProvider collections;
 
@@ -669,13 +680,14 @@ public class TinySerializer implements SerializerFramework {
             final Serializer<Integer> variableInteger = ofNullable(this.varint).orElseGet(this::defaultVarInt);
             final Serializer<Long> variableLong = ofNullable(this.varlong).orElseGet(this::defaultVarLong);
             final Serializer<UUID> uuid = ofNullable(this.uuid).orElseGet(this.defaultUUID(fixedLong));
+            final Serializer<BitSet> bitSet = ofNullable(this.bitSet).orElseGet(BitSetSerializer.supplier(size));
 
             final CollectionsProvider collections = ofNullable(this.collections).orElseGet(defaultCollections(size));
 
             return new TinySerializer(pool, arraySize, scopeSize, subTypeId, enumOrdinal, defaultLengthPolicy,
                     booleanArray, shortArray, intArray, longArray, floatArray, doubleArray, byteArray, charArray,
                     string, fixedByte, fixedCharacter, fixedBoolean, fixedShort, fixedInteger, fixedLong, fixedFloat,
-                    fixedDouble, variableInteger, variableLong, uuid, collections, useStringsForEnums);
+                    fixedDouble, variableInteger, variableLong, uuid, bitSet, collections, useStringsForEnums);
         }
 
         private Supplier<SharedPool> buildPool() {

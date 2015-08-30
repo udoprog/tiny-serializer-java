@@ -9,13 +9,13 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
-import eu.toolchain.serializer.collections.ImmutableListSerializer;
-import eu.toolchain.serializer.collections.ImmutableMapSerializer;
-import eu.toolchain.serializer.collections.ImmutableNavigableMapSerializer;
-import eu.toolchain.serializer.collections.ImmutableNavigableSetSerializer;
-import eu.toolchain.serializer.collections.ImmutableSetSerializer;
-import eu.toolchain.serializer.collections.ImmutableSortedMapSerializer;
-import eu.toolchain.serializer.collections.ImmutableSortedSetSerializer;
+import eu.toolchain.serializer.collection.ImmutableListSerializer;
+import eu.toolchain.serializer.collection.ImmutableMapSerializer;
+import eu.toolchain.serializer.collection.ImmutableNavigableMapSerializer;
+import eu.toolchain.serializer.collection.ImmutableNavigableSetSerializer;
+import eu.toolchain.serializer.collection.ImmutableSetSerializer;
+import eu.toolchain.serializer.collection.ImmutableSortedMapSerializer;
+import eu.toolchain.serializer.collection.ImmutableSortedSetSerializer;
 
 public class ImmutableCollectionsProvider implements CollectionsProvider {
     private final Serializer<Integer> size;

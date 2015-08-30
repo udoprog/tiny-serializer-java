@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -207,9 +208,14 @@ public interface SerializerFramework {
     public Serializer<char[]> charArray();
 
     /**
-     * A {@code Serializer} that can serializer UUIDs.
+     * A {@code Serializer} that can serializer {@link UUID}s.
      */
     public Serializer<UUID> uuid();
+
+    /**
+     * A {@code Serializer} that can serializer {@link BitSet}s.
+     */
+    public Serializer<BitSet> bitSet();
 
     /**
      * Build a serializer for an optional type.

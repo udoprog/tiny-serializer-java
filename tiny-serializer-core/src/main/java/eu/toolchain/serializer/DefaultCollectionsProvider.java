@@ -8,13 +8,13 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
-import eu.toolchain.serializer.collections.DefaultListSerializer;
-import eu.toolchain.serializer.collections.DefaultMapSerializer;
-import eu.toolchain.serializer.collections.DefaultNavigableMapSerializer;
-import eu.toolchain.serializer.collections.DefaultNavigableSetSerializer;
-import eu.toolchain.serializer.collections.DefaultSetSerializer;
-import eu.toolchain.serializer.collections.DefaultSortedMapSerializer;
-import eu.toolchain.serializer.collections.DefaultSortedSetSerializer;
+import eu.toolchain.serializer.collection.DefaultListSerializer;
+import eu.toolchain.serializer.collection.DefaultMapSerializer;
+import eu.toolchain.serializer.collection.DefaultNavigableMapSerializer;
+import eu.toolchain.serializer.collection.DefaultNavigableSetSerializer;
+import eu.toolchain.serializer.collection.DefaultSetSerializer;
+import eu.toolchain.serializer.collection.DefaultSortedMapSerializer;
+import eu.toolchain.serializer.collection.DefaultSortedSetSerializer;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

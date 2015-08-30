@@ -11,7 +11,7 @@ import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
 import eu.toolchain.serializer.TinySerializer;
 import eu.toolchain.serializer.array.CharArraySerializer;
-import eu.toolchain.serializer.types.CompactVarIntSerializer;
+import eu.toolchain.serializer.primitive.CompactVarIntSerializer;
 
 public class CharArraySerializerTest {
     final SerializerFramework s = TinySerializer.builder().build();

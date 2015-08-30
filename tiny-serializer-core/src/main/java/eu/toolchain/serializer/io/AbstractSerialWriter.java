@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
-import eu.toolchain.serializer.types.CompactVarIntSerializer;
+import eu.toolchain.serializer.primitive.CompactVarIntSerializer;
 
 public abstract class AbstractSerialWriter implements SerialWriter {
     public static final CompactVarIntSerializer DEFAULT_SCOPE_SIZE = new CompactVarIntSerializer();

@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import eu.toolchain.serializer.Helpers;
 import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.types.CompactVarIntSerializer;
+import eu.toolchain.serializer.primitive.CompactVarIntSerializer;
 
 public class ArraySerializerTest {
     private Serializer<boolean[]> booleanArray;
