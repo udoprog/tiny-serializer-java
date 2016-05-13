@@ -410,7 +410,7 @@ Included in this project is a performance testing module built using JMH, it
 can be run by doing the following.
 
 ```sh
-$ mvn clean package
+$ mvn -P extra clean package
 $ java -jar tiny-serializer-perftests/target/benchmarks.jar -bm sample -bu ns
 ```
 
