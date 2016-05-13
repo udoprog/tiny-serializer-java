@@ -4,7 +4,7 @@
   <parent>
     <groupId>eu.toolchain.serializer</groupId>
     <artifactId>tiny-serializer-parent</artifactId>
-    <version>1.4.4</version>
+    <version>1.4.5-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
