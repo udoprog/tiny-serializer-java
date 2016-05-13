@@ -129,8 +129,6 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         final List<Processed> processed = new ArrayList<>();
 
         for (final DeferredProcessing processing : elements) {
-            messager.printMessage(Diagnostic.Kind.NOTE, String.format("Processing %s", processing.getElement()));
-
             final Unverified<JavaFile> result = processElement(processing.getElement());
             processed.add(new Processed(result, processing));
         }
