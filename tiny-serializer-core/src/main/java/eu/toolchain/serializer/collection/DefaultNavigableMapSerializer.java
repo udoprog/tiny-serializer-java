@@ -1,17 +1,18 @@
 package eu.toolchain.serializer.collection;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
+
 @RequiredArgsConstructor
-public class DefaultNavigableMapSerializer<K extends Comparable<?>, V> implements Serializer<NavigableMap<K, V>> {
+public class DefaultNavigableMapSerializer<K extends Comparable<?>, V>
+    implements Serializer<NavigableMap<K, V>> {
     private final Serializer<Integer> integer;
 
     private final Serializer<K> key;

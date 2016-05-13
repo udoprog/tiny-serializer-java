@@ -1,16 +1,16 @@
 package eu.toolchain.serializer.type;
 
+import eu.toolchain.serializer.SerialReader;
+import eu.toolchain.serializer.SerialWriter;
+import eu.toolchain.serializer.Serializer;
+import lombok.RequiredArgsConstructor;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
-
-import eu.toolchain.serializer.SerialReader;
-import eu.toolchain.serializer.SerialWriter;
-import eu.toolchain.serializer.Serializer;
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class StringSerializer implements Serializer<String> {

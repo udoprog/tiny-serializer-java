@@ -1,15 +1,14 @@
 package eu.toolchain.serializer.processor;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
-import lombok.RequiredArgsConstructor;
-
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import lombok.RequiredArgsConstructor;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Provides utilities for generating unique, readable names from given types.
@@ -29,7 +28,8 @@ public class Naming {
     }
 
     public String forType(TypeName fieldType, boolean provided) {
-        return makeUnique(String.format(provided ? "%sProvided%s" : "%s%s", prefix, composeName(fieldType)));
+        return makeUnique(
+            String.format(provided ? "%sProvided%s" : "%s%s", prefix, composeName(fieldType)));
     }
 
     private String makeUnique(final String base) {

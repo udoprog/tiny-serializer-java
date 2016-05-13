@@ -13,13 +13,19 @@ public interface CollectionsProvider {
 
     public <K, V> Serializer<Map<K, V>> map(Serializer<K> key, Serializer<V> value);
 
-    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value);
+    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(
+        Serializer<K> key, Serializer<V> value
+    );
 
-    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key, Serializer<V> value);
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(
+        Serializer<K> key, Serializer<V> value
+    );
 
     public <T> Serializer<Set<T>> set(Serializer<T> value);
 
     public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> value);
 
-    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(Serializer<T> serializer);
+    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(
+        Serializer<T> serializer
+    );
 }

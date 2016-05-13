@@ -1,11 +1,9 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-
+import eu.toolchain.serializer.Helpers;
 import org.junit.Test;
 
-import eu.toolchain.serializer.Helpers;
-import eu.toolchain.serializer.primitive.LongSerializer;
+import java.io.IOException;
 
 public class LongSerializerTest {
     private void roundtrip(long value, int... pattern) throws IOException {

@@ -1,11 +1,11 @@
 package eu.toolchain.serializer.type;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
 
 @RequiredArgsConstructor
 public class OrdinalEnumSerializer<T extends Enum<T>> implements Serializer<T> {

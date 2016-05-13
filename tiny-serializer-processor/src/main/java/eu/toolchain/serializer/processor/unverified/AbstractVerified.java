@@ -1,8 +1,7 @@
 package eu.toolchain.serializer.processor.unverified;
 
-import java.util.function.Function;
-
 import javax.annotation.processing.Messager;
+import java.util.function.Function;
 
 public abstract class AbstractVerified<T> implements Unverified<T> {
     @Override

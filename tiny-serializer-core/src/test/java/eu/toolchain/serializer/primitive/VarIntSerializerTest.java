@@ -1,13 +1,10 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-
-import org.junit.Test;
-
 import eu.toolchain.serializer.Helpers;
 import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.primitive.CompactVarIntSerializer;
-import eu.toolchain.serializer.primitive.VarIntSerializer;
+import org.junit.Test;
+
+import java.io.IOException;
 
 public class VarIntSerializerTest {
     final Serializer<Integer> regular = new VarIntSerializer();

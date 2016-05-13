@@ -6,8 +6,8 @@ public class OutputStreamHelper {
     public static NullOutputStream newNullStream() {
         return new NullOutputStream();
     }
-    
+
     public static void main(String argv[]) {
-        
+
     }
 }

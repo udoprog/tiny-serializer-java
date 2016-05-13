@@ -1,5 +1,13 @@
 package eu.toolchain.serializer;
 
+import eu.toolchain.serializer.collection.ImmutableListSerializer;
+import eu.toolchain.serializer.collection.ImmutableMapSerializer;
+import eu.toolchain.serializer.collection.ImmutableNavigableMapSerializer;
+import eu.toolchain.serializer.collection.ImmutableNavigableSetSerializer;
+import eu.toolchain.serializer.collection.ImmutableSetSerializer;
+import eu.toolchain.serializer.collection.ImmutableSortedMapSerializer;
+import eu.toolchain.serializer.collection.ImmutableSortedSetSerializer;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,14 +17,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
-import eu.toolchain.serializer.collection.ImmutableListSerializer;
-import eu.toolchain.serializer.collection.ImmutableMapSerializer;
-import eu.toolchain.serializer.collection.ImmutableNavigableMapSerializer;
-import eu.toolchain.serializer.collection.ImmutableNavigableSetSerializer;
-import eu.toolchain.serializer.collection.ImmutableSetSerializer;
-import eu.toolchain.serializer.collection.ImmutableSortedMapSerializer;
-import eu.toolchain.serializer.collection.ImmutableSortedSetSerializer;
-
 public class ImmutableCollectionsProvider implements CollectionsProvider {
     private final Serializer<Integer> size;
 
@@ -25,13 +25,8 @@ public class ImmutableCollectionsProvider implements CollectionsProvider {
     }
 
     static final String[] collections = new String[]{
-        "ImmutableList",
-        "ImmutableMap",
-        "ImmutableSortedMap",
-        "ImmutableNavigableMap",
-        "ImmutableSet",
-        "ImmutableSortedSet",
-        "ImmutableNavigableSet"
+        "ImmutableList", "ImmutableMap", "ImmutableSortedMap", "ImmutableNavigableMap",
+        "ImmutableSet", "ImmutableSortedSet", "ImmutableNavigableSet"
     };
 
     public static void verifyGuavaAvailable() {
@@ -44,15 +39,14 @@ public class ImmutableCollectionsProvider implements CollectionsProvider {
         }
 
         if (!missing.isEmpty()) {
-            throw new IllegalStateException(
-                    String.format("Missing guava collections (%s), is guava available in your classpath?", missing));
+            throw new IllegalStateException(String.format(
+                "Missing guava collections (%s), is guava available in your classpath?", missing));
         }
     }
 
     static boolean check(String className) {
         try {
-            Class.forName(className, true,
-                    ImmutableCollectionsProvider.class.getClassLoader());
+            Class.forName(className, true, ImmutableCollectionsProvider.class.getClassLoader());
         } catch (ClassNotFoundException e) {
             return false;
         }
@@ -71,12 +65,16 @@ public class ImmutableCollectionsProvider implements CollectionsProvider {
     }
 
     @Override
-    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value) {
+    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(
+        Serializer<K> key, Serializer<V> value
+    ) {
         return new ImmutableSortedMapSerializer<K, V>(size, key, value);
     }
 
     @Override
-    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key, Serializer<V> value) {
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(
+        Serializer<K> key, Serializer<V> value
+    ) {
         return new ImmutableNavigableMapSerializer<K, V>(size, key, value);
     }
 

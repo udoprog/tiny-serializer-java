@@ -1,12 +1,11 @@
 package eu.toolchain.serializer.perftests;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import eu.toolchain.serializer.AutoSerialize;
 import lombok.Data;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Data
 @AutoSerialize

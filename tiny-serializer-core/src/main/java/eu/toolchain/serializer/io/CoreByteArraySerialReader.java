@@ -1,10 +1,10 @@
 package eu.toolchain.serializer.io;
 
-import java.io.EOFException;
-import java.io.IOException;
-
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
+
+import java.io.EOFException;
+import java.io.IOException;
 
 public class CoreByteArraySerialReader extends AbstractSerialReader {
     private final byte[] source;
@@ -16,7 +16,9 @@ public class CoreByteArraySerialReader extends AbstractSerialReader {
         this.source = source;
     }
 
-    public CoreByteArraySerialReader(final SharedPool pool, final Serializer<Integer> scopeSize, final byte[] source) {
+    public CoreByteArraySerialReader(
+        final SharedPool pool, final Serializer<Integer> scopeSize, final byte[] source
+    ) {
         super(pool, scopeSize);
         this.source = source;
     }

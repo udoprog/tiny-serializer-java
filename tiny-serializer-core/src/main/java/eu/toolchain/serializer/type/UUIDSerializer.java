@@ -1,12 +1,12 @@
 package eu.toolchain.serializer.type;
 
-import java.io.IOException;
-import java.util.UUID;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 public class UUIDSerializer implements Serializer<UUID> {

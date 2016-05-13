@@ -1,11 +1,11 @@
 package eu.toolchain.serializer.processor.unverified;
 
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
-
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 
 @RequiredArgsConstructor
 @ToString

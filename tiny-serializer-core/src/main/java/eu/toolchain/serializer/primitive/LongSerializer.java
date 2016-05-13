@@ -1,10 +1,10 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
+
+import java.io.IOException;
 
 public class LongSerializer implements Serializer<Long> {
     public static final int BYTES = 8;
@@ -37,14 +37,14 @@ public class LongSerializer implements Serializer<Long> {
     public static long fromBytes(final byte[] b, int o) {
         long v = 0;
 
-        v += ((long)(b[o + 0] & 0xff) << 56);
-        v += ((long)(b[o + 1] & 0xff) << 48);
-        v += ((long)(b[o + 2] & 0xff) << 40);
-        v += ((long)(b[o + 3] & 0xff) << 32);
-        v += ((long)(b[o + 4] & 0xff) << 24);
-        v += ((long)(b[o + 5] & 0xff) << 16);
-        v += ((long)(b[o + 6] & 0xff) << 8);
-        v += ((long)(b[o + 7] & 0xff));
+        v += ((long) (b[o + 0] & 0xff) << 56);
+        v += ((long) (b[o + 1] & 0xff) << 48);
+        v += ((long) (b[o + 2] & 0xff) << 40);
+        v += ((long) (b[o + 3] & 0xff) << 32);
+        v += ((long) (b[o + 4] & 0xff) << 24);
+        v += ((long) (b[o + 5] & 0xff) << 16);
+        v += ((long) (b[o + 6] & 0xff) << 8);
+        v += ((long) (b[o + 7] & 0xff));
 
         return v;
     }

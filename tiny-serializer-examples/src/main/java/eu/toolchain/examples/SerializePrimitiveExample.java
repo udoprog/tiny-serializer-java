@@ -1,9 +1,9 @@
 package eu.toolchain.examples;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
+
+import java.io.IOException;
 
 public class SerializePrimitiveExample {
     public static void main(String[] argv) throws IOException {

@@ -1,14 +1,14 @@
 package eu.toolchain.serializer.processor.unverified;
 
-import javax.annotation.processing.Messager;
-
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import javax.annotation.processing.Messager;
+
 @RequiredArgsConstructor
 @ToString
-@EqualsAndHashCode(of={"reference"}, callSuper = false)
+@EqualsAndHashCode(of = {"reference"}, callSuper = false)
 public class Verified<T> extends AbstractVerified<T> {
     final T reference;
 

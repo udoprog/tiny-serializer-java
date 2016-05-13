@@ -1,14 +1,14 @@
 package eu.toolchain.serializer.type;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework.TypeMapping;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RequiredArgsConstructor
 public class SubTypesSerializer<T> implements Serializer<T> {
@@ -25,8 +25,8 @@ public class SubTypesSerializer<T> implements Serializer<T> {
         }
 
         typeId.serialize(buffer, m.id());
-        @SuppressWarnings("unchecked")
-        final Serializer<T> serializer = (Serializer<T>) m.serializer();
+        @SuppressWarnings("unchecked") final Serializer<T> serializer =
+            (Serializer<T>) m.serializer();
         serializer.serialize(buffer, value);
     }
 
@@ -42,19 +42,24 @@ public class SubTypesSerializer<T> implements Serializer<T> {
         return m.serializer().deserialize(buffer);
     }
 
-    public static <T> Serializer<T> fromTypeMappings(Serializer<Integer> typeId, Iterable<? extends TypeMapping<? extends T, T>> mappings) {
+    public static <T> Serializer<T> fromTypeMappings(
+        Serializer<Integer> typeId, Iterable<? extends TypeMapping<? extends T, T>> mappings
+    ) {
         final Map<Integer, TypeMapping<? extends T, T>> ids = buildIdMapping(mappings);
-        final Map<Class<? extends T>, TypeMapping<? extends T, T>> keys = buildTypeMapping(mappings);
+        final Map<Class<? extends T>, TypeMapping<? extends T, T>> keys =
+            buildTypeMapping(mappings);
         return new SubTypesSerializer<T>(typeId, ids, keys);
     }
 
     static <T> Map<Integer, TypeMapping<? extends T, T>> buildIdMapping(
-            Iterable<? extends TypeMapping<? extends T, T>> mappings) {
+        Iterable<? extends TypeMapping<? extends T, T>> mappings
+    ) {
         final Map<Integer, TypeMapping<? extends T, T>> mapping = new HashMap<>();
 
         for (TypeMapping<? extends T, T> m : mappings) {
-            if (mapping.put(m.id(), m) == null)
+            if (mapping.put(m.id(), m) == null) {
                 continue;
+            }
 
             throw new IllegalArgumentException("Duplicate mappings for " + m);
         }
@@ -63,12 +68,14 @@ public class SubTypesSerializer<T> implements Serializer<T> {
     }
 
     static <T> Map<Class<? extends T>, TypeMapping<? extends T, T>> buildTypeMapping(
-            Iterable<? extends TypeMapping<? extends T, T>> mappings) {
+        Iterable<? extends TypeMapping<? extends T, T>> mappings
+    ) {
         final Map<Class<? extends T>, TypeMapping<? extends T, T>> mapping = new HashMap<>();
 
         for (final TypeMapping<? extends T, T> m : mappings) {
-            if (mapping.put(m.key(), m) == null)
+            if (mapping.put(m.key(), m) == null) {
                 continue;
+            }
 
             throw new IllegalArgumentException("Duplicate mappings for " + m);
         }

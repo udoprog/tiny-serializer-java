@@ -1,15 +1,14 @@
 package eu.toolchain.examples;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Map;
-
 import com.google.common.collect.ImmutableMap;
-
 import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class SerializeImmutableMap {
     public static void main(String argv[]) throws IOException {
@@ -32,6 +31,7 @@ public class SerializeImmutableMap {
         }
 
         System.out.println(String.format("Serialized size: %d", bytes.limit()));
-        System.out.println(String.format("Equals?: %s (%s = %s)", serialized.equals(result), serialized, result));
+        System.out.println(
+            String.format("Equals?: %s (%s = %s)", serialized.equals(result), serialized, result));
     }
 }

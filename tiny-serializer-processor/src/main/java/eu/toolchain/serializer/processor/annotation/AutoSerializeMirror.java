@@ -1,13 +1,12 @@
 package eu.toolchain.serializer.processor.annotation;
 
-import java.util.Optional;
-
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.Data;
+
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import java.util.Optional;
 
 @Data
 public class AutoSerializeMirror {
@@ -21,8 +20,9 @@ public class AutoSerializeMirror {
     private final boolean orderById;
     private final boolean orderConstructorById;
 
-    public static Unverified<AutoSerializeMirror> getFor(final AutoSerializeUtils utils, final Element element,
-            final AnnotationMirror a) {
+    public static Unverified<AutoSerializeMirror> getFor(
+        final AutoSerializeUtils utils, final Element element, final AnnotationMirror a
+    ) {
         final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
 
         final String name = values.getString("name").get();
@@ -32,21 +32,27 @@ public class AutoSerializeMirror {
         final boolean orderById = values.getBoolean("orderById").get();
         final boolean orderConstructorById = values.getBoolean("orderConstructorById").get();
 
-        final Unverified<Optional<BuilderMirror>> unverifiedBuilder = makeBuilder(utils, element, values);
+        final Unverified<Optional<BuilderMirror>> unverifiedBuilder =
+            makeBuilder(utils, element, values);
 
         return unverifiedBuilder.map((builder) -> {
-            return new AutoSerializeMirror(a, name, useGetter, fieldBased, failOnMissing, builder, orderById,
-                    orderConstructorById);
+            return new AutoSerializeMirror(a, name, useGetter, fieldBased, failOnMissing, builder,
+                orderById, orderConstructorById);
         });
     }
 
-    private static Unverified<Optional<BuilderMirror>> makeBuilder(final AutoSerializeUtils utils,
-            final Element element, final AnnotationValues values) {
+    private static Unverified<Optional<BuilderMirror>> makeBuilder(
+        final AutoSerializeUtils utils, final Element element, final AnnotationValues values
+    ) {
         return utils.builder(element).map((bb) -> {
             return bb.transform((b) -> Unverified.verified(Optional.of(b)));
         }).orElseGet(() -> {
-            for (final AnnotationMirror builderMirror : values.getAnnotationValue("builder").get()) {
-                return BuilderMirror.getFor(utils, element, builderMirror).map((b) -> Optional.of(b));
+            for (final AnnotationMirror builderMirror : values
+                .getAnnotationValue("builder")
+                .get()) {
+                return BuilderMirror
+                    .getFor(utils, element, builderMirror)
+                    .map((b) -> Optional.of(b));
             }
 
             return Unverified.verified(Optional.empty());

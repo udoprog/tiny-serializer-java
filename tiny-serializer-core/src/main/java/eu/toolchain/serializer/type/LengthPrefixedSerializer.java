@@ -1,7 +1,5 @@
 package eu.toolchain.serializer.type;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.LengthPolicy;
 import eu.toolchain.serializer.SerialReader;
@@ -9,6 +7,8 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
 
 @RequiredArgsConstructor
 public class LengthPrefixedSerializer<T> implements Serializer<T> {

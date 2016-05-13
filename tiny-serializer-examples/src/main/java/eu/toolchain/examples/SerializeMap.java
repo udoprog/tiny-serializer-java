@@ -1,14 +1,14 @@
 package eu.toolchain.examples;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-
 import eu.toolchain.serializer.BytesSerialWriter;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.TinySerializer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SerializeMap {
     public static void main(String argv[]) throws IOException {
@@ -33,6 +33,7 @@ public class SerializeMap {
         }
 
         System.out.println(String.format("Serialized size: %d", bytes.limit()));
-        System.out.println(String.format("Equals?: %s (%s = %s)", serialized.equals(result), serialized, result));
+        System.out.println(
+            String.format("Equals?: %s (%s = %s)", serialized.equals(result), serialized, result));
     }
 }

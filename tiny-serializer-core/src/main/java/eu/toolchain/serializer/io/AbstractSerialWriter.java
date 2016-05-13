@@ -1,12 +1,12 @@
 package eu.toolchain.serializer.io;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
 import eu.toolchain.serializer.primitive.CompactVarIntSerializer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public abstract class AbstractSerialWriter implements SerialWriter {
     public static final CompactVarIntSerializer DEFAULT_SCOPE_SIZE = new CompactVarIntSerializer();

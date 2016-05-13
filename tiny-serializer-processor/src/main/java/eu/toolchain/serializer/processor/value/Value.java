@@ -1,8 +1,8 @@
 package eu.toolchain.serializer.processor.value;
 
-import java.util.Optional;
-
 import lombok.Data;
+
+import java.util.Optional;
 
 @Data
 public class Value {

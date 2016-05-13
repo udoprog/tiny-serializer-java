@@ -49,9 +49,9 @@ public interface SerialReader extends Closeable {
 
     /**
      * Retrieve the reader for a scoped section.
-     *
-     * Scopes sections are sections that can be skipped. They are typically prefixed with the length of the section, but
-     * the exact details are implementation specific.
+     * <p>
+     * Scopes sections are sections that can be skipped. They are typically prefixed with the length
+     * of the section, but the exact details are implementation specific.
      *
      * @see #skip() for how to skip scoped sections.
      */

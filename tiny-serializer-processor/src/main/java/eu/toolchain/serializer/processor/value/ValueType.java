@@ -1,14 +1,12 @@
 package eu.toolchain.serializer.processor.value;
 
-import java.util.Optional;
-
-import javax.lang.model.type.TypeMirror;
-
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
-
 import lombok.Data;
+
+import javax.lang.model.type.TypeMirror;
+import java.util.Optional;
 
 @Data
 public class ValueType {

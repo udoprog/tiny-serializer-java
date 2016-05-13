@@ -1,16 +1,5 @@
 package eu.toolchain.serializer.processor;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import javax.annotation.Generated;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -22,7 +11,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import eu.toolchain.serializer.processor.value.Value;
@@ -30,6 +18,16 @@ import eu.toolchain.serializer.processor.value.ValueSet;
 import eu.toolchain.serializer.processor.value.ValueType;
 import eu.toolchain.serializer.processor.value.ValueTypeBuilder;
 import lombok.RequiredArgsConstructor;
+
+import javax.annotation.Generated;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public class AutoSerializeClassProcessor {
@@ -40,18 +38,23 @@ public class AutoSerializeClassProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    public Unverified<JavaFile> process(final TypeElement element, final AutoSerializeMirror autoSerialize) {
+    public Unverified<JavaFile> process(
+        final TypeElement element, final AutoSerializeMirror autoSerialize
+    ) {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final Set<ElementKind> kinds = getKinds(element);
 
-        final Unverified<Optional<ValueTypeBuilder>> unverifiedBuilder = ValueTypeBuilder.build(utils, element, autoSerialize);
-        final Unverified<ValueSet> unverifiedFields = ValueSet.build(utils, element, kinds, autoSerialize);
+        final Unverified<Optional<ValueTypeBuilder>> unverifiedBuilder =
+            ValueTypeBuilder.build(utils, element, autoSerialize);
+        final Unverified<ValueSet> unverifiedFields =
+            ValueSet.build(utils, element, kinds, autoSerialize);
 
         final ClassName elementType = (ClassName) TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
         final String serializerName = utils.serializerName(element);
 
-        final Unverified<?> combineDifferent = Unverified.combineDifferent(unverifiedFields, unverifiedBuilder);
+        final Unverified<?> combineDifferent =
+            Unverified.combineDifferent(unverifiedFields, unverifiedBuilder);
 
         final boolean fieldBased = autoSerialize.isFieldBased();
         final boolean failOnMissing = autoSerialize.isFailOnMissing();
@@ -65,15 +68,22 @@ public class AutoSerializeClassProcessor {
 
             final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
 
-            final AnnotationSpec generatedAnnotation = AnnotationSpec.builder(Generated.class).addMember("value", "$S", AutoSerializeProcessor.class.getCanonicalName()).build();
+            final AnnotationSpec generatedAnnotation = AnnotationSpec
+                .builder(Generated.class)
+                .addMember("value", "$S", AutoSerializeProcessor.class.getCanonicalName())
+                .build();
 
             generated.addAnnotation(generatedAnnotation);
 
             final FieldSpec count = FieldSpec
-                    .builder(TypeName.get(utils.serializerFor(integerType.asType())), "count", Modifier.FINAL).build();
+                .builder(TypeName.get(utils.serializerFor(integerType.asType())), "count",
+                    Modifier.FINAL)
+                .build();
 
             final FieldSpec name = FieldSpec
-                    .builder(TypeName.get(utils.serializerFor(stringType.asType())), "name", Modifier.FINAL).build();
+                .builder(TypeName.get(utils.serializerFor(stringType.asType())), "name",
+                    Modifier.FINAL)
+                .build();
 
             if (fieldBased) {
                 generated.addField(count);
@@ -90,14 +100,20 @@ public class AutoSerializeClassProcessor {
             if (fieldBased) {
                 generated.addMethod(fieldConstructor(values, count, name));
                 generated.addMethod(fieldSerializeMethod(elementType, values, count, name));
-                generated.addMethod(fieldDeserializeMethod(elementType, values, builder, count, name, failOnMissing));
+                generated.addMethod(
+                    fieldDeserializeMethod(elementType, values, builder, count, name,
+                        failOnMissing));
             } else {
                 generated.addMethod(serialConstructor(values));
                 generated.addMethod(serialSerializeMethod(elementType, values));
                 generated.addMethod(serialDeserializeMethod(elementType, values, builder));
             }
 
-            return JavaFile.builder(packageName, generated.build()).skipJavaLangImports(true).indent("    ").build();
+            return JavaFile
+                .builder(packageName, generated.build())
+                .skipJavaLangImports(true)
+                .indent("    ")
+                .build();
         });
     }
 
@@ -126,8 +142,10 @@ public class AutoSerializeClassProcessor {
     }
 
     MethodSpec serialConstructor(final ValueSet values) {
-        final ParameterSpec framework = ParameterSpec.builder(utils.serializerFramework(), "framework")
-                .addModifiers(Modifier.FINAL).build();
+        final ParameterSpec framework = ParameterSpec
+            .builder(utils.serializerFramework(), "framework")
+            .addModifiers(Modifier.FINAL)
+            .build();
 
         final MethodSpec.Builder b = MethodSpec.constructorBuilder();
         b.addModifiers(Modifier.PUBLIC);
@@ -141,29 +159,38 @@ public class AutoSerializeClassProcessor {
 
         for (final ValueType fieldType : values.getOrderedTypes()) {
             if (fieldType.getProvidedParameterSpec().isPresent()) {
-                b.addStatement("$N = $N", fieldType.getFieldSpec(), fieldType.getProvidedParameterSpec().get());
+                b.addStatement("$N = $N", fieldType.getFieldSpec(),
+                    fieldType.getProvidedParameterSpec().get());
                 continue;
             }
 
             final FrameworkMethodBuilder builder = new FrameworkMethodBuilder() {
                 @Override
                 public void assign(final String statement, final List<Object> arguments) {
-                    b.addStatement(String.format("$N = %s", statement),
-                            ImmutableList.builder().add(fieldType.getFieldSpec()).addAll(arguments).build().toArray());
+                    b.addStatement(String.format("$N = %s", statement), ImmutableList
+                        .builder()
+                        .add(fieldType.getFieldSpec())
+                        .addAll(arguments)
+                        .build()
+                        .toArray());
                 }
             };
 
-            statements.resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework).writeTo(
-                    builder);
+            statements
+                .resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework)
+                .writeTo(builder);
         }
 
         return b.build();
     }
 
-    MethodSpec fieldConstructor(final ValueSet values, final FieldSpec count,
-            final FieldSpec name) {
-        final ParameterSpec framework = ParameterSpec.builder(utils.serializerFramework(), "framework")
-                .addModifiers(Modifier.FINAL).build();
+    MethodSpec fieldConstructor(
+        final ValueSet values, final FieldSpec count, final FieldSpec name
+    ) {
+        final ParameterSpec framework = ParameterSpec
+            .builder(utils.serializerFramework(), "framework")
+            .addModifiers(Modifier.FINAL)
+            .build();
 
         final MethodSpec.Builder b = MethodSpec.constructorBuilder();
         b.addModifiers(Modifier.PUBLIC);
@@ -180,26 +207,35 @@ public class AutoSerializeClassProcessor {
 
         for (final ValueType fieldType : values.getOrderedTypes()) {
             if (fieldType.getProvidedParameterSpec().isPresent()) {
-                b.addStatement("$N = $N", fieldType.getFieldSpec(), fieldType.getProvidedParameterSpec().get());
+                b.addStatement("$N = $N", fieldType.getFieldSpec(),
+                    fieldType.getProvidedParameterSpec().get());
                 continue;
             }
 
             final FrameworkMethodBuilder builder = new FrameworkMethodBuilder() {
                 @Override
                 public void assign(final String statement, final List<Object> arguments) {
-                    b.addStatement(String.format("$N = %s", statement),
-                            ImmutableList.builder().add(fieldType.getFieldSpec()).addAll(arguments).build().toArray());
+                    b.addStatement(String.format("$N = %s", statement), ImmutableList
+                        .builder()
+                        .add(fieldType.getFieldSpec())
+                        .addAll(arguments)
+                        .build()
+                        .toArray());
                 }
             };
 
-            statements.resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework).writeTo(
-                    builder);
+            statements
+                .resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework)
+                .writeTo(builder);
         }
 
         return b.build();
     }
 
-    MethodSpec fieldSerializeMethod(final TypeName valueType, final ValueSet serialized, final FieldSpec count, final FieldSpec name) {
+    MethodSpec fieldSerializeMethod(
+        final TypeName valueType, final ValueSet serialized, final FieldSpec count,
+        final FieldSpec name
+    ) {
         final ParameterSpec buffer = utils.parameter(utils.serialWriter(), "buffer");
         final ParameterSpec value = utils.parameter(valueType, "value");
         final MethodSpec.Builder b = utils.serializeMethod(buffer, value);
@@ -208,13 +244,15 @@ public class AutoSerializeClassProcessor {
 
         for (final Value field : serialized.getOrderedValues()) {
             if (field.getType().isOptional()) {
-                b.addStatement("final $T $N = $N.$L()", field.getType().getTypeName(), field.getVariableName(), value, field.getAccessor());
+                b.addStatement("final $T $N = $N.$L()", field.getType().getTypeName(),
+                    field.getVariableName(), value, field.getAccessor());
                 b.beginControlFlow("if ($N.isPresent())", field.getVariableName());
 
                 b.addStatement("$N.serialize($N, $S)", name, buffer, field.getName());
 
                 b.beginControlFlow("try (final $T w = $N.scope())", utils.serialWriter(), buffer);
-                b.addStatement("$N.serialize(w, $N)", field.getType().getFieldSpec(), field.getVariableName());
+                b.addStatement("$N.serialize(w, $N)", field.getType().getFieldSpec(),
+                    field.getVariableName());
                 b.endControlFlow();
 
                 b.endControlFlow();
@@ -223,7 +261,7 @@ public class AutoSerializeClassProcessor {
 
                 b.beginControlFlow("try (final $T w = $N.scope())", utils.serialWriter(), buffer);
                 b.addStatement("$N.serialize(w, $N.$L())", field.getType().getFieldSpec(), value,
-                        field.getAccessor());
+                    field.getAccessor());
                 b.endControlFlow();
             }
         }
@@ -231,8 +269,11 @@ public class AutoSerializeClassProcessor {
         return b.build();
     }
 
-    MethodSpec fieldDeserializeMethod(final ClassName returnType, final ValueSet serializedType,
-            final Optional<ValueTypeBuilder> typeBuilder, final FieldSpec count, final FieldSpec name, final boolean failOnMissing) {
+    MethodSpec fieldDeserializeMethod(
+        final ClassName returnType, final ValueSet serializedType,
+        final Optional<ValueTypeBuilder> typeBuilder, final FieldSpec count, final FieldSpec name,
+        final boolean failOnMissing
+    ) {
         final ParameterSpec buffer = utils.parameter(utils.serialReader(), "buffer");
         final MethodSpec.Builder b = utils.deserializeMethod(returnType, buffer);
 
@@ -240,9 +281,11 @@ public class AutoSerializeClassProcessor {
             final TypeName fieldType = field.getType().getTypeName();
 
             if (field.getType().isOptional()) {
-                b.addStatement("$T $L = $T.empty()", fieldType, field.getVariableName(), utils.optional());
+                b.addStatement("$T $L = $T.empty()", fieldType, field.getVariableName(),
+                    utils.optional());
             } else {
-                b.addStatement("$T $L = $L", fieldType, field.getVariableName(), utils.initLiteral(field.getType().getTypeMirror()));
+                b.addStatement("$T $L = $L", fieldType, field.getVariableName(),
+                    utils.initLiteral(field.getType().getTypeMirror()));
                 b.addStatement("boolean $L = false", field.getIsSetVariableName());
             }
         }
@@ -262,7 +305,8 @@ public class AutoSerializeClassProcessor {
             b.addCode("$>");
 
             b.beginControlFlow("try (final $T r = $N.scope())", utils.serialReader(), buffer);
-            b.addStatement("$N = $N.deserialize(r)", field.getVariableName(), field.getType().getFieldSpec());
+            b.addStatement("$N = $N.deserialize(r)", field.getVariableName(),
+                field.getType().getFieldSpec());
             b.endControlFlow();
 
             if (!field.getType().isOptional()) {
@@ -277,7 +321,8 @@ public class AutoSerializeClassProcessor {
         b.addCode("$>");
 
         if (failOnMissing) {
-            b.addStatement("throw new $T($S + fieldName)", utils.ioException(), "Attempting to assign non-existing field: ");
+            b.addStatement("throw new $T($S + fieldName)", utils.ioException(),
+                "Attempting to assign non-existing field: ");
         } else {
             b.addStatement("$N.skip()", buffer);
             b.addStatement("break");
@@ -292,7 +337,8 @@ public class AutoSerializeClassProcessor {
         for (final Value field : serializedType.getOrderedValues()) {
             if (!field.getType().isOptional()) {
                 b.beginControlFlow("if (!$N)", field.getIsSetVariableName());
-                b.addStatement("throw new $T($S)", utils.ioException(), "Missing required field: " + field.getName());
+                b.addStatement("throw new $T($S)", utils.ioException(),
+                    "Missing required field: " + field.getName());
                 b.endControlFlow();
             }
         }
@@ -301,7 +347,7 @@ public class AutoSerializeClassProcessor {
             typeBuilder.get().writeTo(returnType, b, serializedType.getValues());
         } else {
             b.addStatement("return new $T($L)", returnType,
-                    parameterJoiner.join(serializedType.getConstructorVariables()));
+                parameterJoiner.join(serializedType.getConstructorVariables()));
         }
 
         return b.build();
@@ -313,29 +359,31 @@ public class AutoSerializeClassProcessor {
         final MethodSpec.Builder b = utils.serializeMethod(buffer, value);
 
         for (final Value field : serialized.getOrderedValues()) {
-            b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer, value,
-                    field.getAccessor());
+            b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer,
+                value, field.getAccessor());
         }
 
         return b.build();
     }
 
-    MethodSpec serialDeserializeMethod(ClassName returnType, ValueSet serializedType,
-            Optional<ValueTypeBuilder> typeBuilder) {
+    MethodSpec serialDeserializeMethod(
+        ClassName returnType, ValueSet serializedType, Optional<ValueTypeBuilder> typeBuilder
+    ) {
         final ParameterSpec buffer = utils.parameter(utils.serialReader(), "buffer");
         final MethodSpec.Builder b = utils.deserializeMethod(returnType, buffer);
 
         for (final Value field : serializedType.getOrderedValues()) {
             final TypeName fieldType = field.getType().getTypeName();
             final FieldSpec fieldSpec = field.getType().getFieldSpec();
-            b.addStatement("final $T $L = $N.deserialize($N)", fieldType, field.getVariableName(), fieldSpec, buffer);
+            b.addStatement("final $T $L = $N.deserialize($N)", fieldType, field.getVariableName(),
+                fieldSpec, buffer);
         }
 
         if (typeBuilder.isPresent()) {
             typeBuilder.get().writeTo(returnType, b, serializedType.getValues());
         } else {
             b.addStatement("return new $T($L)", returnType,
-                    parameterJoiner.join(serializedType.getConstructorVariables()));
+                parameterJoiner.join(serializedType.getConstructorVariables()));
         }
 
         return b.build();

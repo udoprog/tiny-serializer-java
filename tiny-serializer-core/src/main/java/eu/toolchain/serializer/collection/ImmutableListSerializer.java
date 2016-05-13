@@ -1,14 +1,13 @@
 package eu.toolchain.serializer.collection;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class ImmutableListSerializer<T> implements Serializer<List<T>> {

@@ -1,11 +1,11 @@
 package eu.toolchain.serializer.io;
 
+import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-
-import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.SharedPool;
 
 public class CoreByteChannelSerialReader extends AbstractSerialReader {
     public static final int SKIP_SIZE = 1024;
@@ -13,7 +13,10 @@ public class CoreByteChannelSerialReader extends AbstractSerialReader {
     final ByteBuffer one = ByteBuffer.allocate(1);
     final ReadableByteChannel channel;
 
-    public CoreByteChannelSerialReader(final SharedPool pool, final Serializer<Integer> scopeSize, final ReadableByteChannel channel) {
+    public CoreByteChannelSerialReader(
+        final SharedPool pool, final Serializer<Integer> scopeSize,
+        final ReadableByteChannel channel
+    ) {
         super(pool, scopeSize);
         this.channel = channel;
     }

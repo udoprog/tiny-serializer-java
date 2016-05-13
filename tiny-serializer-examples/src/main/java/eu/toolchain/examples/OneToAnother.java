@@ -1,12 +1,6 @@
 package eu.toolchain.examples;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.Set;
-
 import com.google.common.collect.Sets;
-
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
@@ -16,6 +10,11 @@ import eu.toolchain.serializer.TinySerializer;
 import eu.toolchain.serializer.io.CoreByteArraySerialReader;
 import eu.toolchain.serializer.io.CoreOutputStreamSerialWriter;
 import lombok.Data;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
 
 public class OneToAnother {
     @AutoSerialize(fieldBased = true)

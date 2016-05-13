@@ -1,11 +1,11 @@
 package eu.toolchain.serializer.array;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
 
 /**
  * A boolean array serializer that encodes boolean into bytes, through bit offsets.

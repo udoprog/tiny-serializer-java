@@ -1,14 +1,14 @@
 package eu.toolchain.serializer;
 
-import java.io.IOException;
-
+import eu.toolchain.serializer.io.CoreBytesSerialWriter;
 import org.junit.Assert;
 import org.junit.internal.ExactComparisonCriteria;
 
-import eu.toolchain.serializer.io.CoreBytesSerialWriter;
+import java.io.IOException;
 
 public final class Helpers {
-    public static <T> CapturingSerialWriter roundtrip(Serializer<T> serializer, T value) throws IOException {
+    public static <T> CapturingSerialWriter roundtrip(Serializer<T> serializer, T value)
+        throws IOException {
         final CapturingSerialWriter out = new CapturingSerialWriter();
         serializer.serialize(out, value);
         final T result = serializer.deserialize(out.toSerialReader());
@@ -16,7 +16,8 @@ public final class Helpers {
         return out;
     }
 
-    public static <T> CapturingSerialWriter roundtripArray(Serializer<T> serializer, T value) throws IOException {
+    public static <T> CapturingSerialWriter roundtripArray(Serializer<T> serializer, T value)
+        throws IOException {
         final CapturingSerialWriter out = new CapturingSerialWriter();
         serializer.serialize(out, value);
         final T result = serializer.deserialize(out.toSerialReader());
@@ -24,13 +25,14 @@ public final class Helpers {
         return out;
     }
 
-    public static <T> void roundTripPattern(Serializer<T> serializer, T value, final int[] pattern) throws IOException {
+    public static <T> void roundTripPattern(Serializer<T> serializer, T value, final int[] pattern)
+        throws IOException {
         final CapturingSerialWriter out = roundtrip(serializer, value);
 
         for (int i = 0; i < pattern.length; ++i) {
             final Integer b = out.getCaptured().get(i);
-            Assert.assertEquals(String.format("pattern position#%d should match", i), (byte) pattern[i],
-                    (byte) b.intValue());
+            Assert.assertEquals(String.format("pattern position#%d should match", i),
+                (byte) pattern[i], (byte) b.intValue());
         }
     }
 

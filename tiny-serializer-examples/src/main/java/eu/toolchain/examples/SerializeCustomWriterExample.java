@@ -1,12 +1,12 @@
 package eu.toolchain.examples;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
 import eu.toolchain.serializer.HexUtils;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.TinySerializer;
 import eu.toolchain.serializer.io.AbstractSerialWriter;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 public class SerializeCustomWriterExample {
     public static void main(String argv[]) throws IOException {

@@ -1,25 +1,22 @@
 package eu.toolchain.serializer.type;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
-
-import lombok.Data;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
-
 import com.google.common.collect.ImmutableList;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
-import eu.toolchain.serializer.TinySerializer;
 import eu.toolchain.serializer.SerializerFramework.TypeMapping;
-import eu.toolchain.serializer.io.CoreBytesSerialWriter;
+import eu.toolchain.serializer.TinySerializer;
 import eu.toolchain.serializer.io.CoreByteArraySerialReader;
+import eu.toolchain.serializer.io.CoreBytesSerialWriter;
+import lombok.Data;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SubtypesSerializerTest {
@@ -44,10 +41,11 @@ public class SubtypesSerializerTest {
 
     @Test
     public void testBasic() throws IOException {
-        final ImmutableList.Builder<TypeMapping<? extends Parent, Parent>> children = ImmutableList.builder();
+        final ImmutableList.Builder<TypeMapping<? extends Parent, Parent>> children =
+            ImmutableList.builder();
 
-        children.add(s.<A, Parent> type(1, A.class, a));
-        children.add(s.<B, Parent> type(2, B.class, b));
+        children.add(s.<A, Parent>type(1, A.class, a));
+        children.add(s.<B, Parent>type(2, B.class, b));
 
         Serializer<Parent> parent = s.subtypes(children.build());
 

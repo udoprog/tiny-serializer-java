@@ -1,20 +1,18 @@
 package eu.toolchain.serializer.processor.value;
 
-import java.util.Optional;
-import java.util.function.Supplier;
+import com.google.common.base.CaseFormat;
+import com.squareup.javapoet.TypeName;
+import eu.toolchain.serializer.processor.AutoSerializeUtils;
+import eu.toolchain.serializer.processor.annotation.FieldMirror;
+import eu.toolchain.serializer.processor.unverified.Unverified;
+import lombok.Data;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
-
-import com.google.common.base.CaseFormat;
-import com.squareup.javapoet.TypeName;
-
-import eu.toolchain.serializer.processor.AutoSerializeUtils;
-import eu.toolchain.serializer.processor.annotation.FieldMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.Data;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 @Data
 public class ValueSpecification {
@@ -28,8 +26,10 @@ public class ValueSpecification {
     private final Optional<Integer> id;
     private final Optional<String> providerName;
 
-    public static Unverified<ValueSpecification> build(final AutoSerializeUtils utils, final Element parent,
-            final Element element, boolean defaultUseGetter) {
+    public static Unverified<ValueSpecification> build(
+        final AutoSerializeUtils utils, final Element parent, final Element element,
+        boolean defaultUseGetter
+    ) {
         final TypeMirror valueType;
         final boolean useGetter;
 
@@ -51,27 +51,39 @@ public class ValueSpecification {
         final boolean provided = field.map(FieldMirror::isProvided).orElse(false);
         final boolean optional = utils.isOptional(valueType);
 
-        final String fieldName = field.map(FieldMirror::getFieldName).filter(n -> !n.trim().isEmpty())
-                .orElse(element.getSimpleName().toString());
-        final String name = field.map(FieldMirror::getName).filter(n -> !n.trim().isEmpty()).orElse(fieldName);
-        final String accessor = field.map(FieldMirror::getAccessor).filter(a -> !a.trim().isEmpty())
-                .orElseGet(getDefaultAccessor(fieldName, useGetter));
-        final Optional<String> providerName = field.map(FieldMirror::getProviderName).filter(p -> !p.trim().isEmpty());
-        final Optional<Integer> constructorOrder = field.map(FieldMirror::getConstructorOrder).filter(o -> o >= 0);
+        final String fieldName = field
+            .map(FieldMirror::getFieldName)
+            .filter(n -> !n.trim().isEmpty())
+            .orElse(element.getSimpleName().toString());
+        final String name =
+            field.map(FieldMirror::getName).filter(n -> !n.trim().isEmpty()).orElse(fieldName);
+        final String accessor = field
+            .map(FieldMirror::getAccessor)
+            .filter(a -> !a.trim().isEmpty())
+            .orElseGet(getDefaultAccessor(fieldName, useGetter));
+        final Optional<String> providerName =
+            field.map(FieldMirror::getProviderName).filter(p -> !p.trim().isEmpty());
+        final Optional<Integer> constructorOrder =
+            field.map(FieldMirror::getConstructorOrder).filter(o -> o >= 0);
         final Optional<Integer> id = field.map(FieldMirror::getId).filter(o -> o >= 0);
 
         if (!accessorMethodExists(parent, accessor, TypeName.get(valueType))) {
-            final String message = String.format(String.format("Missing accessor %s %s()", valueType, accessor));
+            final String message =
+                String.format(String.format("Missing accessor %s %s()", valueType, accessor));
             return field
-                    .map((f) -> Unverified.<ValueSpecification> brokenAnnotation(message, element, f.getAnnotation()))
-                    .orElseGet(() -> Unverified.brokenElement(message, element));
+                .map((f) -> Unverified.<ValueSpecification>brokenAnnotation(message, element,
+                    f.getAnnotation()))
+                .orElseGet(() -> Unverified.brokenElement(message, element));
         }
 
-        return Unverified.verified(new ValueSpecification(element, valueType, name, provided, optional, accessor,
+        return Unverified.verified(
+            new ValueSpecification(element, valueType, name, provided, optional, accessor,
                 constructorOrder, id, providerName));
     }
 
-    static boolean accessorMethodExists(final Element root, final String accessor, final TypeName serializedType) {
+    static boolean accessorMethodExists(
+        final Element root, final String accessor, final TypeName serializedType
+    ) {
         for (final Element enclosed : root.getEnclosedElements()) {
             if (enclosed.getKind() != ElementKind.METHOD) {
                 continue;

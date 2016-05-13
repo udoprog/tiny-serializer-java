@@ -1,5 +1,9 @@
 package eu.toolchain.serializer.perftests;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -11,10 +15,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
 public class ObjectHelper {
     public static ImmutableSerializedObject newSerializedObject() {
         final Map<String, String> map = newMap();
@@ -22,7 +22,8 @@ public class ObjectHelper {
         final Map<String, List<String>> optionalMap = newOptionalMap();
         final Set<Long> set = newSet();
         final int[][][] deeplyNested = newDeeplyNested();
-        return new ImmutableSerializedObject(42, "hello world", map, list, optionalMap, set, deeplyNested);
+        return new ImmutableSerializedObject(42, "hello world", map, list, optionalMap, set,
+            deeplyNested);
     }
 
     public static AutoMatterSerializedObject newAutoMatterSerializedObject() {
@@ -31,7 +32,15 @@ public class ObjectHelper {
         final Map<String, List<String>> optionalMap = newOptionalMap();
         final Set<Long> set = newSet();
         final int[][][] deeplyNested = newDeeplyNested();
-        return new AutoMatterSerializedObjectBuilder().version(42).field("hello world").map(map).list(list).optionalMap(optionalMap).set(set).deeplyNested(deeplyNested).build();
+        return new AutoMatterSerializedObjectBuilder()
+            .version(42)
+            .field("hello world")
+            .map(map)
+            .list(list)
+            .optionalMap(optionalMap)
+            .set(set)
+            .deeplyNested(deeplyNested)
+            .build();
     }
 
     public static MutableSerializedObject newMutableSerializedObject() {
@@ -40,7 +49,8 @@ public class ObjectHelper {
         final Map<String, List<String>> optionalMap = new HashMap<>(newOptionalMap());
         final Set<Long> set = new HashSet<>(newSet());
         final int[][][] deeplyNested = newDeeplyNested();
-        return new MutableSerializedObject(42, "hello world", map, list, optionalMap, set, deeplyNested);
+        return new MutableSerializedObject(42, "hello world", map, list, optionalMap, set,
+            deeplyNested);
     }
 
     private static Map<String, List<String>> newOptionalMap() {
@@ -48,13 +58,13 @@ public class ObjectHelper {
     }
 
     private static Map<String, String> newMap() {
-        return ImmutableMap.of("hello", "world", "this", "sucks", "long string", "another long string",
-                "an even longer string with a twist", "ok");
+        return ImmutableMap.of("hello", "world", "this", "sucks", "long string",
+            "another long string", "an even longer string with a twist", "ok");
     }
 
     private static List<String> newList() {
         return ImmutableList.of("fee", "fii", "foo", "fum", "another long string",
-                "an even longer string with a twist");
+            "an even longer string with a twist");
     }
 
     private static Set<Long> newSet() {

@@ -1,25 +1,5 @@
 package eu.toolchain.serializer;
 
-import static java.util.Optional.ofNullable;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.UUID;
-import java.util.function.Supplier;
-
 import eu.toolchain.serializer.array.ArraySerializer;
 import eu.toolchain.serializer.array.BooleanArraySerializer;
 import eu.toolchain.serializer.array.ByteArraySerializer;
@@ -63,6 +43,26 @@ import eu.toolchain.serializer.type.StringSerializer;
 import eu.toolchain.serializer.type.SubTypesSerializer;
 import eu.toolchain.serializer.type.UUIDSerializer;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.UUID;
+import java.util.function.Supplier;
+
+import static java.util.Optional.ofNullable;
 
 @RequiredArgsConstructor
 public class TinySerializer extends AbstractSerializerFramework {
@@ -222,12 +222,16 @@ public class TinySerializer extends AbstractSerializerFramework {
     }
 
     @Override
-    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value) {
+    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(
+        Serializer<K> key, Serializer<V> value
+    ) {
         return collections.sortedMap(key, value);
     }
 
     @Override
-    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key, Serializer<V> value) {
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(
+        Serializer<K> key, Serializer<V> value
+    ) {
         return collections.navigableMap(key, value);
     }
 
@@ -242,7 +246,9 @@ public class TinySerializer extends AbstractSerializerFramework {
     }
 
     @Override
-    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(Serializer<T> serializer) {
+    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(
+        Serializer<T> serializer
+    ) {
         return collections.navigableSet(serializer);
     }
 
@@ -309,9 +315,13 @@ public class TinySerializer extends AbstractSerializerFramework {
     @Override
     public <T extends Enum<T>> Serializer<T> forEnum(final T[] values) {
         if (useStringsForEnums) {
-            return new StringEnumSerializer<T>(string, values, () -> { throw new IOException("string does not match enum"); });
+            return new StringEnumSerializer<T>(string, values, () -> {
+                throw new IOException("string does not match enum");
+            });
         } else {
-            return new OrdinalEnumSerializer<T>(enumOrdinal, values, () -> { throw new IOException("ordinal out of range"); });
+            return new OrdinalEnumSerializer<T>(enumOrdinal, values, () -> {
+                throw new IOException("ordinal out of range");
+            });
         }
     }
 
@@ -340,7 +350,9 @@ public class TinySerializer extends AbstractSerializerFramework {
     }
 
     @Override
-    public final <T> Serializer<T> subtypes(Iterable<? extends TypeMapping<? extends T, T>> mappings) {
+    public final <T> Serializer<T> subtypes(
+        Iterable<? extends TypeMapping<? extends T, T>> mappings
+    ) {
         return SubTypesSerializer.fromTypeMappings(subTypeId, mappings);
     }
 
@@ -352,7 +364,8 @@ public class TinySerializer extends AbstractSerializerFramework {
     /* utility functions */
 
     @Override
-    public <T> ByteBuffer serialize(final Serializer<T> serializer, final T value) throws IOException {
+    public <T> ByteBuffer serialize(final Serializer<T> serializer, final T value)
+        throws IOException {
         try (final BytesSerialWriter writer = writeBytes()) {
             serializer.serialize(writer, value);
             return writer.toByteBuffer();
@@ -360,7 +373,8 @@ public class TinySerializer extends AbstractSerializerFramework {
     }
 
     @Override
-    public <T> T deserialize(final Serializer<T> serializer, final ByteBuffer buffer) throws IOException {
+    public <T> T deserialize(final Serializer<T> serializer, final ByteBuffer buffer)
+        throws IOException {
         try (final SerialReader reader = readByteBuffer(buffer)) {
             return serializer.deserialize(reader);
         }
@@ -453,7 +467,8 @@ public class TinySerializer extends AbstractSerializerFramework {
         /**
          * Whether to use an immediate (non pooled) pool implementation or not.
          *
-         * @param immediateSharedPool {@code true} if an immediate pool should be used, {@code false} otherwise.
+         * @param immediateSharedPool {@code true} if an immediate pool should be used, {@code
+         * false} otherwise.
          * @return This builder.
          */
         public Builder immediateSharedPool(boolean immediateSharedPool) {
@@ -463,14 +478,14 @@ public class TinySerializer extends AbstractSerializerFramework {
 
         /**
          * Prefer the 'simpler' variable length implementation over the more compact one.
+         * <p>
+         * The simpler is beneficial when you are inspecting traffic by eye, since it performs a
+         * less esoteric encoding of the number.
          *
-         * The simpler is beneficial when you are inspecting traffic by eye, since it performs a less esoteric encoding
-         * of the number.
-         *
-         * @see VarIntSerializer
-         * @see CompactVarIntSerializer
          * @param useCompactVariableLength
          * @return This builder.
+         * @see VarIntSerializer
+         * @see CompactVarIntSerializer
          */
         public Builder useSimplerVariableLength(boolean useSimplerVariableLength) {
             this.useSimplerVariableLength = useSimplerVariableLength;
@@ -479,9 +494,10 @@ public class TinySerializer extends AbstractSerializerFramework {
 
         /**
          * Use a compact, but less efficient serializer for size-like numbers.
-         *
-         * Size-like numbers are things which designates sizes, which typically have a small(ish) value. Therefore you
-         * can usually save a fair bit of space by using a VLQ-like serialization on them.
+         * <p>
+         * Size-like numbers are things which designates sizes, which typically have a small(ish)
+         * value. Therefore you can usually save a fair bit of space by using a VLQ-like
+         * serialization on them.
          *
          * @param useCompactSize {@code true} will enable compact size serialization.
          * @return This builder.
@@ -492,13 +508,15 @@ public class TinySerializer extends AbstractSerializerFramework {
         }
 
         /**
-         * Use immutable collections when deserializing data. Note that this does not enforce that serialized
-         * collections are immutable, only that the ones produced by the framework are.
+         * Use immutable collections when deserializing data. Note that this does not enforce that
+         * serialized collections are immutable, only that the ones produced by the framework are.
+         * <p>
+         * <b>This option requires that google guava</b> is in your classpath, if this is not the
+         * case, an {@link IllegalStateException} will be thrown in the {@link #build()} method
+         * call.
          *
-         * <b>This option requires that google guava</b> is in your classpath, if this is not the case, an
-         * {@link IllegalStateException} will be thrown in the {@link #build()} method call.
-         *
-         * @param useImmutableCollections {@code true} will cause produced collections to be immutable.
+         * @param useImmutableCollections {@code true} will cause produced collections to be
+         * immutable.
          * @return This builder.
          */
         public Builder useImmutableCollections(boolean useImmutableCollections) {
@@ -516,9 +534,10 @@ public class TinySerializer extends AbstractSerializerFramework {
 
         /**
          * Set serializer to use for size-like numbers.
-         *
-         * Size-like numbers are things which designates sizes, which typically have a small(ish) value. Therefore you
-         * can usually save a fair bit of space by using a VLQ-like serialization on them.
+         * <p>
+         * Size-like numbers are things which designates sizes, which typically have a small(ish)
+         * value. Therefore you can usually save a fair bit of space by using a VLQ-like
+         * serialization on them.
          *
          * @param size Serializer to use for sizes.
          * @return This builder.
@@ -608,7 +627,9 @@ public class TinySerializer extends AbstractSerializerFramework {
         }
 
         /**
-         * Set a default length policy for the {@link SerializerFramework#lengthPrefixed(Serializer)} serialization.
+         * Set a default length policy for the
+         * {@link SerializerFramework#lengthPrefixed(Serializer)}
+         * serialization.
          *
          * @param defaultLengthPolicy New length policy to set.
          * @return This builder.
@@ -632,24 +653,27 @@ public class TinySerializer extends AbstractSerializerFramework {
         }
 
         /**
-         * Build a new instance of the Tiny implementation of the {@code SerializerFramework} according to the current
-         * configuration.
-         *
+         * Build a new instance of the Tiny implementation of the {@code SerializerFramework}
+         * according to the current configuration.
+         * <p>
          * The builder may be modified after an invocation to build.
          *
          * @return
-         * @throws IllegalStateException If the configuration is invalid, or the environment does not match the specified configuration.
+         * @throws IllegalStateException If the configuration is invalid, or the environment does
+         * not match the specified configuration.
          * @see #useImmutableCollections
          */
         public TinySerializer build() {
             final Supplier<SharedPool> pool = buildPool();
 
-            final Serializer<Integer> size = ofNullable(this.size).orElseGet(this::defaultCollectionSize);
+            final Serializer<Integer> size =
+                ofNullable(this.size).orElseGet(this::defaultCollectionSize);
             final Serializer<Integer> arraySize = ofNullable(this.arraySize).orElse(size);
             final Serializer<Integer> scopeSize = ofNullable(this.scopeSize).orElse(size);
             final Serializer<Integer> subTypeId = ofNullable(this.subTypeId).orElse(size);
             final Serializer<Integer> enumOrdinal = ofNullable(this.enumOrdinal).orElse(size);
-            final LengthPolicy defaultLengthPolicy = ofNullable(this.defaultLengthPolicy).orElse(DEFAULT_LENGTH_POLICY);
+            final LengthPolicy defaultLengthPolicy =
+                ofNullable(this.defaultLengthPolicy).orElse(DEFAULT_LENGTH_POLICY);
 
             final Serializer<boolean[]> booleanArray = new BooleanArraySerializer(arraySize);
             final Serializer<short[]> shortArray = new ShortArraySerializer(arraySize);
@@ -659,33 +683,48 @@ public class TinySerializer extends AbstractSerializerFramework {
             final Serializer<float[]> floatArray = new FloatArraySerializer(arraySize);
             final Serializer<double[]> doubleArray = new DoubleArraySerializer(arraySize);
 
-            final Serializer<byte[]> byteArray = ofNullable(this.byteArray).orElseGet(defaultByteArray(size));
-            final Serializer<char[]> charArray = ofNullable(this.charArray).orElseGet(defaultCharArray(size));
+            final Serializer<byte[]> byteArray =
+                ofNullable(this.byteArray).orElseGet(defaultByteArray(size));
+            final Serializer<char[]> charArray =
+                ofNullable(this.charArray).orElseGet(defaultCharArray(size));
 
-            final Serializer<String> string = ofNullable(this.string)
-                    .orElseGet(defaultString(ofNullable(this.stringSize).orElse(size)));
+            final Serializer<String> string = ofNullable(this.string).orElseGet(
+                defaultString(ofNullable(this.stringSize).orElse(size)));
 
-            final Serializer<Byte> fixedByte = ofNullable(this.fixedByte).orElseGet(ByteSerializer::new);
-            final Serializer<Character> fixedCharacter = ofNullable(this.fixedCharacter)
-                    .orElseGet(CharacterSerializer::new);
-            final Serializer<Boolean> fixedBoolean = ofNullable(this.fixedBoolean).orElseGet(BooleanSerializer::new);
-            final Serializer<Short> fixedShort = ofNullable(this.fixedShort).orElseGet(ShortSerializer::new);
-            final Serializer<Integer> fixedInteger = ofNullable(this.integer).orElseGet(IntegerSerializer::new);
-            final Serializer<Long> fixedLong = ofNullable(this.fixedLong).orElseGet(LongSerializer::new);
-            final Serializer<Float> fixedFloat = ofNullable(this.floatNumber).orElseGet(FloatSerializer::new);
-            final Serializer<Double> fixedDouble = ofNullable(this.doubleNumber).orElseGet(DoubleSerializer::new);
+            final Serializer<Byte> fixedByte =
+                ofNullable(this.fixedByte).orElseGet(ByteSerializer::new);
+            final Serializer<Character> fixedCharacter =
+                ofNullable(this.fixedCharacter).orElseGet(CharacterSerializer::new);
+            final Serializer<Boolean> fixedBoolean =
+                ofNullable(this.fixedBoolean).orElseGet(BooleanSerializer::new);
+            final Serializer<Short> fixedShort =
+                ofNullable(this.fixedShort).orElseGet(ShortSerializer::new);
+            final Serializer<Integer> fixedInteger =
+                ofNullable(this.integer).orElseGet(IntegerSerializer::new);
+            final Serializer<Long> fixedLong =
+                ofNullable(this.fixedLong).orElseGet(LongSerializer::new);
+            final Serializer<Float> fixedFloat =
+                ofNullable(this.floatNumber).orElseGet(FloatSerializer::new);
+            final Serializer<Double> fixedDouble =
+                ofNullable(this.doubleNumber).orElseGet(DoubleSerializer::new);
 
-            final Serializer<Integer> variableInteger = ofNullable(this.varint).orElseGet(this::defaultVarInt);
-            final Serializer<Long> variableLong = ofNullable(this.varlong).orElseGet(this::defaultVarLong);
-            final Serializer<UUID> uuid = ofNullable(this.uuid).orElseGet(this.defaultUUID(fixedLong));
-            final Serializer<BitSet> bitSet = ofNullable(this.bitSet).orElseGet(BitSetSerializer.supplier(size));
+            final Serializer<Integer> variableInteger =
+                ofNullable(this.varint).orElseGet(this::defaultVarInt);
+            final Serializer<Long> variableLong =
+                ofNullable(this.varlong).orElseGet(this::defaultVarLong);
+            final Serializer<UUID> uuid =
+                ofNullable(this.uuid).orElseGet(this.defaultUUID(fixedLong));
+            final Serializer<BitSet> bitSet =
+                ofNullable(this.bitSet).orElseGet(BitSetSerializer.supplier(size));
 
-            final CollectionsProvider collections = ofNullable(this.collections).orElseGet(defaultCollections(size));
+            final CollectionsProvider collections =
+                ofNullable(this.collections).orElseGet(defaultCollections(size));
 
-            return new TinySerializer(pool, arraySize, scopeSize, subTypeId, enumOrdinal, defaultLengthPolicy,
-                    booleanArray, shortArray, intArray, longArray, floatArray, doubleArray, byteArray, charArray,
-                    string, fixedByte, fixedCharacter, fixedBoolean, fixedShort, fixedInteger, fixedLong, fixedFloat,
-                    fixedDouble, variableInteger, variableLong, uuid, bitSet, collections, useStringsForEnums);
+            return new TinySerializer(pool, arraySize, scopeSize, subTypeId, enumOrdinal,
+                defaultLengthPolicy, booleanArray, shortArray, intArray, longArray, floatArray,
+                doubleArray, byteArray, charArray, string, fixedByte, fixedCharacter, fixedBoolean,
+                fixedShort, fixedInteger, fixedLong, fixedFloat, fixedDouble, variableInteger,
+                variableLong, uuid, bitSet, collections, useStringsForEnums);
         }
 
         private Supplier<SharedPool> buildPool() {
@@ -744,7 +783,7 @@ public class TinySerializer extends AbstractSerializerFramework {
         }
 
         private Supplier<Serializer<UUID>> defaultUUID(Serializer<Long> fixedLong) {
-            return () ->  new UUIDSerializer(fixedLong);
+            return () -> new UUIDSerializer(fixedLong);
         }
     }
 }

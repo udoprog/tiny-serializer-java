@@ -1,18 +1,18 @@
 package eu.toolchain.serializer.collection;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.SortedMap;
-
 import com.google.common.collect.ImmutableSortedMap;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.SortedMap;
+
 @RequiredArgsConstructor
-public class ImmutableSortedMapSerializer<K extends Comparable<?>, V> implements Serializer<SortedMap<K, V>> {
+public class ImmutableSortedMapSerializer<K extends Comparable<?>, V>
+    implements Serializer<SortedMap<K, V>> {
     private final Serializer<Integer> size;
 
     private final Serializer<K> key;

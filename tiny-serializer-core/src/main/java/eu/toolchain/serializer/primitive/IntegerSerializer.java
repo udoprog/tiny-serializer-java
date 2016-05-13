@@ -1,10 +1,10 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
+
+import java.io.IOException;
 
 public class IntegerSerializer implements Serializer<Integer> {
     public static final int BYTES = 4;
@@ -33,10 +33,10 @@ public class IntegerSerializer implements Serializer<Integer> {
     public static int fromBytes(final byte[] b, int o) {
         int v = 0;
 
-        v += ((int)(b[o + 0] & 0xff) << 24);
-        v += ((int)(b[o + 1] & 0xff) << 16);
-        v += ((int)(b[o + 2] & 0xff) << 8);
-        v += ((int)(b[o + 3] & 0xff));
+        v += ((int) (b[o + 0] & 0xff) << 24);
+        v += ((int) (b[o + 1] & 0xff) << 16);
+        v += ((int) (b[o + 2] & 0xff) << 8);
+        v += ((int) (b[o + 3] & 0xff));
 
         return v;
     }

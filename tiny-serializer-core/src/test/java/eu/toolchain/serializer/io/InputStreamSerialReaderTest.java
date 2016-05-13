@@ -1,14 +1,6 @@
 package eu.toolchain.serializer.io;
 
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.verify;
-
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-
+import eu.toolchain.serializer.Serializer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,7 +8,14 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import eu.toolchain.serializer.Serializer;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class InputStreamSerialReaderTest {

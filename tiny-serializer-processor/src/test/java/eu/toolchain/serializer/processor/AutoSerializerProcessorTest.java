@@ -1,13 +1,12 @@
 package eu.toolchain.serializer.processor;
 
-import static com.google.common.truth.Truth.assert_;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
+import com.google.testing.compile.JavaFileObjects;
+import org.junit.Test;
 
 import javax.tools.JavaFileObject;
 
-import org.junit.Test;
-
-import com.google.testing.compile.JavaFileObjects;
+import static com.google.common.truth.Truth.assert_;
+import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 
 public class AutoSerializerProcessorTest {
     @Test
@@ -124,17 +123,27 @@ public class AutoSerializerProcessorTest {
             restSerializers[i] = resourcePathFor(rest[i]);
         }
 
-        assert_().about(javaSource()).that(source).processedWith(new AutoSerializeProcessor()).compilesWithoutError()
-                .and().generatesSources(firstSerializer, restSerializers);
+        assert_()
+            .about(javaSource())
+            .that(source)
+            .processedWith(new AutoSerializeProcessor())
+            .compilesWithoutError()
+            .and()
+            .generatesSources(firstSerializer, restSerializers);
     }
 
     static void verifyFailingSerializer(String name) {
         final JavaFileObject source = resourcePathFor(name);
-        assert_().about(javaSource()).that(source).processedWith(new AutoSerializeProcessor()).failsToCompile();
+        assert_()
+            .about(javaSource())
+            .that(source)
+            .processedWith(new AutoSerializeProcessor())
+            .failsToCompile();
     }
 
     static JavaFileObject resourcePathFor(String name) {
-        final String dirName = AutoSerializerProcessorTest.class.getPackage().getName().replace('.', '/');
+        final String dirName =
+            AutoSerializerProcessorTest.class.getPackage().getName().replace('.', '/');
         return JavaFileObjects.forResource(String.format("%s/%s.java", dirName, name));
     }
 }

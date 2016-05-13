@@ -1,12 +1,12 @@
 package eu.toolchain.serializer.array;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.primitive.IntegerSerializer;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
 
 @RequiredArgsConstructor
 public class FloatArraySerializer implements Serializer<float[]> {

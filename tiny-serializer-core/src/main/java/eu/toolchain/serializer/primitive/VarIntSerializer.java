@@ -1,28 +1,28 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 /**
  * Variable-length number encoding based on continuation bits.
- *
- * Each byte carries 7 bits of data, the first bit indicates whether the sequence continues or not. Any bit not included
- * in the sequence is padded to 0.
- *
+ * <p>
+ * Each byte carries 7 bits of data, the first bit indicates whether the sequence continues or not.
+ * Any bit not included in the sequence is padded to 0.
+ * <p>
  * <h1>Example</h1>
- *
+ * <p>
  * <pre>
  * 00000000 00000000 10001000 01010101
  *             zzzzz zzyyyyyy yxxxxxxx
  * </pre>
- *
+ * <p>
  * Is encoded as:
- *
+ * <p>
  * <pre>
  * 11010101 10010000 00000010
  * Cxxxxxxx Cyyyyyyy Czzzzzzz

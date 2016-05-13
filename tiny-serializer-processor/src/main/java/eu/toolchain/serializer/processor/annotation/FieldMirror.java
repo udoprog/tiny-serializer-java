@@ -1,10 +1,10 @@
 package eu.toolchain.serializer.processor.annotation;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import lombok.Data;
+
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
 
 @Data
 public class FieldMirror {
@@ -19,7 +19,9 @@ public class FieldMirror {
     private final boolean provided;
     private final String providerName;
 
-    public static FieldMirror getFor(final AutoSerializeUtils utils, final Element element, final AnnotationMirror a) {
+    public static FieldMirror getFor(
+        final AutoSerializeUtils utils, final Element element, final AnnotationMirror a
+    ) {
         final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
 
         final String name = values.getString("name").get();
@@ -31,6 +33,7 @@ public class FieldMirror {
         final boolean provided = values.getBoolean("provided").get();
         final String providerName = values.getString("providerName").get();
 
-        return new FieldMirror(a, name, fieldName, accessor, id, constructorOrder, useGetter, provided, providerName);
+        return new FieldMirror(a, name, fieldName, accessor, id, constructorOrder, useGetter,
+            provided, providerName);
     }
 }

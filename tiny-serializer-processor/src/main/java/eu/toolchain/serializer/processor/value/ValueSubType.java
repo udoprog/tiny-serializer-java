@@ -1,8 +1,8 @@
 package eu.toolchain.serializer.processor.value;
 
-import javax.lang.model.type.DeclaredType;
-
 import lombok.Data;
+
+import javax.lang.model.type.DeclaredType;
 
 @Data
 public class ValueSubType {

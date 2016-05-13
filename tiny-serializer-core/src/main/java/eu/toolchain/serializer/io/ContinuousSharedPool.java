@@ -1,8 +1,8 @@
 package eu.toolchain.serializer.io;
 
-import java.nio.ByteBuffer;
-
 import eu.toolchain.serializer.SharedPool;
+
+import java.nio.ByteBuffer;
 
 public class ContinuousSharedPool implements SharedPool {
     public static final int MIN_BUFFER_SIZE = 64;

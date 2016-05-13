@@ -1,7 +1,9 @@
 package eu.toolchain.serializer.processor.annotation;
 
-import java.util.List;
-import java.util.Map;
+import com.google.common.collect.ImmutableList;
+import eu.toolchain.serializer.processor.unverified.Unverified;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -9,12 +11,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
-
-import com.google.common.collect.ImmutableList;
-
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 public class AnnotationValues {
@@ -52,11 +50,13 @@ public class AnnotationValues {
         final TypeMirror typeMirror = toTypeMirror(annotationValue);
 
         if (typeMirror == null) {
-            return Unverified.brokenAnnotationValue("Could not resolve type", element, annotation, annotationValue);
+            return Unverified.brokenAnnotationValue("Could not resolve type", element, annotation,
+                annotationValue);
         }
 
         if (typeMirror instanceof ErrorType) {
-            return Unverified.brokenAnnotationValue("Could not resolve type", element, annotation, annotationValue);
+            return Unverified.brokenAnnotationValue("Could not resolve type", element, annotation,
+                annotationValue);
         }
 
         return Unverified.verified(new Value<>(annotationValue, typeMirror));
@@ -144,7 +144,8 @@ public class AnnotationValues {
 
             @Override
             protected Short defaultAction(Object o, Void p) {
-                throw new IllegalArgumentException(String.format("Could not convert %s to Short", annotationValue));
+                throw new IllegalArgumentException(
+                    String.format("Could not convert %s to Short", annotationValue));
             }
         }, null);
     }
@@ -163,43 +164,55 @@ public class AnnotationValues {
 
             @Override
             protected Integer defaultAction(Object o, Void p) {
-                throw new IllegalArgumentException(String.format("Could not convert %s to Integer", annotationValue));
+                throw new IllegalArgumentException(
+                    String.format("Could not convert %s to Integer", annotationValue));
             }
         }, null);
     }
 
     public List<AnnotationMirror> toAnnotationMirror(final AnnotationValue annotationValue) {
-        return annotationValue.accept(new SimpleAnnotationValueVisitor8<List<AnnotationMirror>, Void>() {
-            @Override
-            public List<AnnotationMirror> visitAnnotation(AnnotationMirror a, Void p) {
-                return ImmutableList.of(a);
-            }
-
-            @Override
-            public List<AnnotationMirror> visitArray(List<? extends AnnotationValue> vals, Void p) {
-                final ImmutableList.Builder<AnnotationMirror> mirrors = ImmutableList.builder();
-
-                for (final AnnotationValue val : vals) {
-                    mirrors.add(val.accept(new SimpleAnnotationValueVisitor8<AnnotationMirror, Void>() {
-                        public AnnotationMirror visitAnnotation(AnnotationMirror a, Void p) {
-                            return a;
-                        };
-
-                        @Override
-                        protected AnnotationMirror defaultAction(Object o, Void p) {
-                            throw new IllegalArgumentException(String.format("Could not convert %s to AnnotationMirror", annotationValue));
-                        }
-                    }, null));
+        return annotationValue.accept(
+            new SimpleAnnotationValueVisitor8<List<AnnotationMirror>, Void>() {
+                @Override
+                public List<AnnotationMirror> visitAnnotation(AnnotationMirror a, Void p) {
+                    return ImmutableList.of(a);
                 }
 
-                return mirrors.build();
-            }
+                @Override
+                public List<AnnotationMirror> visitArray(
+                    List<? extends AnnotationValue> vals, Void p
+                ) {
+                    final ImmutableList.Builder<AnnotationMirror> mirrors = ImmutableList.builder();
 
-            @Override
-            protected List<AnnotationMirror> defaultAction(Object o, Void p) {
-                throw new IllegalArgumentException(String.format("Could not convert %s to AnnotationMirror", annotationValue));
-            }
-        }, null);
+                    for (final AnnotationValue val : vals) {
+                        mirrors.add(
+                            val.accept(new SimpleAnnotationValueVisitor8<AnnotationMirror, Void>() {
+                                public AnnotationMirror visitAnnotation(
+                                    AnnotationMirror a, Void p
+                                ) {
+                                    return a;
+                                }
+
+                                ;
+
+                                @Override
+                                protected AnnotationMirror defaultAction(Object o, Void p) {
+                                    throw new IllegalArgumentException(
+                                        String.format("Could not convert %s to AnnotationMirror",
+                                            annotationValue));
+                                }
+                            }, null));
+                    }
+
+                    return mirrors.build();
+                }
+
+                @Override
+                protected List<AnnotationMirror> defaultAction(Object o, Void p) {
+                    throw new IllegalArgumentException(
+                        String.format("Could not convert %s to AnnotationMirror", annotationValue));
+                }
+            }, null);
     }
 
     public boolean toBoolean(AnnotationValue annotationValue) {
@@ -211,7 +224,8 @@ public class AnnotationValues {
 
             @Override
             protected Boolean defaultAction(Object o, Void p) {
-                throw new IllegalArgumentException(String.format("Could not convert %s to Boolean", annotationValue));
+                throw new IllegalArgumentException(
+                    String.format("Could not convert %s to Boolean", annotationValue));
             }
         }, null);
     }

@@ -1,13 +1,5 @@
 package eu.toolchain.serializer;
 
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-
 import eu.toolchain.serializer.collection.DefaultListSerializer;
 import eu.toolchain.serializer.collection.DefaultMapSerializer;
 import eu.toolchain.serializer.collection.DefaultNavigableMapSerializer;
@@ -16,6 +8,14 @@ import eu.toolchain.serializer.collection.DefaultSetSerializer;
 import eu.toolchain.serializer.collection.DefaultSortedMapSerializer;
 import eu.toolchain.serializer.collection.DefaultSortedSetSerializer;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 
 @RequiredArgsConstructor
 public class DefaultCollectionsProvider implements CollectionsProvider {
@@ -32,13 +32,16 @@ public class DefaultCollectionsProvider implements CollectionsProvider {
     }
 
     @Override
-    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value) {
+    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(
+        Serializer<K> key, Serializer<V> value
+    ) {
         return new DefaultSortedMapSerializer<K, V>(size, key, value);
     }
 
     @Override
-    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key,
-            Serializer<V> value) {
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(
+        Serializer<K> key, Serializer<V> value
+    ) {
         return new DefaultNavigableMapSerializer<K, V>(size, key, value);
     }
 
@@ -53,7 +56,9 @@ public class DefaultCollectionsProvider implements CollectionsProvider {
     }
 
     @Override
-    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(Serializer<T> serializer) {
+    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(
+        Serializer<T> serializer
+    ) {
         return new DefaultNavigableSetSerializer<T>(size, serializer);
     }
 }

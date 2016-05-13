@@ -39,6 +39,7 @@ public abstract class AbstractSerializerFramework implements SerializerFramework
     @Override
     public Serializer<Long> varlong() {
         return variableLong();
-    };
+    }
 
+    ;
 }

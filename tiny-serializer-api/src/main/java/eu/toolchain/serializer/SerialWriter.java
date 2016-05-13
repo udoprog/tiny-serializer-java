@@ -12,7 +12,7 @@ public interface SerialWriter extends Closeable {
 
     /**
      * Write an array of bytes from the given buffer.
-     *
+     * <p>
      * Will write all {@link ByteBuffer#remaining()} bytes.
      */
     public void write(ByteBuffer buffer) throws IOException;
@@ -37,9 +37,9 @@ public interface SerialWriter extends Closeable {
 
     /**
      * Create a scoped writer.
-     *
-     * Scopes sections are sections that can be skipped. They are typically prefixed with the length of the section, but
-     * the exact details are implementation specific.
+     * <p>
+     * Scopes sections are sections that can be skipped. They are typically prefixed with the length
+     * of the section, but the exact details are implementation specific.
      */
     public SerialWriter.Scope scope();
 
@@ -48,8 +48,9 @@ public interface SerialWriter extends Closeable {
     public interface Scope extends SerialWriter {
         /**
          * Close the current scoped section.
-         *
-         * After this, the section should be guaranteed to have been written to its parent {@code SerialWriter}.
+         * <p>
+         * After this, the section should be guaranteed to have been written to its parent {@code
+         * SerialWriter}.
          */
         @Override
         public void close() throws IOException;

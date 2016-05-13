@@ -1,22 +1,20 @@
 package eu.toolchain.serializer.processor.value;
 
-import java.util.List;
-import java.util.Optional;
-
-import javax.lang.model.element.TypeElement;
-
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
-
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.BuilderMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.Data;
+
+import javax.lang.model.element.TypeElement;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author udoprog
@@ -28,12 +26,14 @@ public class ValueTypeBuilder {
     final BuilderMirror builder;
 
     /**
-     * If {@code true}, indicates that the constructor of the builder should be used when instantiating it.
+     * If {@code true}, indicates that the constructor of the builder should be used when
+     * instantiating it.
      */
     final boolean useConstructor;
 
     /**
-     * If {@code true}, indicates that builder methods are setters instead of using a one-to-one mapping of field names.
+     * If {@code true}, indicates that builder methods are setters instead of using a one-to-one
+     * mapping of field names.
      */
     final boolean useSetter;
 
@@ -42,8 +42,10 @@ public class ValueTypeBuilder {
      */
     final String method;
 
-    public static Unverified<Optional<ValueTypeBuilder>> build(final AutoSerializeUtils utils,
-            final TypeElement element, final AutoSerializeMirror autoSerialize) {
+    public static Unverified<Optional<ValueTypeBuilder>> build(
+        final AutoSerializeUtils utils, final TypeElement element,
+        final AutoSerializeMirror autoSerialize
+    ) {
         return utils.builder(element).map((unverifiedDirect) -> {
             return unverifiedDirect.map((direct) -> {
                 return Optional.of(build(direct, element, utils));
@@ -55,10 +57,12 @@ public class ValueTypeBuilder {
         });
     }
 
-    static ValueTypeBuilder build(final BuilderMirror builder, final TypeElement element,
-            final AutoSerializeUtils utils) {
+    static ValueTypeBuilder build(
+        final BuilderMirror builder, final TypeElement element, final AutoSerializeUtils utils
+    ) {
         final boolean useConstructor = builder.shouldUseConstructor();
-        return new ValueTypeBuilder(builder, useConstructor, builder.isUseSetter(), builder.getMethodName());
+        return new ValueTypeBuilder(builder, useConstructor, builder.isUseSetter(),
+            builder.getMethodName());
     }
 
     public void writeTo(ClassName returnType, MethodSpec.Builder b, List<Value> variables) {
@@ -83,12 +87,15 @@ public class ValueTypeBuilder {
             parameters.add(f.getVariableName());
         }
 
-        b.addStatement(String.format("return %s%s.build()", builderStatement, emptyJoiner.join(builders.build())),
-                parameters.build().toArray());
+        b.addStatement(String.format("return %s%s.build()", builderStatement,
+            emptyJoiner.join(builders.build())), parameters.build().toArray());
     }
 
     TypeName getBuilderTypeForConstructor(ClassName returnType) {
-        return builder.getType().map((t) -> TypeName.get(t.get())).orElse(returnType.nestedClass("Builder"));
+        return builder
+            .getType()
+            .map((t) -> TypeName.get(t.get()))
+            .orElse(returnType.nestedClass("Builder"));
     }
 
     TypeName getBuilderTypeForMethod(ClassName returnType) {

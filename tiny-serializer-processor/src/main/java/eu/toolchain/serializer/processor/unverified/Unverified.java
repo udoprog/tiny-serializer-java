@@ -1,46 +1,48 @@
 package eu.toolchain.serializer.processor.unverified;
 
-import java.util.List;
-import java.util.function.Function;
+import com.google.common.collect.ImmutableList;
 
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-
-import com.google.common.collect.ImmutableList;
+import java.util.List;
+import java.util.function.Function;
 
 public interface Unverified<T> {
-    public T get();
+    T get();
 
-    public boolean isVerified();
+    boolean isVerified();
 
-    public void writeError(Messager messager);
+    void writeError(Messager messager);
 
-    public <O> Unverified<O> map(Function<? super T, ? extends O> result);
+    <O> Unverified<O> map(Function<? super T, ? extends O> result);
 
-    public <O> Unverified<O> transform(Function<? super T, ? extends Unverified<O>> result);
+    <O> Unverified<O> transform(Function<? super T, ? extends Unverified<O>> result);
 
-    public T orElse(T defaultValue);
+    T orElse(T defaultValue);
 
-    public static <T> Unverified<T> verified(T reference) {
+    static <T> Unverified<T> verified(T reference) {
         return new Verified<>(reference);
     }
 
-    public static <T> Unverified<T> brokenElement(String message, Element element) {
+    static <T> Unverified<T> brokenElement(String message, Element element) {
         return new BrokenElement<>(message, element);
     }
 
-    public static <T> Unverified<T> brokenAnnotation(String message, Element element, AnnotationMirror annotation) {
+    static <T> Unverified<T> brokenAnnotation(
+        String message, Element element, AnnotationMirror annotation
+    ) {
         return new BrokenAnnotation<>(message, element, annotation);
     }
 
-    public static <T> Unverified<T> brokenAnnotationValue(String message, Element element, AnnotationMirror annotation,
-            AnnotationValue value) {
+    static <T> Unverified<T> brokenAnnotationValue(
+        String message, Element element, AnnotationMirror annotation, AnnotationValue value
+    ) {
         return new BrokenAnnotationValue<>(message, element, annotation, value);
     }
 
-    public static <T> Unverified<List<T>> combine(Iterable<? extends Unverified<T>> maybes) {
+    static <T> Unverified<List<T>> combine(Iterable<? extends Unverified<T>> maybes) {
         return new AbstractVerified<List<T>>() {
             @Override
             public List<T> get() {
@@ -73,7 +75,7 @@ public interface Unverified<T> {
         };
     }
 
-    public static Unverified<?> combineDifferent(Unverified<?>... maybes) {
+    static Unverified<?> combineDifferent(Unverified<?>... maybes) {
         return new AbstractVerified<Object>() {
             @Override
             public Object get() {

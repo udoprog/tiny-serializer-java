@@ -1,13 +1,13 @@
 package eu.toolchain.serializer.collection;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public class DefaultSetSerializer<T> implements Serializer<Set<T>> {
@@ -18,8 +18,9 @@ public class DefaultSetSerializer<T> implements Serializer<Set<T>> {
     public void serialize(SerialWriter buffer, Set<T> values) throws IOException {
         size.serialize(buffer, values.size());
 
-        for (final T value : values)
+        for (final T value : values) {
             serializer.serialize(buffer, value);
+        }
     }
 
     @Override
@@ -28,8 +29,9 @@ public class DefaultSetSerializer<T> implements Serializer<Set<T>> {
 
         final Set<T> values = new HashSet<>(size);
 
-        for (int i = 0; i < size; ++i)
+        for (int i = 0; i < size; ++i) {
             values.add(serializer.deserialize(buffer));
+        }
 
         return values;
     }

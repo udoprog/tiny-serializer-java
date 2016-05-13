@@ -7,8 +7,9 @@ public class TestHexUtils {
     private void roundtrip(String reference, int... bytes) {
         byte[] b = new byte[bytes.length];
 
-        for (int i = 0; i < bytes.length; i++)
+        for (int i = 0; i < bytes.length; i++) {
             b[i] = (byte) (bytes[i] & 0xff);
+        }
 
         Assert.assertEquals(reference, HexUtils.toHex(b));
     }

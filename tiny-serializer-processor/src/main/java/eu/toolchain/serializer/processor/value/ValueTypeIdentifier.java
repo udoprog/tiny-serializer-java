@@ -1,10 +1,9 @@
 package eu.toolchain.serializer.processor.value;
 
-import java.util.Optional;
-
+import com.squareup.javapoet.TypeName;
 import lombok.Data;
 
-import com.squareup.javapoet.TypeName;
+import java.util.Optional;
 
 @Data
 class ValueTypeIdentifier {

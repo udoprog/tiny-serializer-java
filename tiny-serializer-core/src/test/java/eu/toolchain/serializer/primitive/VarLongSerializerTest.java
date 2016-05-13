@@ -1,13 +1,10 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-
-import org.junit.Test;
-
 import eu.toolchain.serializer.Helpers;
 import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.primitive.CompactVarLongSerializer;
-import eu.toolchain.serializer.primitive.VarLongSerializer;
+import org.junit.Test;
+
+import java.io.IOException;
 
 public class VarLongSerializerTest {
     final VarLongSerializer regular = new VarLongSerializer();

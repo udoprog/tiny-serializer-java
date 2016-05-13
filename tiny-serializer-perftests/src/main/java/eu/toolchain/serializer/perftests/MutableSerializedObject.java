@@ -1,16 +1,14 @@
 package eu.toolchain.serializer.perftests;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.msgpack.annotation.Message;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.msgpack.annotation.Message;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 
 @Data
 @NoArgsConstructor

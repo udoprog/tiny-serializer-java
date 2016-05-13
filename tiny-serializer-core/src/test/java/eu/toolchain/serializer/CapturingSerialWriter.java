@@ -1,10 +1,10 @@
 package eu.toolchain.serializer;
 
+import eu.toolchain.serializer.io.AbstractSerialWriter;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import eu.toolchain.serializer.io.AbstractSerialWriter;
 
 public class CapturingSerialWriter extends AbstractSerialWriter {
     final List<Integer> captured = new ArrayList<>();

@@ -1,13 +1,11 @@
 package eu.toolchain.serializer.type;
 
-import java.io.IOException;
-
+import eu.toolchain.serializer.SerialWriter;
+import eu.toolchain.serializer.Serializer;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import eu.toolchain.serializer.SerialWriter;
-import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.type.NullSerializer;
+import java.io.IOException;
 
 public class TestNullSerializer {
     final Object reference = new Object();
@@ -15,8 +13,8 @@ public class TestNullSerializer {
     @Test
     public void testSerializeNonNull() throws IOException {
         final SerialWriter out = Mockito.mock(SerialWriter.class);
-        @SuppressWarnings("unchecked")
-        final Serializer<Object> inner = Mockito.mock(Serializer.class);
+        @SuppressWarnings("unchecked") final Serializer<Object> inner =
+            Mockito.mock(Serializer.class);
         final Serializer<Object> serializer = new NullSerializer<>(inner);
 
         serializer.serialize(out, reference);
@@ -27,8 +25,8 @@ public class TestNullSerializer {
     @Test
     public void testSerializeNull() throws IOException {
         final SerialWriter out = Mockito.mock(SerialWriter.class);
-        @SuppressWarnings("unchecked")
-        final Serializer<Object> inner = Mockito.mock(Serializer.class);
+        @SuppressWarnings("unchecked") final Serializer<Object> inner =
+            Mockito.mock(Serializer.class);
         final Serializer<Object> serializer = new NullSerializer<>(inner);
 
         serializer.serialize(out, null);

@@ -1,18 +1,18 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 /**
  * Based on the same concept as {@link VarIntSerializer} expanded to 64 bits.
  *
- * @see VarIntSerializer
  * @author udoprog
+ * @see VarIntSerializer
  */
 public class VarLongSerializer implements Serializer<Long> {
     public static final int MAX_SIZE = 10;

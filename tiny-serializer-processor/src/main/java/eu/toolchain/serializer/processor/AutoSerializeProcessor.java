@@ -1,9 +1,12 @@
 package eu.toolchain.serializer.processor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import com.google.auto.service.AutoService;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.JavaFile;
+import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
+import eu.toolchain.serializer.processor.unverified.Unverified;
+import lombok.Data;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -19,15 +22,10 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
-
-import com.google.auto.service.AutoService;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.JavaFile;
-
-import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.Data;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @AutoService(Processor.class)
 public class AutoSerializeProcessor extends AbstractProcessor {
@@ -61,11 +59,13 @@ public class AutoSerializeProcessor extends AbstractProcessor {
     }
 
     /**
-     * Eclipse JDT does not preserve the original order of type fields, causing some Processor assumptions to fail.
+     * Eclipse JDT does not preserve the original order of type fields, causing some Processor
+     * assumptions to fail.
      */
     void warnAboutBugEclipse300408() {
         messager.printMessage(Diagnostic.Kind.WARNING,
-                "@AutoSerialize processor might not work properly in Eclipse < 3.5, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=300408");
+            "@AutoSerialize processor might not work properly in Eclipse < 3.5, see https://bugs" +
+                ".eclipse.org/bugs/show_bug.cgi?id=300408");
     }
 
     @Override
@@ -82,17 +82,19 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         // failing TypeElement's from last round
         if (!deferred.isEmpty()) {
-            elementsToProcess.addAll(deferred.stream().map(DeferredProcessing.refresh(utils)).iterator());
+            elementsToProcess.addAll(
+                deferred.stream().map(DeferredProcessing.refresh(utils)).iterator());
             deferred.clear();
         }
 
         for (final Element e : env.getElementsAnnotatedWith(utils.autoSerializeType())) {
             if (!(e instanceof TypeElement)) {
-                messager.printMessage(Diagnostic.Kind.WARNING, String.format("Skipping non-type element %s", e));
+                messager.printMessage(Diagnostic.Kind.WARNING,
+                    String.format("Skipping non-type element %s", e));
                 continue;
             }
 
-            elementsToProcess.add(new DeferredProcessing((TypeElement)e, Optional.empty()));
+            elementsToProcess.add(new DeferredProcessing((TypeElement) e, Optional.empty()));
         }
 
         final List<Processed> processed = processElements(elementsToProcess.build());
@@ -108,7 +110,9 @@ public class AutoSerializeProcessor extends AbstractProcessor {
             try {
                 serializer.get().writeTo(filer);
             } catch (final Exception e) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "Failed to write:\n" + Throwables.getStackTraceAsString(e), p.getProcessing().getElement());
+                messager.printMessage(Diagnostic.Kind.ERROR,
+                    "Failed to write:\n" + Throwables.getStackTraceAsString(e),
+                    p.getProcessing().getElement());
             }
         }
 
@@ -145,7 +149,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         final Unverified<AutoSerializeMirror> unverifiedAutoSerialize = annotation.get();
 
-        return unverifiedAutoSerialize.<JavaFile> transform((autoSerialize) -> {
+        return unverifiedAutoSerialize.<JavaFile>transform((autoSerialize) -> {
             if (element.getKind() == ElementKind.INTERFACE) {
                 if (autoSerialize.getBuilder().isPresent()) {
                     return classProcessor.process(element, autoSerialize);
@@ -155,14 +159,16 @@ public class AutoSerializeProcessor extends AbstractProcessor {
             }
 
             if (element.getKind() == ElementKind.CLASS) {
-                if (element.getModifiers().contains(Modifier.ABSTRACT) && !autoSerialize.getBuilder().isPresent()) {
+                if (element.getModifiers().contains(Modifier.ABSTRACT) &&
+                    !autoSerialize.getBuilder().isPresent()) {
                     return abstractProcessor.process(element, autoSerialize);
                 }
 
                 return classProcessor.process(element, autoSerialize);
             }
 
-            return Unverified.brokenElement("Unsupported type, expected class or interface", element);
+            return Unverified.brokenElement("Unsupported type, expected class or interface",
+                element);
         });
     }
 

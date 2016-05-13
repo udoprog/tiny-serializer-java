@@ -1,14 +1,14 @@
 package eu.toolchain.examples;
 
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.Optional;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.StreamSerialWriter;
 import eu.toolchain.serializer.TinySerializer;
+
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.Optional;
 
 public class StreamCommunicationExample {
     public static void main(String[] argv) throws IOException, InterruptedException {

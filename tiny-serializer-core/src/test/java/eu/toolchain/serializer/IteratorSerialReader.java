@@ -1,12 +1,12 @@
 package eu.toolchain.serializer;
 
+import eu.toolchain.serializer.io.AbstractSerialReader;
+import lombok.RequiredArgsConstructor;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-
-import eu.toolchain.serializer.io.AbstractSerialReader;
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class IteratorSerialReader extends AbstractSerialReader {
@@ -16,7 +16,7 @@ public class IteratorSerialReader extends AbstractSerialReader {
     public byte read() throws IOException {
         try {
             return iterator.next().byteValue();
-        } catch(NoSuchElementException e) {
+        } catch (NoSuchElementException e) {
             throw new EOFException(String.format("End of iterator"));
         }
     }
@@ -28,7 +28,7 @@ public class IteratorSerialReader extends AbstractSerialReader {
         while (i < offset + length) {
             try {
                 b[i++] = iterator.next().byteValue();
-            } catch(NoSuchElementException e) {
+            } catch (NoSuchElementException e) {
                 throw new EOFException(String.format("End of iterator on offset #%d", i));
             }
         }

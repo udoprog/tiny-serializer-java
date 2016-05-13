@@ -1,39 +1,40 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 /**
  * Variable-length number encoding based on continuation bits.
- *
- * This is very similar to {@link VarIntSerializer}, with the exception that the encoding achieves a perfect mapping for
- * a sequence of bytes to a single number.
- *
+ * <p>
+ * This is very similar to {@link VarIntSerializer}, with the exception that the encoding achieves a
+ * perfect mapping for a sequence of bytes to a single number.
+ * <p>
  * Consider the following case.
- *
+ * <p>
  * <pre>
  * 10000000 00000000
  * </pre>
- *
+ * <p>
  * This essentially represents the same as a single byte, with no continuation of.
- *
+ * <p>
  * <pre>
  * 00000000
  * </pre>
- *
- * We can do better by mapping each *continuation* to a specific value, subtract that value during encoding, and add it
- * back during decoding.
- *
- * So each continuation would have a value of (1 << (7 * n)) which we can subtract from the 7 bit encoded message, and
- * re-encode it.
- *
- * Using this technique, we can represent 2113665 more values with 5 bytes than was previously possible. This also means
- * that the encoding is more compact (hence the name) because these bits are coalesced towards zero.
+ * <p>
+ * We can do better by mapping each *continuation* to a specific value, subtract that value during
+ * encoding, and add it back during decoding.
+ * <p>
+ * So each continuation would have a value of (1 << (7 * n)) which we can subtract from the 7 bit
+ * encoded message, and re-encode it.
+ * <p>
+ * Using this technique, we can represent 2113665 more values with 5 bytes than was previously
+ * possible. This also means that the encoding is more compact (hence the name) because these bits
+ * are coalesced towards zero.
  *
  * @author udoprog
  */

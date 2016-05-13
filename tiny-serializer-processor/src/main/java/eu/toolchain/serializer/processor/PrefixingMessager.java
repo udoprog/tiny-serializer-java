@@ -1,12 +1,12 @@
 package eu.toolchain.serializer.processor;
 
+import lombok.RequiredArgsConstructor;
+
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic.Kind;
-
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class PrefixingMessager implements Messager {
@@ -29,7 +29,9 @@ public class PrefixingMessager implements Messager {
     }
 
     @Override
-    public void printMessage(Kind kind, CharSequence msg, Element e, AnnotationMirror a, AnnotationValue v) {
+    public void printMessage(
+        Kind kind, CharSequence msg, Element e, AnnotationMirror a, AnnotationValue v
+    ) {
         delegate.printMessage(kind, prefix + ": " + msg, e, a, v);
     }
 }

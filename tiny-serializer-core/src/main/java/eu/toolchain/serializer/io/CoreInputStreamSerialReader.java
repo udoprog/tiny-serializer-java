@@ -1,11 +1,11 @@
 package eu.toolchain.serializer.io;
 
+import eu.toolchain.serializer.Serializer;
+import eu.toolchain.serializer.SharedPool;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-
-import eu.toolchain.serializer.Serializer;
-import eu.toolchain.serializer.SharedPool;
 
 public class CoreInputStreamSerialReader extends AbstractSerialReader {
     private final InputStream input;
@@ -15,7 +15,9 @@ public class CoreInputStreamSerialReader extends AbstractSerialReader {
         this.input = input;
     }
 
-    public CoreInputStreamSerialReader(final SharedPool pool, final Serializer<Integer> scopeSize, final InputStream input) {
+    public CoreInputStreamSerialReader(
+        final SharedPool pool, final Serializer<Integer> scopeSize, final InputStream input
+    ) {
         super(pool, scopeSize);
         this.input = input;
     }

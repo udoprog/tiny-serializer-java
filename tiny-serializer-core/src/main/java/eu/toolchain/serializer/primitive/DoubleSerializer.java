@@ -1,10 +1,10 @@
 package eu.toolchain.serializer.primitive;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
+
+import java.io.IOException;
 
 public class DoubleSerializer implements Serializer<Double> {
     @Override

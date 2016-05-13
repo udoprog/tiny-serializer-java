@@ -1,13 +1,13 @@
 package eu.toolchain.serializer.collection;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RequiredArgsConstructor
 public class DefaultMapSerializer<K, V> implements Serializer<Map<K, V>> {

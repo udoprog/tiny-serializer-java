@@ -1,23 +1,23 @@
 package eu.toolchain.serializer.perftests.benchmarks;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.function.Supplier;
-
+import eu.toolchain.serializer.perftests.MutableSerializedObject;
+import eu.toolchain.serializer.perftests.ObjectHelper;
+import eu.toolchain.serializer.perftests.OutputStreamHelper;
 import org.msgpack.MessagePack;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
-import eu.toolchain.serializer.perftests.MutableSerializedObject;
-import eu.toolchain.serializer.perftests.ObjectHelper;
-import eu.toolchain.serializer.perftests.OutputStreamHelper;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.function.Supplier;
 
 @State(Scope.Benchmark)
 public class MessagePackPerformance {
-    final MutableSerializedObject object = ObjectHelper.newMutableSerializedObject();;
+    final MutableSerializedObject object = ObjectHelper.newMutableSerializedObject();
+    ;
     final OutputStream nullStream = OutputStreamHelper.newNullStream();
 
     final MessagePack msgpack = new MessagePack();

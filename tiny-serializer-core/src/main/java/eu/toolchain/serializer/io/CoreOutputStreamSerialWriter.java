@@ -1,13 +1,14 @@
 package eu.toolchain.serializer.io;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
 import eu.toolchain.serializer.StreamSerialWriter;
 
-public class CoreOutputStreamSerialWriter extends AbstractSerialWriter implements StreamSerialWriter {
+import java.io.IOException;
+import java.io.OutputStream;
+
+public class CoreOutputStreamSerialWriter extends AbstractSerialWriter
+    implements StreamSerialWriter {
     private final OutputStream output;
 
     public CoreOutputStreamSerialWriter(final OutputStream output) {
@@ -15,7 +16,9 @@ public class CoreOutputStreamSerialWriter extends AbstractSerialWriter implement
         this.output = output;
     }
 
-    public CoreOutputStreamSerialWriter(final SharedPool pool, final Serializer<Integer> scopeSize, final OutputStream output) {
+    public CoreOutputStreamSerialWriter(
+        final SharedPool pool, final Serializer<Integer> scopeSize, final OutputStream output
+    ) {
         super(pool, scopeSize);
         this.output = output;
     }

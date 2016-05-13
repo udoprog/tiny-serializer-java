@@ -19,15 +19,15 @@ import java.util.UUID;
 
 /**
  * Serialization Framework.
- *
+ * <p>
  * This type is the entry-point to everything regarding serialization.
- *
+ * <p>
  * <h1>Fixed vs. Variable Width Serializers</h1>
- *
+ * <p>
  * A fixed-width {@link Serializer} always marshalls the value into the same number of bytes.
- *
- * A variable-width {@link Serializer} encodes the value using a varying number of bytes, typically to reduce the size
- * for more frequent numerals.
+ * <p>
+ * A variable-width {@link Serializer} encodes the value using a varying number of bytes, typically
+ * to reduce the size for more frequent numerals.
  *
  * @author udoprog
  */
@@ -151,7 +151,7 @@ public interface SerializerFramework {
 
     /**
      * Build a {@code Serializer} that adds the specified prefix when serializing.
-     *
+     * <p>
      * If this prefix is missing when reading, a runtime exception will be thrown.
      *
      * @param prefix The prefix to use.
@@ -161,8 +161,8 @@ public interface SerializerFramework {
     public <T> Serializer<T> prefix(byte[] prefix, Serializer<T> serializer);
 
     /**
-     * Create a length-prefixed serialized that buffers up data, and guarantees that the underlying child-serializer
-     * gets the specified amount.
+     * Create a length-prefixed serialized that buffers up data, and guarantees that the underlying
+     * child-serializer gets the specified amount.
      *
      * @param serializer The {@code Serializer} to length prefix.
      * @param policy A policy governing how long a child message is allowed to be.
@@ -179,7 +179,7 @@ public interface SerializerFramework {
 
     /**
      * Build a {@code Serializer} that can serialize a list.
-     *
+     * <p>
      * How the list is encoded is implementation specific.
      *
      * @param <T> Type of the list items.
@@ -190,7 +190,7 @@ public interface SerializerFramework {
 
     /**
      * Build a {@code Serializer} that can serialize a map.
-     *
+     * <p>
      * How the map is encoded is implementation specific.
      *
      * @param <T> Type of map keys.
@@ -203,7 +203,7 @@ public interface SerializerFramework {
 
     /**
      * Build a {@code Serializer} that can serialize a sorted map.
-     *
+     * <p>
      * How the map is encoded is implementation specific.
      *
      * @param <T> Type of map keys.
@@ -212,13 +212,17 @@ public interface SerializerFramework {
      * @param value The {@code Serializer} to use for map values.
      * @return A new map {@code Serializer}.
      */
-    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(Serializer<K> key, Serializer<V> value);
+    public <K extends Comparable<?>, V> Serializer<SortedMap<K, V>> sortedMap(
+        Serializer<K> key, Serializer<V> value
+    );
 
-    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(Serializer<K> key, Serializer<V> value);
+    public <K extends Comparable<?>, V> Serializer<NavigableMap<K, V>> navigableMap(
+        Serializer<K> key, Serializer<V> value
+    );
 
     /**
      * Build a {@code Serializer} that can serialize a set.
-     *
+     * <p>
      * How the ser is encoded is implementation specific.
      *
      * @param <T> Type of the set items.
@@ -229,7 +233,7 @@ public interface SerializerFramework {
 
     /**
      * Build a {@code Serializer} that can serialize a sorted set.
-     *
+     * <p>
      * How the ser is encoded is implementation specific.
      *
      * @param <T> Type of the set items.
@@ -238,10 +242,13 @@ public interface SerializerFramework {
      */
     public <T extends Comparable<?>> Serializer<SortedSet<T>> sortedSet(Serializer<T> serializer);
 
-    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(Serializer<T> serializer);
+    public <T extends Comparable<?>> Serializer<NavigableSet<T>> navigableSet(
+        Serializer<T> serializer
+    );
 
     /**
      * Create a new serializer for the given array.
+     *
      * @param element The element serializer to use.
      * @param constructor The array constructor to use.
      * @return A new array serializer.
@@ -290,15 +297,16 @@ public interface SerializerFramework {
 
     /**
      * Same as {@link #forEnum(Object[], Object)}, but throws an exception when out-of-range.
+     *
      * @see #forEnum(Object[], Object)
      */
     public <T extends Enum<T>> Serializer<T> forEnum(final T[] values);
 
     /**
      * A serializer that can serialize enums.
-     *
+     * <p>
      * Example usage:
-     *
+     * <p>
      * <pre>
      * {@code
      *     // setup a serializer framework
@@ -319,7 +327,8 @@ public interface SerializerFramework {
     public <T> Serializer<T> notImplemented();
 
     /**
-     * A type mapping, that maps a specific type {@code Class<K>}, to a {@code Serializer}, and an ordinal id.
+     * A type mapping, that maps a specific type {@code Class<K>}, to a {@code Serializer}, and an
+     * ordinal id.
      *
      * @param <T> Super type to create mapping for.
      * @param <K> Subtype of the super type <T>.
@@ -349,9 +358,9 @@ public interface SerializerFramework {
 
     /**
      * Serialize a value.
-     *
-     * It is not recommended that you use this method when integrating this framework. For that, implement a custom
-     * {@code SerialWriter} that fits your needs to the letter instead.
+     * <p>
+     * It is not recommended that you use this method when integrating this framework. For that,
+     * implement a custom {@code SerialWriter} that fits your needs to the letter instead.
      *
      * @param serializer The {@code Serializer} to use.
      * @param value The value to serialize.
@@ -362,9 +371,9 @@ public interface SerializerFramework {
 
     /**
      * Deserialize a buffer.
-     *
-     * It is not recommended that you use this method when integrating this framework. For that, implement a custom
-     * {@code SerialReader} that fits your needs to the letter instead.
+     * <p>
+     * It is not recommended that you use this method when integrating this framework. For that,
+     * implement a custom {@code SerialReader} that fits your needs to the letter instead.
      *
      * @param serializer The {@code Serializer} to use.
      * @param buffer The buffer to deserialize.
@@ -410,10 +419,10 @@ public interface SerializerFramework {
 
     /**
      * Write to the given {@link OutputStream}.
-     *
-     * This returns a special writer implementation {@link StreamSerialWriter} which provides flushing capabilities. It
-     * is important to flush the underlying stream when you wish for any previously serialized objects to be written.
-     * Flushing is implied when closing the stream.
+     * <p>
+     * This returns a special writer implementation {@link StreamSerialWriter} which provides
+     * flushing capabilities. It is important to flush the underlying stream when you wish for any
+     * previously serialized objects to be written. Flushing is implied when closing the stream.
      *
      * @param output The output stream to write to.
      * @return A new {@link SerialWriter} connected to the given {@link OutputStream}.
@@ -422,7 +431,7 @@ public interface SerializerFramework {
 
     /**
      * Read from the given {@link InputStream}.
-     *
+     * <p>
      * Reading from input streams are very likely to block.
      *
      * @param input The input stream to read from.

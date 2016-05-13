@@ -1,29 +1,29 @@
 package eu.toolchain.serializer.type;
 
-import java.io.IOException;
-
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 
+import java.io.IOException;
+
 /**
  * {@code null} is serialized as follows.
- * 
+ * <p>
  * <pre>
  * | 0    |
  * | 0x7e |
  * </pre>
- * 
+ * <p>
  * Non-{@code null} is serialized as follows.
- * 
+ * <p>
  * <pre>
  * | 0    | 1..n  |
  * | 0x7f | value |
  * </pre>
  */
 public class NullSerializer<T> implements Serializer<T> {
-    public static final byte[] NULL = new byte[] { 0x7e };
-    public static final byte[] NOT_NULL = new byte[] { 0x7f };
+    public static final byte[] NULL = new byte[]{0x7e};
+    public static final byte[] NOT_NULL = new byte[]{0x7f};
 
     private final Serializer<T> serializer;
 
@@ -48,8 +48,9 @@ public class NullSerializer<T> implements Serializer<T> {
 
         buffer.read(bytes);
 
-        if (bytes[0] == 0x7e)
+        if (bytes[0] == 0x7e) {
             return null;
+        }
 
         return serializer.deserialize(buffer);
     }

@@ -19,7 +19,7 @@ public @interface AutoSerialize {
 
     /**
      * Fail during de-serialization if a field is seen that is not part of this object.
-     *
+     * <p>
      * The default behaviour is to fail.
      *
      * @return {@code true} if the de-serialize method should throws exception on missing fields.
@@ -49,9 +49,9 @@ public @interface AutoSerialize {
 
     boolean orderConstructorById() default false;
 
-    @Target({ ElementType.ANNOTATION_TYPE, ElementType.TYPE })
+    @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface Builder {
+    @interface Builder {
         /**
          * Use the specified builder class instead of assuming the serialized type has a builder.
          *
@@ -61,7 +61,7 @@ public @interface AutoSerialize {
 
         /**
          * Use setters when assigning values to a builder.
-         *
+         * <p>
          * Default behavior is to assume the builder has methods named the same as the field.
          *
          * @return {@code true} if builders use setters, {@code false} otherwise.
@@ -70,20 +70,24 @@ public @interface AutoSerialize {
 
         /**
          * Use builder constructor when constructing builder.
+         * <p>
+         * The default method would otherwise be to create a builder instance using {@link
+         * #useBuilderMethod()}.
          *
-         * The default method would otherwise be to create a builder instance using {@link #useBuilderMethod()}.
-         *
-         * @return {@code true} if constructor should be used for builder type, {@code false} otherwise.
+         * @return {@code true} if constructor should be used for builder type, {@code false}
+         * otherwise.
          */
         boolean useConstructor() default false;
 
         /**
-         * Use method on builder type when constructing builder.
-         * This takes precedence over {@link #useConstructor()}
+         * Use method on builder type when constructing builder. This takes precedence over {@link
+         * #useConstructor()}
+         * <p>
+         * This only makes sense if the builder type itself has a static builder method (like
+         * MyType.builder()).
          *
-         * This only makes sense if the builder type itself has a static builder method (like MyType.builder()).
-         *
-         * @return {@code true} if builder method should be used for builder type, {@code false} otherwise.
+         * @return {@code true} if builder method should be used for builder type, {@code false}
+         * otherwise.
          */
         boolean useMethod() default false;
 
@@ -97,21 +101,21 @@ public @interface AutoSerialize {
 
     @Target(ElementType.TYPE)
     @Retention(RetentionPolicy.SOURCE)
-    public @interface SubTypes {
+    @interface SubTypes {
         SubType[] value() default {};
     }
 
     @Target(ElementType.TYPE)
     @Retention(RetentionPolicy.SOURCE)
-    public @interface SubType {
+    @interface SubType {
         Class<?> value();
 
         short id() default -1;
     }
 
-    @Target({ ElementType.PARAMETER, ElementType.FIELD, ElementType.METHOD })
+    @Target({ElementType.PARAMETER, ElementType.FIELD, ElementType.METHOD})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface Field {
+    @interface Field {
         /**
          * Override serialized name.
          *
@@ -121,7 +125,7 @@ public @interface AutoSerialize {
 
         /**
          * Override field name.
-         *
+         * <p>
          * By default, the field name is derived from the name of the field or method.
          *
          * @return The configured field name, or empty string if none is configured.
@@ -130,9 +134,10 @@ public @interface AutoSerialize {
 
         /**
          * Override accessor name.
-         *
+         * <p>
          * By default, the accessor will be the same as the field name. If {@link #useGetter()} or
-         * {@link AutoSerialize#useGetter()} is {@code true}, will use a getter derived from the name.
+         * {@link AutoSerialize#useGetter()} is {@code true}, will use a getter derived from the
+         * name.
          *
          * @return The configured accessor, or empty string if none is configured.
          */
@@ -160,7 +165,8 @@ public @interface AutoSerialize {
         boolean useGetter() default true;
 
         /**
-         * Indicate that the annotated field should be provided in the construction of the serializer.
+         * Indicate that the annotated field should be provided in the construction of the
+         * serializer.
          */
         boolean provided() default false;
 
@@ -170,8 +176,8 @@ public @interface AutoSerialize {
         String providerName() default "";
     }
 
-    @Target({ ElementType.FIELD, ElementType.METHOD })
+    @Target({ElementType.FIELD, ElementType.METHOD})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface Ignore {
+    @interface Ignore {
     }
 }

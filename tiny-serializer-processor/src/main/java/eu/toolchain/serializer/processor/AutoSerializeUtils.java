@@ -1,27 +1,5 @@
 package eu.toolchain.serializer.processor;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.function.Supplier;
-
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ErrorType;
-import javax.lang.model.type.MirroredTypeException;
-import javax.lang.model.type.PrimitiveType;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +7,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
-
 import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.DefaultBuilderType;
 import eu.toolchain.serializer.SerialReader;
@@ -47,6 +24,27 @@ import eu.toolchain.serializer.processor.annotation.SubTypesMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
 import lombok.RequiredArgsConstructor;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ErrorType;
+import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Supplier;
+
 @RequiredArgsConstructor
 public class AutoSerializeUtils {
     public static final String SERIALIZER_NAME_FORMAT = "%s_Serializer";
@@ -55,9 +53,12 @@ public class AutoSerializeUtils {
     public static final String SERIALIZER = Serializer.class.getCanonicalName();
     public static final String AUTOSERIALIZE = AutoSerialize.class.getCanonicalName();
     public static final String AUTOSERIALIZE_IGNORE = AutoSerialize.Ignore.class.getCanonicalName();
-    public static final String AUTOSERIALIZE_BUILDER = AutoSerialize.Builder.class.getCanonicalName();
-    public static final String AUTOSERIALIZE_SUBTYPE = AutoSerialize.SubType.class.getCanonicalName();
-    public static final String AUTOSERIALIZE_SUBTYPES = AutoSerialize.SubTypes.class.getCanonicalName();
+    public static final String AUTOSERIALIZE_BUILDER =
+        AutoSerialize.Builder.class.getCanonicalName();
+    public static final String AUTOSERIALIZE_SUBTYPE =
+        AutoSerialize.SubType.class.getCanonicalName();
+    public static final String AUTOSERIALIZE_SUBTYPES =
+        AutoSerialize.SubTypes.class.getCanonicalName();
     public static final String AUTOSERIALIZE_FIELD = AutoSerialize.Field.class.getCanonicalName();
 
     public static final String SERIALIZER_FRAMEWORK = SerializerFramework.class.getCanonicalName();
@@ -83,7 +84,9 @@ public class AutoSerializeUtils {
         this.autoSerializeType = elements.getTypeElement(AUTOSERIALIZE);
     }
 
-    public MethodSpec.Builder deserializeMethod(final TypeName returnType, final ParameterSpec buffer) {
+    public MethodSpec.Builder deserializeMethod(
+        final TypeName returnType, final ParameterSpec buffer
+    ) {
         final MethodSpec.Builder b = MethodSpec.methodBuilder("deserialize");
 
         b.addModifiers(Modifier.PUBLIC);
@@ -95,7 +98,9 @@ public class AutoSerializeUtils {
         return b;
     }
 
-    public MethodSpec.Builder serializeMethod(final ParameterSpec buffer, final ParameterSpec value) {
+    public MethodSpec.Builder serializeMethod(
+        final ParameterSpec buffer, final ParameterSpec value
+    ) {
         final MethodSpec.Builder b = MethodSpec.methodBuilder("serialize");
 
         b.addModifiers(Modifier.PUBLIC);
@@ -128,7 +133,9 @@ public class AutoSerializeUtils {
         return type;
     }
 
-    public Optional<ClassName> pullMirroredClass(Supplier<Class<?>> supplier, String defaultPackageName) {
+    public Optional<ClassName> pullMirroredClass(
+        Supplier<Class<?>> supplier, String defaultPackageName
+    ) {
         try {
             return Optional.of(ClassName.get(supplier.get()));
         } catch (final MirroredTypeException e) {
@@ -136,18 +143,21 @@ public class AutoSerializeUtils {
         }
     }
 
-    private Optional<ClassName> buildClassName(final MirroredTypeException e, final TypeMirror type, final String defaultPackageName) {
+    private Optional<ClassName> buildClassName(
+        final MirroredTypeException e, final TypeMirror type, final String defaultPackageName
+    ) {
         if (type instanceof ErrorType) {
             return Optional.empty();
         }
 
-        return Optional.of((ClassName)TypeName.get(type));
+        return Optional.of((ClassName) TypeName.get(type));
     }
 
     /**
      * Re-fetch the given element from the environment.
-     *
-     * This might be necessary to update type information which was not available on previous rounds.
+     * <p>
+     * This might be necessary to update type information which was not available on previous
+     * rounds.
      *
      * @param element Element to fetch.
      * @return A refreshed version of the specified element from the environment.
@@ -173,14 +183,18 @@ public class AutoSerializeUtils {
     public AnnotationValues getElementValuesWithDefaults(Element element, AnnotationMirror a) {
         final ImmutableMap.Builder<String, AnnotationValue> builder = ImmutableMap.builder();
 
-        for (Entry<? extends ExecutableElement, ? extends AnnotationValue> e : elements.getElementValuesWithDefaults(a).entrySet()) {
+        for (Entry<? extends ExecutableElement, ? extends AnnotationValue> e : elements
+            .getElementValuesWithDefaults(a)
+            .entrySet()) {
             builder.put(e.getKey().getSimpleName().toString(), e.getValue());
         }
 
         return new AnnotationValues(element, a, builder.build());
     }
 
-    public <T extends Annotation> Optional<AnnotationMirror> annotation(Element element, String annotationType) {
+    public <T extends Annotation> Optional<AnnotationMirror> annotation(
+        Element element, String annotationType
+    ) {
         for (final AnnotationMirror a : getAnnotations(element, annotationType)) {
             return Optional.of(a);
         }
@@ -189,27 +203,33 @@ public class AutoSerializeUtils {
     }
 
     public Optional<Unverified<AutoSerializeMirror>> autoSerialize(Element element) {
-        return annotation(element, AUTOSERIALIZE).map((a) -> AutoSerializeMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE).map(
+            (a) -> AutoSerializeMirror.getFor(this, element, a));
     }
 
     public Optional<Unverified<SubTypeMirror>> subType(Element element) {
-        return annotation(element, AUTOSERIALIZE_SUBTYPE).map((a) -> SubTypeMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_SUBTYPE).map(
+            (a) -> SubTypeMirror.getFor(this, element, a));
     }
 
     public Optional<Unverified<SubTypesMirror>> subTypes(Element element) {
-        return annotation(element, AUTOSERIALIZE_SUBTYPES).map((a) -> SubTypesMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_SUBTYPES).map(
+            (a) -> SubTypesMirror.getFor(this, element, a));
     }
 
     public Optional<FieldMirror> field(Element element) {
-        return annotation(element, AUTOSERIALIZE_FIELD).map((a) -> FieldMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_FIELD).map(
+            (a) -> FieldMirror.getFor(this, element, a));
     }
 
     public Optional<Unverified<BuilderMirror>> builder(Element element) {
-        return annotation(element, AUTOSERIALIZE_BUILDER).map((a) -> BuilderMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_BUILDER).map(
+            (a) -> BuilderMirror.getFor(this, element, a));
     }
 
     public Optional<IgnoreMirror> ignore(Element element) {
-        return annotation(element, AUTOSERIALIZE_IGNORE).map((a) -> IgnoreMirror.getFor(this, element, a));
+        return annotation(element, AUTOSERIALIZE_IGNORE).map(
+            (a) -> IgnoreMirror.getFor(this, element, a));
     }
 
     public TypeElement autoSerializeType() {
@@ -257,24 +277,24 @@ public class AutoSerializeUtils {
 
         final PrimitiveType p = (PrimitiveType) type;
         switch (p.getKind()) {
-        case BOOLEAN:
-            return "false";
-        case SHORT:
-            return "0";
-        case INT:
-            return "0";
-        case LONG:
-            return "0L";
-        case FLOAT:
-            return "0f";
-        case DOUBLE:
-            return "0d";
-        case BYTE:
-            return "0";
-        case CHAR:
-            return "'\0'";
-        default:
-            throw new IllegalArgumentException("Unsupported primitive: " + type.toString());
+            case BOOLEAN:
+                return "false";
+            case SHORT:
+                return "0";
+            case INT:
+                return "0";
+            case LONG:
+                return "0L";
+            case FLOAT:
+                return "0f";
+            case DOUBLE:
+                return "0d";
+            case BYTE:
+                return "0";
+            case CHAR:
+                return "'\0'";
+            default:
+                throw new IllegalArgumentException("Unsupported primitive: " + type.toString());
         }
     }
 
@@ -284,19 +304,24 @@ public class AutoSerializeUtils {
         Element element = root;
 
         do {
-            if (element.getKind() != ElementKind.CLASS && element.getKind() != ElementKind.INTERFACE) {
-                throw new IllegalArgumentException(String.format("Element is not interface or class (%s)", element));
+            if (element.getKind() != ElementKind.CLASS &&
+                element.getKind() != ElementKind.INTERFACE) {
+                throw new IllegalArgumentException(
+                    String.format("Element is not interface or class (%s)", element));
             }
 
-            if (element.getEnclosingElement().getKind() == ElementKind.CLASS && !element.getModifiers().contains(Modifier.STATIC)) {
-                throw new IllegalArgumentException(String.format("Nested element must be static (%s)", element));
+            if (element.getEnclosingElement().getKind() == ElementKind.CLASS &&
+                !element.getModifiers().contains(Modifier.STATIC)) {
+                throw new IllegalArgumentException(
+                    String.format("Nested element must be static (%s)", element));
             }
 
             parts.add(element.getSimpleName().toString());
             element = element.getEnclosingElement();
         } while (element.getKind() != ElementKind.PACKAGE);
 
-        return String.format(SERIALIZER_NAME_FORMAT, underscoreJoiner.join(parts.build().reverse()));
+        return String.format(SERIALIZER_NAME_FORMAT,
+            underscoreJoiner.join(parts.build().reverse()));
     }
 
     public ClassName serializerClassFor(final DeclaredType type) {

@@ -1,5 +1,18 @@
 package eu.toolchain.serializer.processor;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
+import lombok.RequiredArgsConstructor;
+
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.SimpleTypeVisitor6;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,23 +28,6 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
-
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor6;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
-
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FrameworkStatements {
@@ -64,10 +60,12 @@ public class FrameworkStatements {
         parameterized.put(ClassName.get(List.class), new Parameterized("$N.list", 1));
         parameterized.put(ClassName.get(Map.class), new Parameterized("$N.map", 2));
         parameterized.put(ClassName.get(SortedMap.class), new Parameterized("$N.sortedMap", 2, 2));
-        parameterized.put(ClassName.get(NavigableMap.class), new Parameterized("$N.navigableMap", 2, 2));
+        parameterized.put(ClassName.get(NavigableMap.class),
+            new Parameterized("$N.navigableMap", 2, 2));
         parameterized.put(ClassName.get(Set.class), new Parameterized("$N.set", 1));
         parameterized.put(ClassName.get(SortedSet.class), new Parameterized("$N.sortedSet", 1, 2));
-        parameterized.put(ClassName.get(NavigableSet.class), new Parameterized("$N.navigableSet", 1, 2));
+        parameterized.put(ClassName.get(NavigableSet.class),
+            new Parameterized("$N.navigableSet", 1, 2));
         parameterized.put(ClassName.get(Optional.class), new Parameterized("$N.optional", 1));
     }
 
@@ -77,12 +75,7 @@ public class FrameworkStatements {
         final String statement = direct.get(TypeName.get(type));
 
         if (statement != null) {
-            return new FrameworkStatement() {
-                @Override
-                public void writeTo(FrameworkMethodBuilder builder) {
-                    builder.assign(statement, ImmutableList.of(framework));
-                }
-            };
+            return builder -> builder.assign(statement, ImmutableList.of(framework));
         }
 
         if (type instanceof ArrayType) {
@@ -111,30 +104,28 @@ public class FrameworkStatements {
         final TypeMirror componentType = a.getComponentType();
 
         if (utils.isPrimitive(componentType)) {
-            throw new IllegalArgumentException("Cannot serialize array with a primitive component type: " + a);
+            throw new IllegalArgumentException(
+                "Cannot serialize array with a primitive component type: " + a);
         }
 
-        final FrameworkStatement component = resolveStatement(utils.boxedIfNeeded(componentType), framework);
+        final FrameworkStatement component =
+            resolveStatement(utils.boxedIfNeeded(componentType), framework);
 
         final TypeName innerMost = TypeName.get(arrayInnerMost(componentType));
         // Get parenthesis combination after the size parameter.
         final String parens = arrayParensAfterSize(componentType);
 
-        return new FrameworkStatement() {
-            @Override
-            public void writeTo(FrameworkMethodBuilder builder) {
-                component.writeTo((cs, ca) -> {
-                    final List<Object> arguments = new ArrayList<>();
+        return builder -> component.writeTo((cs, ca) -> {
+            final List<Object> arguments = new ArrayList<>();
 
-                    arguments.add(framework);
-                    arguments.add(componentType);
-                    arguments.addAll(ca);
-                    arguments.add(innerMost);
+            arguments.add(framework);
+            arguments.add(componentType);
+            arguments.addAll(ca);
+            arguments.add(innerMost);
 
-                    builder.assign(String.format("$N.<$T>array(%s, (s) -> new $T[s]%s)", cs, parens), arguments);
-                });
-            }
-        };
+            builder.assign(String.format("$N.<$T>array(%s, (s) -> new $T[s]%s)", cs, parens),
+                arguments);
+        });
     }
 
     private String arrayParensAfterSize(TypeMirror t) {
@@ -168,18 +159,16 @@ public class FrameworkStatements {
     private FrameworkStatement resolveEnum(final TypeElement element, final Object framework) {
         final ClassName enumType = ClassName.get(element);
 
-        return new FrameworkStatement() {
-            @Override
-            public void writeTo(FrameworkMethodBuilder builder) {
-                builder.assign("$N.forEnum($T.values())", ImmutableList.of(framework, enumType));
-            }
-        };
+        return builder -> builder.assign("$N.forEnum($T.values())",
+            ImmutableList.of(framework, enumType));
     }
 
     static Joiner argumentJoiner = Joiner.on(", ");
 
-    FrameworkStatement resolveGeneric(final String statementBase, final List<Object> argumentsBase,
-            final List<FrameworkStatement> statements) {
+    FrameworkStatement resolveGeneric(
+        final String statementBase, final List<Object> argumentsBase,
+        final List<FrameworkStatement> statements
+    ) {
         final List<String> typeStatements = new ArrayList<>();
 
         final ImmutableList.Builder<Object> outerArguments = ImmutableList.builder();
@@ -187,24 +176,17 @@ public class FrameworkStatements {
         outerArguments.addAll(argumentsBase);
 
         for (final FrameworkStatement a : statements) {
-            a.writeTo(new FrameworkMethodBuilder() {
-                @Override
-                public void assign(String statement, List<Object> arguments) {
-                    typeStatements.add(statement);
-                    outerArguments.addAll(arguments);
-                }
+            a.writeTo((statement, arguments) -> {
+                typeStatements.add(statement);
+                outerArguments.addAll(arguments);
             });
         }
 
-        final String statement = String.format("%s(%s)", statementBase, argumentJoiner.join(typeStatements));
+        final String statement =
+            String.format("%s(%s)", statementBase, argumentJoiner.join(typeStatements));
         final List<Object> arguments = outerArguments.build();
 
-        return new FrameworkStatement() {
-            @Override
-            public void writeTo(FrameworkMethodBuilder builder) {
-                builder.assign(statement, arguments);
-            }
-        };
+        return builder -> builder.assign(statement, arguments);
     }
 
     FrameworkStatement resolveCustomSerializer(final DeclaredType type, final Object framework) {
@@ -212,12 +194,7 @@ public class FrameworkStatements {
 
         final List<Object> arguments = ImmutableList.of(utils.serializerClassFor(type), framework);
 
-        return new FrameworkStatement() {
-            @Override
-            public void writeTo(FrameworkMethodBuilder builder) {
-                builder.assign(statement, arguments);
-            }
-        };
+        return builder -> builder.assign(statement, arguments);
     }
 
     private ParameterizedMatch findBestMatch(DeclaredType type) {
@@ -259,7 +236,8 @@ public class FrameworkStatements {
             statements.add(resolveStatement(typeArguments.next(), framework));
         }
 
-        return resolveGeneric(p.parameterized.statement, ImmutableList.of(framework), statements.build());
+        return resolveGeneric(p.parameterized.statement, ImmutableList.of(framework),
+            statements.build());
     }
 
     static class Parameterized implements Comparable<Parameterized> {
@@ -291,16 +269,6 @@ public class FrameworkStatements {
         @Override
         public int compareTo(ParameterizedMatch o) {
             return parameterized.compareTo(o.parameterized);
-        }
-    }
-
-    static class PrimitiveArrayStatement {
-        final TypeName type;
-        final String statement;
-
-        public PrimitiveArrayStatement(TypeName type, String statement) {
-            this.type = type;
-            this.statement = statement;
         }
     }
 }

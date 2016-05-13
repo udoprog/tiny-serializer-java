@@ -11,8 +11,9 @@ public class HexUtils {
     public static String toHex(byte[] value) {
         final StringBuilder b = new StringBuilder();
 
-        for (byte c : value)
+        for (byte c : value) {
             b.append(hex[(c >>> 4) & 0xf]).append(hex[c & 0xf]);
+        }
 
         return "0x" + b.toString();
     }
