@@ -5,7 +5,9 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
+import javax.annotation.Generated;
 
+@Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class Array_Serializer implements Serializer<Array> {
     final Serializer<boolean[]> s_BooleanArray;
     final Serializer<short[]> s_ShortArray;

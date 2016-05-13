@@ -5,7 +5,9 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
+import javax.annotation.Generated;
 
+@Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class Ordering_Serializer implements Serializer<Ordering> {
     final Serializer<String> s_String;
 

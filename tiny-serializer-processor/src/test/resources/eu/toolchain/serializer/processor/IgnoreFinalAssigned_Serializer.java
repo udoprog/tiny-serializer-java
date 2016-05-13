@@ -5,7 +5,9 @@ import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
+import javax.annotation.Generated;
 
+@Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class IgnoreFinalAssigned_Serializer implements Serializer<IgnoreFinalAssigned> {
     public IgnoreFinalAssigned_Serializer(final SerializerFramework framework) {
     }

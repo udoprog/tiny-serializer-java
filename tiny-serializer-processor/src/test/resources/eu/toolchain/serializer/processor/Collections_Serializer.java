@@ -12,7 +12,9 @@ import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import javax.annotation.Generated;
 
+@Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class Collections_Serializer implements Serializer<Collections> {
     final Serializer<List<Interface>> s_List;
     final Serializer<Map<String, Interface>> s_Map;

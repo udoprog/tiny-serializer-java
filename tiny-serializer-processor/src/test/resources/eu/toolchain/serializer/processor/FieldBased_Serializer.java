@@ -6,7 +6,9 @@ import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
 import java.util.Optional;
+import javax.annotation.Generated;
 
+@Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class FieldBased_Serializer implements Serializer<FieldBased> {
     final Serializer<Integer> count;
 

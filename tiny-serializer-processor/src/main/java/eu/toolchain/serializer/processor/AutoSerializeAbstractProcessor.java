@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Generated;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -12,6 +13,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 
 import com.google.common.collect.ImmutableList;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -41,6 +43,11 @@ public class AutoSerializeAbstractProcessor {
 
         return subTypes(element, packageName).map((subTypes) -> {
             final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
+
+            final AnnotationSpec generatedAnnotation = AnnotationSpec.builder(Generated.class).addMember("value", "$S", AutoSerializeProcessor.class.getCanonicalName()).build();
+
+            generated.addAnnotation(generatedAnnotation);
+
             final FieldSpec serializer = FieldSpec.builder(supertype, "serializer", Modifier.FINAL).build();
 
             generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);

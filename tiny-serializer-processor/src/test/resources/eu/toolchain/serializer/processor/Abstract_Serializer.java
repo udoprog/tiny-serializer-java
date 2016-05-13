@@ -7,7 +7,9 @@ import eu.toolchain.serializer.SerializerFramework;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Generated;
 
+@Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class Abstract_Serializer implements Serializer<Abstract> {
     final Serializer<Abstract> serializer;
 

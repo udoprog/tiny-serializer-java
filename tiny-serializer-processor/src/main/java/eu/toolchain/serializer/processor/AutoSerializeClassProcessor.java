@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Generated;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -13,6 +14,7 @@ import javax.lang.model.util.Types;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -62,6 +64,10 @@ public class AutoSerializeClassProcessor {
             final Optional<ValueTypeBuilder> builder = unverifiedBuilder.get();
 
             final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
+
+            final AnnotationSpec generatedAnnotation = AnnotationSpec.builder(Generated.class).addMember("value", "$S", AutoSerializeProcessor.class.getCanonicalName()).build();
+
+            generated.addAnnotation(generatedAnnotation);
 
             final FieldSpec count = FieldSpec
                     .builder(TypeName.get(utils.serializerFor(integerType.asType())), "count", Modifier.FINAL).build();
@@ -206,7 +212,7 @@ public class AutoSerializeClassProcessor {
                 b.beginControlFlow("if ($N.isPresent())", field.getVariableName());
 
                 b.addStatement("$N.serialize($N, $S)", name, buffer, field.getName());
- 
+
                 b.beginControlFlow("try (final $T w = $N.scope())", utils.serialWriter(), buffer);
                 b.addStatement("$N.serialize(w, $N)", field.getType().getFieldSpec(), field.getVariableName());
                 b.endControlFlow();
