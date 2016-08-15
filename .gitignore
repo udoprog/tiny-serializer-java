@@ -5,6 +5,7 @@ target
 .*.un~
 *~
 .*.swp
+*.iml
 .classpath
 .project
 .settings
