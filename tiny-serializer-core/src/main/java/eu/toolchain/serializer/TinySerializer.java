@@ -643,12 +643,19 @@ public class TinySerializer extends AbstractSerializerFramework {
             return this;
         }
 
-        public Builder collections(CollectionsProvider collections) {
-            if (collections == null) {
-                throw new NullPointerException("collections");
+
+        /**
+         * Set what string serializer to use.
+         *
+         * @param string String serializer to use.
+         * @return This builder.
+         */
+        public Builder string(Serializer<String> string) {
+            if (string == null) {
+                throw new NullPointerException("string");
             }
 
-            this.collections = collections;
+            this.string = string;
             return this;
         }
 
