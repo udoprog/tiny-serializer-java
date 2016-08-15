@@ -60,6 +60,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Optional.ofNullable;
@@ -439,7 +440,7 @@ public class TinySerializer extends AbstractSerializerFramework {
 
         private Serializer<byte[]> byteArray;
         private Serializer<char[]> charArray;
-        private Serializer<String> string;
+        private Function<Serializer<Integer>, Serializer<String>> string;
         private Serializer<Integer> stringSize;
 
         private Serializer<Character> fixedCharacter;
@@ -482,7 +483,7 @@ public class TinySerializer extends AbstractSerializerFramework {
          * The simpler is beneficial when you are inspecting traffic by eye, since it performs a
          * less esoteric encoding of the number.
          *
-         * @param useCompactVariableLength
+         * @param useSimplerVariableLength
          * @return This builder.
          * @see VarIntSerializer
          * @see CompactVarIntSerializer
@@ -599,7 +600,7 @@ public class TinySerializer extends AbstractSerializerFramework {
         /**
          * Set serializer to use for enum ordinal values.
          *
-         * @param subTypeId Serializer to use for enum ordinal values.
+         * @param enumOrdinal Serializer to use for enum ordinal values.
          * @return This builder.
          */
         public Builder enumOrdinal(Serializer<Integer> enumOrdinal) {
@@ -614,7 +615,7 @@ public class TinySerializer extends AbstractSerializerFramework {
         /**
          * Set serializer to use for string sizes.
          *
-         * @param subTypeId Serializer to use for string sizes.
+         * @param stringSize Serializer to use for string sizes.
          * @return This builder.
          */
         public Builder stringSize(Serializer<Integer> stringSize) {
@@ -643,14 +644,13 @@ public class TinySerializer extends AbstractSerializerFramework {
             return this;
         }
 
-
         /**
          * Set what string serializer to use.
          *
          * @param string String serializer to use.
          * @return This builder.
          */
-        public Builder string(Serializer<String> string) {
+        public Builder string(Function<Serializer<Integer>, Serializer<String>> string) {
             if (string == null) {
                 throw new NullPointerException("string");
             }
@@ -665,7 +665,6 @@ public class TinySerializer extends AbstractSerializerFramework {
          * <p>
          * The builder may be modified after an invocation to build.
          *
-         * @return
          * @throws IllegalStateException If the configuration is invalid, or the environment does
          * not match the specified configuration.
          * @see #useImmutableCollections
@@ -695,8 +694,9 @@ public class TinySerializer extends AbstractSerializerFramework {
             final Serializer<char[]> charArray =
                 ofNullable(this.charArray).orElseGet(defaultCharArray(size));
 
-            final Serializer<String> string = ofNullable(this.string).orElseGet(
-                defaultString(ofNullable(this.stringSize).orElse(size)));
+            final Serializer<String> string = ofNullable(this.string)
+                .orElse(StringSerializer::new)
+                .apply(ofNullable(this.stringSize).orElse(size));
 
             final Serializer<Byte> fixedByte =
                 ofNullable(this.fixedByte).orElseGet(ByteSerializer::new);
@@ -736,10 +736,10 @@ public class TinySerializer extends AbstractSerializerFramework {
 
         private Supplier<SharedPool> buildPool() {
             if (immediateSharedPool) {
-                return () -> new ImmediateSharedPool();
+                return ImmediateSharedPool::new;
             }
 
-            return () -> new ContinuousSharedPool();
+            return ContinuousSharedPool::new;
         }
 
         private Supplier<CollectionsProvider> defaultCollections(final Serializer<Integer> size) {
@@ -767,10 +767,6 @@ public class TinySerializer extends AbstractSerializerFramework {
 
         private Supplier<? extends Serializer<char[]>> defaultCharArray(Serializer<Integer> size) {
             return () -> new CharacterArraySerializer(size);
-        }
-
-        private Supplier<Serializer<String>> defaultString(Serializer<Integer> size) {
-            return () -> new StringSerializer(size);
         }
 
         private Serializer<Integer> defaultVarInt() {
