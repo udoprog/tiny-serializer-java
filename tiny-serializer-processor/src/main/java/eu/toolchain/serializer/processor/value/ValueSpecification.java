@@ -5,6 +5,7 @@ import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
 import eu.toolchain.serializer.processor.unverified.Unverified;
+import javax.lang.model.type.TypeKind;
 import lombok.Data;
 
 import javax.lang.model.element.Element;
@@ -60,7 +61,7 @@ public class ValueSpecification {
         final String accessor = field
             .map(FieldMirror::getAccessor)
             .filter(a -> !a.trim().isEmpty())
-            .orElseGet(getDefaultAccessor(fieldName, useGetter));
+            .orElseGet(getDefaultAccessor(valueType, fieldName, useGetter));
         final Optional<String> providerName =
             field.map(FieldMirror::getProviderName).filter(p -> !p.trim().isEmpty());
         final Optional<Integer> constructorOrder =
@@ -107,10 +108,16 @@ public class ValueSpecification {
         return false;
     }
 
-    static Supplier<String> getDefaultAccessor(final String fieldName, final boolean useGetter) {
+    static Supplier<String> getDefaultAccessor(
+        final TypeMirror fieldType, final String fieldName, final boolean useGetter
+    ) {
         return () -> {
             if (!useGetter) {
                 return fieldName;
+            }
+
+            if (fieldType.getKind() == TypeKind.BOOLEAN) {
+                return "is" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, fieldName);
             }
 
             return "get" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, fieldName);

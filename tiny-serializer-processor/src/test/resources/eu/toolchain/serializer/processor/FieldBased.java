@@ -20,7 +20,7 @@ public class FieldBased {
         return string;
     }
 
-    public boolean getHello() {
+    public boolean isHello() {
         return hello;
     }
 

@@ -40,7 +40,7 @@ public final class FieldBased_Serializer implements Serializer<FieldBased> {
         name.serialize(buffer, "hello");
 
         try (final SerialWriter w = buffer.scope()) {
-            s_Boolean.serialize(w, value.getHello());
+            s_Boolean.serialize(w, value.isHello());
         }
 
         final Optional<String> v_optional = value.getOptional();
