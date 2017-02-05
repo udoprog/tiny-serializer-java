@@ -11,3 +11,5 @@ target
 .settings
 bin
 pom.xml.versionsBackup
+!.editorconfig
+!.gitignore
