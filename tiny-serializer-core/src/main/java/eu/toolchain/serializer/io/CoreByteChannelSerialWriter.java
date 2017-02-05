@@ -2,7 +2,6 @@ package eu.toolchain.serializer.io;
 
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
@@ -21,15 +20,27 @@ public class CoreByteChannelSerialWriter extends AbstractSerialWriter {
     }
 
     @Override
+    public void write(final ByteBuffer buffer) throws IOException {
+        while (buffer.remaining() > 0) {
+            channel.write(buffer);
+        }
+    }
+
+    @Override
     public void write(byte b) throws IOException {
+        one.reset();
         one.put(b);
         one.flip();
-        channel.write(one);
-        one.flip();
+        write(one);
     }
 
     @Override
     public void write(byte[] bytes, int offset, int length) throws IOException {
-        channel.write(ByteBuffer.wrap(bytes, offset, length));
+        write(ByteBuffer.wrap(bytes, offset, length));
+    }
+
+    @Override
+    public void close() throws IOException {
+        channel.close();
     }
 }
