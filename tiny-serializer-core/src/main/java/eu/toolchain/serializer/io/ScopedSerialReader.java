@@ -3,14 +3,13 @@ package eu.toolchain.serializer.io;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
-
 import java.io.IOException;
 
 class ScopedSerialReader extends AbstractSerialReader {
     private final SerialReader parent;
     private final int size;
 
-    private int p = 0;
+    private int position = 0;
 
     public ScopedSerialReader(
         final SharedPool pool, final Serializer<Integer> scopeSize, final SerialReader parent,
@@ -19,6 +18,11 @@ class ScopedSerialReader extends AbstractSerialReader {
         super(pool, scopeSize);
         this.parent = parent;
         this.size = size;
+    }
+
+    @Override
+    public long position() {
+        return parent.position() + position;
     }
 
     @Override
@@ -40,12 +44,12 @@ class ScopedSerialReader extends AbstractSerialReader {
     }
 
     private void retain(int requested) throws IOException {
-        if (p + requested > size) {
+        if (position + requested > size) {
             throw new IOException(
-                "end-of-scope reached (p: " + p + ", size: " + size + ", requested: " + requested +
-                    ")");
+                "end-of-scope reached (p: " + position + ", size: " + size + ", requested: " +
+                    requested + ")");
         }
 
-        p += requested;
+        position += requested;
     }
 }

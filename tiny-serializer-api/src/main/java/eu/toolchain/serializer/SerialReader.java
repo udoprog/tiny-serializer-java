@@ -6,6 +6,11 @@ import java.nio.ByteBuffer;
 
 public interface SerialReader extends Closeable {
     /**
+     * Get the current position that is being read.
+     */
+    long position();
+
+    /**
      * Read a single byte.
      */
     byte read() throws IOException;

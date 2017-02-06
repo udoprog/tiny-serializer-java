@@ -2,7 +2,6 @@ package eu.toolchain.serializer.io;
 
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -10,6 +9,13 @@ import java.nio.ByteBuffer;
 
 public class CoreByteBufferSerialWriter extends AbstractSerialWriter {
     private final ByteBuffer buffer;
+
+    long position = 0L;
+
+    public CoreByteBufferSerialWriter(final ByteBuffer buffer) {
+        super();
+        this.buffer = buffer;
+    }
 
     public CoreByteBufferSerialWriter(
         final SharedPool pool, final Serializer<Integer> scopeSize, final ByteBuffer buffer
@@ -19,21 +25,32 @@ public class CoreByteBufferSerialWriter extends AbstractSerialWriter {
     }
 
     @Override
+    public long position() {
+        return position;
+    }
+
+    @Override
+    public void write(final ByteBuffer buffer) throws IOException {
+        final int length = buffer.remaining();
+
+        try {
+            this.buffer.put(buffer);
+        } catch (final BufferOverflowException e) {
+            throw new EOFException();
+        }
+
+        position += length;
+    }
+
+    @Override
     public void write(byte b) throws IOException {
         try {
             buffer.put(b);
         } catch (final BufferOverflowException e) {
             throw new EOFException();
         }
-    }
 
-    @Override
-    public void write(byte[] bytes) throws IOException {
-        try {
-            buffer.put(bytes);
-        } catch (final BufferOverflowException e) {
-            throw new EOFException();
-        }
+        position += 1;
     }
 
     @Override
@@ -43,6 +60,8 @@ public class CoreByteBufferSerialWriter extends AbstractSerialWriter {
         } catch (final BufferOverflowException e) {
             throw new EOFException();
         }
+
+        position += length;
     }
 
     @Override

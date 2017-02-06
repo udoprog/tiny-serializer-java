@@ -2,14 +2,13 @@ package eu.toolchain.serializer.io;
 
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
-
 import java.io.EOFException;
 import java.io.IOException;
 
 public class CoreByteArraySerialReader extends AbstractSerialReader {
     private final byte[] source;
 
-    private int p = 0;
+    private int position = 0;
 
     public CoreByteArraySerialReader(final byte[] source) {
         super();
@@ -24,19 +23,24 @@ public class CoreByteArraySerialReader extends AbstractSerialReader {
     }
 
     @Override
+    public long position() {
+        return (long) position;
+    }
+
+    @Override
     public byte read() throws IOException {
-        if (p + 1 > source.length) {
+        if (position + 1 > source.length) {
             throw new EOFException();
         }
 
-        final byte b = source[p];
-        p += 1;
+        final byte b = source[position];
+        position += 1;
         return b;
     }
 
     @Override
-    public void read(byte[] b, int offset, int length) throws IOException {
-        if (offset < 0 || length < 0 || offset + length > b.length) {
+    public void read(byte[] bytes, int offset, int length) throws IOException {
+        if (offset < 0 || length < 0 || offset + length > bytes.length) {
             throw new IndexOutOfBoundsException();
         }
 
@@ -44,20 +48,20 @@ public class CoreByteArraySerialReader extends AbstractSerialReader {
             return;
         }
 
-        if (p + length > source.length) {
+        if (position + length > source.length) {
             throw new EOFException();
         }
 
-        System.arraycopy(source, p, b, offset, length);
-        p += length;
+        System.arraycopy(source, position, bytes, offset, length);
+        position += length;
     }
 
     @Override
     public void skip(int size) throws IOException {
-        if (p + size > source.length) {
+        if (position + size > source.length) {
             throw new EOFException();
         }
 
-        p += size;
+        position += size;
     }
 }

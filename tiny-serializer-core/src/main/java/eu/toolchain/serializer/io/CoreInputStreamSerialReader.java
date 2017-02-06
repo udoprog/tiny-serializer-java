@@ -10,6 +10,8 @@ import java.io.InputStream;
 public class CoreInputStreamSerialReader extends AbstractSerialReader {
     private final InputStream input;
 
+    private long position = 0L;
+
     public CoreInputStreamSerialReader(final InputStream input) {
         super();
         this.input = input;
@@ -23,6 +25,11 @@ public class CoreInputStreamSerialReader extends AbstractSerialReader {
     }
 
     @Override
+    public long position() {
+        return position;
+    }
+
+    @Override
     public byte read() throws IOException {
         final int b = input.read();
 
@@ -30,6 +37,7 @@ public class CoreInputStreamSerialReader extends AbstractSerialReader {
             throw new EOFException();
         }
 
+        position += 1;
         return (byte) b;
     }
 
@@ -46,6 +54,8 @@ public class CoreInputStreamSerialReader extends AbstractSerialReader {
 
             index += r;
         }
+
+        position += length;
     }
 
     @Override
@@ -61,6 +71,8 @@ public class CoreInputStreamSerialReader extends AbstractSerialReader {
 
             index += r;
         }
+
+        position += length;
     }
 
     @Override

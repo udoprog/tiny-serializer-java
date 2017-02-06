@@ -3,13 +3,14 @@ package eu.toolchain.serializer.io;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
 import eu.toolchain.serializer.StreamSerialWriter;
-
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class CoreOutputStreamSerialWriter extends AbstractSerialWriter
     implements StreamSerialWriter {
     private final OutputStream output;
+
+    private long position = 0L;
 
     public CoreOutputStreamSerialWriter(final OutputStream output) {
         super();
@@ -24,13 +25,20 @@ public class CoreOutputStreamSerialWriter extends AbstractSerialWriter
     }
 
     @Override
+    public long position() {
+        return position;
+    }
+
+    @Override
     public void write(byte b) throws IOException {
         output.write(b & 0xff);
+        position += 1;
     }
 
     @Override
     public void write(byte[] bytes, int offset, int length) throws IOException {
         output.write(bytes, offset, length);
+        position += length;
     }
 
     @Override
