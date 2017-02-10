@@ -12,22 +12,20 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
 import eu.toolchain.serializer.processor.value.Value;
 import eu.toolchain.serializer.processor.value.ValueSet;
 import eu.toolchain.serializer.processor.value.ValueType;
 import eu.toolchain.serializer.processor.value.ValueTypeBuilder;
-import lombok.RequiredArgsConstructor;
-
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Generated;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AutoSerializeClassProcessor {
@@ -38,23 +36,19 @@ public class AutoSerializeClassProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    public Unverified<JavaFile> process(
+    public JavaFile process(
         final TypeElement element, final AutoSerializeMirror autoSerialize
     ) {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
         final Set<ElementKind> kinds = getKinds(element);
 
-        final Unverified<Optional<ValueTypeBuilder>> unverifiedBuilder =
+        final Optional<ValueTypeBuilder> builder =
             ValueTypeBuilder.build(utils, element, autoSerialize);
-        final Unverified<ValueSet> unverifiedFields =
-            ValueSet.build(utils, element, kinds, autoSerialize);
+        final ValueSet values = ValueSet.build(utils, element, kinds, autoSerialize);
 
         final ClassName elementType = (ClassName) TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
         final String serializerName = utils.serializerName(element);
-
-        final Unverified<?> combineDifferent =
-            Unverified.combineDifferent(unverifiedFields, unverifiedBuilder);
 
         final boolean fieldBased = autoSerialize.isFieldBased();
         final boolean failOnMissing = autoSerialize.isFailOnMissing();
@@ -62,59 +56,52 @@ public class AutoSerializeClassProcessor {
         final TypeElement stringType = elements.getTypeElement(String.class.getCanonicalName());
         final TypeElement integerType = elements.getTypeElement(Integer.class.getCanonicalName());
 
-        return combineDifferent.map((o) -> {
-            final ValueSet values = unverifiedFields.get();
-            final Optional<ValueTypeBuilder> builder = unverifiedBuilder.get();
+        final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
 
-            final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
+        final AnnotationSpec generatedAnnotation = AnnotationSpec
+            .builder(Generated.class)
+            .addMember("value", "$S", AutoSerializeProcessor.class.getCanonicalName())
+            .build();
 
-            final AnnotationSpec generatedAnnotation = AnnotationSpec
-                .builder(Generated.class)
-                .addMember("value", "$S", AutoSerializeProcessor.class.getCanonicalName())
-                .build();
+        generated.addAnnotation(generatedAnnotation);
 
-            generated.addAnnotation(generatedAnnotation);
+        final FieldSpec count = FieldSpec
+            .builder(TypeName.get(utils.serializerFor(integerType.asType())), "count",
+                Modifier.FINAL)
+            .build();
 
-            final FieldSpec count = FieldSpec
-                .builder(TypeName.get(utils.serializerFor(integerType.asType())), "count",
-                    Modifier.FINAL)
-                .build();
+        final FieldSpec name = FieldSpec
+            .builder(TypeName.get(utils.serializerFor(stringType.asType())), "name", Modifier.FINAL)
+            .build();
 
-            final FieldSpec name = FieldSpec
-                .builder(TypeName.get(utils.serializerFor(stringType.asType())), "name",
-                    Modifier.FINAL)
-                .build();
+        if (fieldBased) {
+            generated.addField(count);
+            generated.addField(name);
+        }
 
-            if (fieldBased) {
-                generated.addField(count);
-                generated.addField(name);
-            }
+        for (final ValueType t : values.getTypes()) {
+            generated.addField(t.getFieldSpec());
+        }
 
-            for (final ValueType t : values.getTypes()) {
-                generated.addField(t.getFieldSpec());
-            }
+        generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+        generated.addSuperinterface(supertype);
 
-            generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
-            generated.addSuperinterface(supertype);
+        if (fieldBased) {
+            generated.addMethod(fieldConstructor(values, count, name));
+            generated.addMethod(fieldSerializeMethod(elementType, values, count, name));
+            generated.addMethod(
+                fieldDeserializeMethod(elementType, values, builder, count, name, failOnMissing));
+        } else {
+            generated.addMethod(serialConstructor(values));
+            generated.addMethod(serialSerializeMethod(elementType, values));
+            generated.addMethod(serialDeserializeMethod(elementType, values, builder));
+        }
 
-            if (fieldBased) {
-                generated.addMethod(fieldConstructor(values, count, name));
-                generated.addMethod(fieldSerializeMethod(elementType, values, count, name));
-                generated.addMethod(
-                    fieldDeserializeMethod(elementType, values, builder, count, name,
-                        failOnMissing));
-            } else {
-                generated.addMethod(serialConstructor(values));
-                generated.addMethod(serialSerializeMethod(elementType, values));
-                generated.addMethod(serialDeserializeMethod(elementType, values, builder));
-            }
-
-            return JavaFile
-                .builder(packageName, generated.build())
-                .skipJavaLangImports(true)
-                .indent("    ")
-                .build();
-        });
+        return JavaFile
+            .builder(packageName, generated.build())
+            .skipJavaLangImports(true)
+            .indent("    ")
+            .build();
     }
 
     /**

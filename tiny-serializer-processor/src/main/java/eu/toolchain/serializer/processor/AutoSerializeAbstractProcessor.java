@@ -1,5 +1,7 @@
 package eu.toolchain.serializer.processor;
 
+import static eu.toolchain.serializer.processor.Exceptions.brokenElement;
+
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -11,20 +13,18 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
 import eu.toolchain.serializer.processor.value.ValueSubType;
-import lombok.RequiredArgsConstructor;
-
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javax.annotation.Generated;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AutoSerializeAbstractProcessor {
@@ -32,7 +32,7 @@ public class AutoSerializeAbstractProcessor {
     final FrameworkStatements statements;
     final AutoSerializeUtils utils;
 
-    public Unverified<JavaFile> process(
+    public JavaFile process(
         final TypeElement element, final AutoSerializeMirror autoSerialize
     ) {
         final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
@@ -41,34 +41,34 @@ public class AutoSerializeAbstractProcessor {
         final TypeName elementType = TypeName.get(element.asType());
         final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
 
-        return subTypes(element, packageName).map((subTypes) -> {
-            final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
+        final List<ValueSubType> subTypes = subTypes(element, packageName);
 
-            final AnnotationSpec generatedAnnotation = AnnotationSpec
-                .builder(Generated.class)
-                .addMember("value", "$S", AutoSerializeProcessor.class.getCanonicalName())
-                .build();
+        final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
 
-            generated.addAnnotation(generatedAnnotation);
+        final AnnotationSpec generatedAnnotation = AnnotationSpec
+            .builder(Generated.class)
+            .addMember("value", "$S", AutoSerializeProcessor.class.getCanonicalName())
+            .build();
 
-            final FieldSpec serializer =
-                FieldSpec.builder(supertype, "serializer", Modifier.FINAL).build();
+        generated.addAnnotation(generatedAnnotation);
 
-            generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
-            generated.addSuperinterface(supertype);
+        final FieldSpec serializer =
+            FieldSpec.builder(supertype, "serializer", Modifier.FINAL).build();
 
-            generated.addField(serializer);
+        generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+        generated.addSuperinterface(supertype);
 
-            generated.addMethod(constructor(elementType, serializer, subTypes));
-            generated.addMethod(serialize(elementType, serializer));
-            generated.addMethod(derialize(elementType, serializer));
+        generated.addField(serializer);
 
-            return JavaFile
-                .builder(packageName, generated.build())
-                .skipJavaLangImports(true)
-                .indent("    ")
-                .build();
-        });
+        generated.addMethod(constructor(elementType, serializer, subTypes));
+        generated.addMethod(serialize(elementType, serializer));
+        generated.addMethod(derialize(elementType, serializer));
+
+        return JavaFile
+            .builder(packageName, generated.build())
+            .skipJavaLangImports(true)
+            .indent("    ")
+            .build();
     }
 
     MethodSpec constructor(
@@ -120,35 +120,30 @@ public class AutoSerializeAbstractProcessor {
             .build();
     }
 
-    Unverified<List<ValueSubType>> subTypes(Element element, final String defaultPackageName) {
-        return utils.subTypes(element).map((unverifiedSubTypes) -> {
-            return unverifiedSubTypes.transform((subTypes) -> {
-                final Set<Short> seenIds = new HashSet<>();
+    List<ValueSubType> subTypes(Element element, final String defaultPackageName) {
+        return utils.subTypes(element).map(subTypes -> {
+            final Set<Short> seenIds = new HashSet<>();
 
-                int offset = 0;
-                final ShortIterator index = new ShortIterator();
+            int offset = 0;
+            final ShortIterator index = new ShortIterator();
 
-                final ImmutableList.Builder<Unverified<ValueSubType>> results =
-                    ImmutableList.builder();
+            final ImmutableList.Builder<ValueSubType> results = ImmutableList.builder();
 
-                for (final SubTypeMirror s : subTypes.getSubTypes()) {
-                    final DeclaredType type = (DeclaredType) s.getValue().get();
+            for (final SubTypeMirror s : subTypes.getSubTypes()) {
+                final DeclaredType type = (DeclaredType) s.getValue().get();
+                final short id = s.getId().orElseGet(index::next);
 
-                    final short id = s.getId().orElseGet(index::next);
-
-                    if (!seenIds.add(id)) {
-                        results.add(Unverified.brokenElement(
-                            String.format("Conflicting subtype id (%d) defined for definition #%d",
-                                id, offset), element));
-                        continue;
-                    }
-
-                    results.add(Unverified.verified(new ValueSubType(type, id)));
-                    offset++;
+                if (!seenIds.add(id)) {
+                    throw brokenElement(
+                        String.format("Conflicting subtype id (%d) defined for definition #%d", id,
+                            offset), element);
                 }
 
-                return Unverified.combine(results.build());
-            });
-        }).orElse(Unverified.verified(ImmutableList.of()));
+                results.add(new ValueSubType(type, id));
+                offset++;
+            }
+
+            return results.build();
+        }).orElseGet(ImmutableList::of);
     }
 }

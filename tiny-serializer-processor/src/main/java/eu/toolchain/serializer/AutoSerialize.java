@@ -176,6 +176,11 @@ public @interface AutoSerialize {
         String providerName() default "";
     }
 
+    /**
+     * Indicates that the annotated field should be ignored.
+     *
+     * This means that the value of the field must also be provided.
+     */
     @Target({ElementType.FIELD, ElementType.METHOD})
     @Retention(RetentionPolicy.SOURCE)
     @interface Ignore {

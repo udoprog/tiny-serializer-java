@@ -21,9 +21,12 @@ import eu.toolchain.serializer.processor.annotation.FieldMirror;
 import eu.toolchain.serializer.processor.annotation.IgnoreMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypesMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.RequiredArgsConstructor;
-
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Supplier;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -38,12 +41,7 @@ import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.function.Supplier;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AutoSerializeUtils {
@@ -202,17 +200,17 @@ public class AutoSerializeUtils {
         return Optional.empty();
     }
 
-    public Optional<Unverified<AutoSerializeMirror>> autoSerialize(Element element) {
+    public Optional<AutoSerializeMirror> autoSerialize(Element element) {
         return annotation(element, AUTOSERIALIZE).map(
             (a) -> AutoSerializeMirror.getFor(this, element, a));
     }
 
-    public Optional<Unverified<SubTypeMirror>> subType(Element element) {
+    public Optional<SubTypeMirror> subType(Element element) {
         return annotation(element, AUTOSERIALIZE_SUBTYPE).map(
             (a) -> SubTypeMirror.getFor(this, element, a));
     }
 
-    public Optional<Unverified<SubTypesMirror>> subTypes(Element element) {
+    public Optional<SubTypesMirror> subTypes(Element element) {
         return annotation(element, AUTOSERIALIZE_SUBTYPES).map(
             (a) -> SubTypesMirror.getFor(this, element, a));
     }
@@ -222,7 +220,7 @@ public class AutoSerializeUtils {
             (a) -> FieldMirror.getFor(this, element, a));
     }
 
-    public Optional<Unverified<BuilderMirror>> builder(Element element) {
+    public Optional<BuilderMirror> builder(Element element) {
         return annotation(element, AUTOSERIALIZE_BUILDER).map(
             (a) -> BuilderMirror.getFor(this, element, a));
     }

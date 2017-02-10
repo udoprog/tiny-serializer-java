@@ -1,13 +1,11 @@
 package eu.toolchain.serializer.processor.annotation;
 
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.Data;
-
+import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
-import java.util.Optional;
+import lombok.Data;
 
 @Data
 public class BuilderMirror {
@@ -19,7 +17,7 @@ public class BuilderMirror {
     private final Optional<AnnotationValues.Value<TypeMirror>> type;
     private final String methodName;
 
-    public static Unverified<BuilderMirror> getFor(
+    public static BuilderMirror getFor(
         final AutoSerializeUtils utils, final Element element, final AnnotationMirror a
     ) {
         final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
@@ -29,16 +27,13 @@ public class BuilderMirror {
         final boolean useConstructor = values.getBoolean("useConstructor").get();
         final String methodName = values.getString("methodName").get();
 
-        final Unverified<AnnotationValues.Value<TypeMirror>> unverifiedType =
-            values.getTypeMirror("type");
+        final AnnotationValues.Value<TypeMirror> type = values.getTypeMirror("type");
 
-        return unverifiedType.map((type) -> {
-            final Optional<AnnotationValues.Value<TypeMirror>> typeMirror = Optional
-                .of(type)
-                .filter((t) -> !t.get().toString().equals(AutoSerializeUtils.DEFAULT_BUILDER_TYPE));
-            return new BuilderMirror(a, useSetter, useMethod, useConstructor, typeMirror,
-                methodName);
-        });
+        final Optional<AnnotationValues.Value<TypeMirror>> typeMirror = Optional
+            .of(type)
+            .filter((t) -> !t.get().toString().equals(AutoSerializeUtils.DEFAULT_BUILDER_TYPE));
+
+        return new BuilderMirror(a, useSetter, useMethod, useConstructor, typeMirror, methodName);
     }
 
     public boolean shouldUseConstructor() {

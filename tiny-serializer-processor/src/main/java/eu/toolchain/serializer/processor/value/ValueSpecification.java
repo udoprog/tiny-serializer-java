@@ -1,19 +1,20 @@
 package eu.toolchain.serializer.processor.value;
 
+import static eu.toolchain.serializer.processor.Exceptions.brokenAnnotation;
+import static eu.toolchain.serializer.processor.Exceptions.brokenElement;
+
 import com.google.common.base.CaseFormat;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import javax.lang.model.type.TypeKind;
-import lombok.Data;
-
+import java.util.Optional;
+import java.util.function.Supplier;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import java.util.Optional;
-import java.util.function.Supplier;
+import lombok.Data;
 
 @Data
 public class ValueSpecification {
@@ -21,13 +22,14 @@ public class ValueSpecification {
     private final TypeMirror valueType;
     private final String valueName;
     private final boolean provided;
+    private final boolean ignored;
     private final boolean optional;
     private final String accessor;
     private final Optional<Integer> constructorOrder;
     private final Optional<Integer> id;
     private final Optional<String> providerName;
 
-    public static Unverified<ValueSpecification> build(
+    public static ValueSpecification build(
         final AutoSerializeUtils utils, final Element parent, final Element element,
         boolean defaultUseGetter
     ) {
@@ -50,6 +52,7 @@ public class ValueSpecification {
         }
 
         final boolean provided = field.map(FieldMirror::isProvided).orElse(false);
+        final boolean ignored = utils.ignore(element).isPresent();
         final boolean optional = utils.isOptional(valueType);
 
         final String fieldName = field
@@ -68,18 +71,18 @@ public class ValueSpecification {
             field.map(FieldMirror::getConstructorOrder).filter(o -> o >= 0);
         final Optional<Integer> id = field.map(FieldMirror::getId).filter(o -> o >= 0);
 
-        if (!accessorMethodExists(parent, accessor, TypeName.get(valueType))) {
-            final String message =
-                String.format(String.format("Missing accessor %s %s()", valueType, accessor));
-            return field
-                .map((f) -> Unverified.<ValueSpecification>brokenAnnotation(message, element,
-                    f.getAnnotation()))
-                .orElseGet(() -> Unverified.brokenElement(message, element));
+        if (!ignored) {
+            if (!accessorMethodExists(parent, accessor, TypeName.get(valueType))) {
+                final String message = String.format("Missing accessor %s %s()", valueType, accessor);
+
+                throw field
+                    .map(f -> brokenAnnotation(message, element, f.getAnnotation()))
+                    .orElseGet(() -> brokenElement(message, element));
+            }
         }
 
-        return Unverified.verified(
-            new ValueSpecification(element, valueType, name, provided, optional, accessor,
-                constructorOrder, id, providerName));
+        return new ValueSpecification(element, valueType, name, provided, ignored, optional,
+            accessor, constructorOrder, id, providerName);
     }
 
     static boolean accessorMethodExists(

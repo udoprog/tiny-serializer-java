@@ -1,13 +1,16 @@
 package eu.toolchain.serializer.processor;
 
+import static eu.toolchain.serializer.processor.Exceptions.brokenElement;
+
 import com.google.auto.service.AutoService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.JavaFile;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.Data;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -22,10 +25,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import lombok.Data;
 
 @AutoService(Processor.class)
 public class AutoSerializeProcessor extends AbstractProcessor {
@@ -74,7 +74,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
         if (env.processingOver()) {
             for (final DeferredProcessing d : deferred) {
-                d.getBroken().get().writeError(messager);
+                d.getBroken().accept(messager);
             }
 
             return false;
@@ -94,25 +94,32 @@ public class AutoSerializeProcessor extends AbstractProcessor {
                 continue;
             }
 
-            elementsToProcess.add(new DeferredProcessing((TypeElement) e, Optional.empty()));
+            elementsToProcess.add(new DeferredProcessing((TypeElement) e, messager -> {
+            }));
         }
 
-        final List<Processed> processed = processElements(elementsToProcess.build());
+        final List<Processed> results = new ArrayList<>();
 
-        for (final Processed p : processed) {
-            final Unverified<JavaFile> serializer = p.getFile();
-
-            if (!serializer.isVerified()) {
-                deferred.add(p.processing.withBroken(serializer));
-                continue;
-            }
-
+        for (final DeferredProcessing p : elementsToProcess.build()) {
             try {
-                serializer.get().writeTo(filer);
+                final JavaFile file = processElement(p.getElement());
+                results.add(new Processed(file, p.getElement()));
+            } catch (final BrokenException broken) {
+                deferred.add(p.withBroken(broken.getWriter()));
             } catch (final Exception e) {
                 messager.printMessage(Diagnostic.Kind.ERROR,
-                    "Failed to write:\n" + Throwables.getStackTraceAsString(e),
-                    p.getProcessing().getElement());
+                    "Failed to process:\n" + Throwables.getStackTraceAsString(e), p.getElement());
+            }
+        }
+
+        for (final Processed p : results) {
+            final JavaFile file = p.getFile();
+
+            try {
+                file.writeTo(filer);
+            } catch (final Exception e) {
+                messager.printMessage(Diagnostic.Kind.ERROR,
+                    "Failed to write:\n" + Throwables.getStackTraceAsString(e), p.getElement());
             }
         }
 
@@ -129,52 +136,38 @@ public class AutoSerializeProcessor extends AbstractProcessor {
         return SourceVersion.latestSupported();
     }
 
-    List<Processed> processElements(Set<DeferredProcessing> elements) {
-        final List<Processed> processed = new ArrayList<>();
-
-        for (final DeferredProcessing processing : elements) {
-            final Unverified<JavaFile> result = processElement(processing.getElement());
-            processed.add(new Processed(result, processing));
-        }
-
-        return processed;
-    }
-
-    Unverified<JavaFile> processElement(TypeElement element) {
-        final Optional<Unverified<AutoSerializeMirror>> annotation = utils.autoSerialize(element);
+    JavaFile processElement(TypeElement element) {
+        final Optional<AutoSerializeMirror> annotation = utils.autoSerialize(element);
 
         if (!annotation.isPresent()) {
-            return Unverified.brokenElement("@AutoSerialize annotation not present", element);
+            throw brokenElement("@AutoSerialize annotation not present", element);
         }
 
-        final Unverified<AutoSerializeMirror> unverifiedAutoSerialize = annotation.get();
+        final AutoSerializeMirror autoSerialize = annotation.get();
 
-        return unverifiedAutoSerialize.<JavaFile>transform((autoSerialize) -> {
-            if (element.getKind() == ElementKind.INTERFACE) {
-                if (autoSerialize.getBuilder().isPresent()) {
-                    return classProcessor.process(element, autoSerialize);
-                } else {
-                    return abstractProcessor.process(element, autoSerialize);
-                }
-            }
-
-            if (element.getKind() == ElementKind.CLASS) {
-                if (element.getModifiers().contains(Modifier.ABSTRACT) &&
-                    !autoSerialize.getBuilder().isPresent()) {
-                    return abstractProcessor.process(element, autoSerialize);
-                }
-
+        if (element.getKind() == ElementKind.INTERFACE) {
+            if (autoSerialize.getBuilder().isPresent()) {
                 return classProcessor.process(element, autoSerialize);
+            } else {
+                return abstractProcessor.process(element, autoSerialize);
+            }
+        }
+
+        if (element.getKind() == ElementKind.CLASS) {
+            if (element.getModifiers().contains(Modifier.ABSTRACT) &&
+                !autoSerialize.getBuilder().isPresent()) {
+                return abstractProcessor.process(element, autoSerialize);
             }
 
-            return Unverified.brokenElement("Unsupported type, expected class or interface",
-                element);
-        });
+            return classProcessor.process(element, autoSerialize);
+        }
+
+        throw brokenElement("Unsupported type, expected class or interface", element);
     }
 
     @Data
     public static class Processed {
-        final Unverified<JavaFile> file;
-        final DeferredProcessing processing;
+        private final JavaFile file;
+        private final Element element;
     }
 }

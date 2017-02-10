@@ -1,18 +1,18 @@
 package eu.toolchain.serializer.processor.annotation;
 
-import com.google.common.collect.ImmutableList;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import static eu.toolchain.serializer.processor.Exceptions.brokenValue;
 
+import com.google.common.collect.ImmutableList;
+import java.util.List;
+import java.util.Map;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
-import java.util.List;
-import java.util.Map;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class AnnotationValues {
@@ -40,7 +40,7 @@ public class AnnotationValues {
         return new Value<>(annotationValue, toBoolean(annotationValue));
     }
 
-    public Unverified<Value<TypeMirror>> getTypeMirror(final String key) {
+    public Value<TypeMirror> getTypeMirror(final String key) {
         final AnnotationValue annotationValue = values.get(key);
 
         if (annotationValue == null) {
@@ -50,16 +50,14 @@ public class AnnotationValues {
         final TypeMirror typeMirror = toTypeMirror(annotationValue);
 
         if (typeMirror == null) {
-            return Unverified.brokenAnnotationValue("Could not resolve type", element, annotation,
-                annotationValue);
+            throw brokenValue("Could not resolve type", element, annotation, annotationValue);
         }
 
         if (typeMirror instanceof ErrorType) {
-            return Unverified.brokenAnnotationValue("Could not resolve type", element, annotation,
-                annotationValue);
+            throw brokenValue("Could not resolve type", element, annotation, annotationValue);
         }
 
-        return Unverified.verified(new Value<>(annotationValue, typeMirror));
+        return new Value<>(annotationValue, typeMirror);
     }
 
     public Value<String> getString(final String key) {

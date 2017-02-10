@@ -4,69 +4,59 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
 public class ValueSet {
-    final static Ordering<Optional<Integer>> integerOrdering =
-        Ordering.from(new Comparator<Optional<Integer>>() {
-            @Override
-            public int compare(Optional<Integer> a, Optional<Integer> b) {
-                if (a.isPresent() && !b.isPresent()) {
-                    return -1;
-                }
+    final static Ordering<Optional<Integer>> integerOrdering = Ordering.from((a, b) -> {
+        if (a.isPresent() && !b.isPresent()) {
+            return -1;
+        }
 
-                if (!a.isPresent() && b.isPresent()) {
-                    return 1;
-                }
+        if (!a.isPresent() && b.isPresent()) {
+            return 1;
+        }
 
-                if (!a.isPresent() && !b.isPresent()) {
-                    return 0;
-                }
+        if (!a.isPresent() && !b.isPresent()) {
+            return 0;
+        }
 
-                return Integer.compare(a.get(), b.get());
-            }
-        });
+        return Integer.compare(a.get(), b.get());
+    });
 
     final static Ordering<Value> orderingById = integerOrdering.onResultOf((f) -> f.getId());
 
     final static Ordering<Value> orderingByCtorOrder =
-        integerOrdering.onResultOf((f) -> f.getConstructorOrder());
+        integerOrdering.onResultOf(Value::getConstructorOrder);
 
     final static Ordering<ValueType> orderingTypesById =
-        integerOrdering.onResultOf((ValueType f) -> f.getId());
+        integerOrdering.onResultOf(ValueType::getId);
 
     private final boolean orderById;
     private final boolean orderConstructorById;
     private final List<ValueType> types;
     private final List<Value> values;
+    private final List<Value> ignored;
 
-    public ValueSet(final boolean orderById, final boolean orderConstructorById) {
-        this(orderById, orderConstructorById, ImmutableList.of(), ImmutableList.of());
-    }
-
-    public static Unverified<ValueSet> build(
+    public static ValueSet build(
         final AutoSerializeUtils utils, final TypeElement element, final Set<ElementKind> kinds,
         final AutoSerializeMirror autoSerialize
     ) {
         final ValueSetBuilder valueSet = new ValueSetBuilder(utils);
 
-        for (final Unverified<ValueSpecification> value : parseValues(utils, element, kinds,
+        for (final ValueSpecification value : parseValues(utils, element, kinds,
             autoSerialize.isUseGetter())) {
             valueSet.add(value);
         }
@@ -74,12 +64,11 @@ public class ValueSet {
         return valueSet.build(autoSerialize.isOrderById(), autoSerialize.isOrderConstructorById());
     }
 
-    static Iterable<Unverified<ValueSpecification>> parseValues(
+    static Iterable<ValueSpecification> parseValues(
         final AutoSerializeUtils utils, final TypeElement enclosing, final Set<ElementKind> kinds,
         final boolean defaultUseGetter
     ) {
-        final ImmutableList.Builder<Unverified<ValueSpecification>> builder =
-            ImmutableList.builder();
+        final ImmutableList.Builder<ValueSpecification> builder = ImmutableList.builder();
 
         for (final Element element : enclosing.getEnclosedElements()) {
             if (!kinds.contains(element.getKind())) {
@@ -97,10 +86,6 @@ public class ValueSet {
                 continue;
             }
 
-            if (utils.ignore(element).isPresent()) {
-                continue;
-            }
-
             if (element instanceof ExecutableElement) {
                 final ExecutableElement e = (ExecutableElement) element;
 
@@ -109,7 +94,14 @@ public class ValueSet {
                 }
             }
 
-            builder.add(ValueSpecification.build(utils, enclosing, element, defaultUseGetter));
+            final ValueSpecification value =
+                ValueSpecification.build(utils, enclosing, element, defaultUseGetter);
+
+            if (value.isIgnored()) {
+                continue;
+            }
+
+            builder.add(value);
         }
 
         return builder.build();

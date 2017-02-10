@@ -9,12 +9,10 @@ import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.BuilderMirror;
-import eu.toolchain.serializer.processor.unverified.Unverified;
-import lombok.Data;
-
-import javax.lang.model.element.TypeElement;
 import java.util.List;
 import java.util.Optional;
+import javax.lang.model.element.TypeElement;
+import lombok.Data;
 
 /**
  * @author udoprog
@@ -42,19 +40,16 @@ public class ValueTypeBuilder {
      */
     final String method;
 
-    public static Unverified<Optional<ValueTypeBuilder>> build(
+    public static Optional<ValueTypeBuilder> build(
         final AutoSerializeUtils utils, final TypeElement element,
         final AutoSerializeMirror autoSerialize
     ) {
-        return utils.builder(element).map((unverifiedDirect) -> {
-            return unverifiedDirect.map((direct) -> {
-                return Optional.of(build(direct, element, utils));
-            });
-        }).orElseGet(() -> {
-            return Unverified.verified(autoSerialize.getBuilder().map((nested) -> {
-                return Optional.of(build(nested, element, utils));
-            }).orElse(Optional.empty()));
-        });
+        return utils
+            .builder(element)
+            .map(direct -> Optional.of(build(direct, element, utils)))
+            .orElseGet(() -> autoSerialize.getBuilder().map(nested -> {
+                return build(nested, element, utils);
+            }));
     }
 
     static ValueTypeBuilder build(
