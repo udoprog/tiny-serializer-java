@@ -11,6 +11,7 @@ import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.Naming;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class FieldSetBuilder {
   final Naming variableNaming = new Naming("v_");
   final Naming isSetVariableNaming = new Naming("i_");
 
-  final List<FieldType> fieldTypes = new ArrayList<>();
+  final LinkedHashMap<FieldTypeId, FieldType> fieldTypes = new LinkedHashMap<>();
   final List<Field> fields = new ArrayList<>();
   final List<Field> ignored = new ArrayList<>();
 
@@ -104,28 +105,22 @@ public class FieldSetBuilder {
     final TypeName valueTypeName = TypeName.get(valueType);
     final TypeName serializerType = TypeName.get(utils.serializerFor(valueType));
 
-    final FieldTypeId identifier = new FieldTypeId(valueTypeName, provided, providerName);
+    final FieldTypeId fieldTypeId = new FieldTypeId(valueTypeName, provided, providerName);
 
-    final FieldType type =
-      getOrBuildFieldType(valueType, provided, optional, providerName, id, valueTypeName,
-        serializerType, identifier);
+    // each field type should only be declared once
+    final FieldType type = fieldTypes.computeIfAbsent(fieldTypeId,
+      key -> getOrBuildFieldType(valueType, valueTypeName, optional, id, serializerType, key));
 
     fields.add(new Field(type, name, accessor, variableNaming.forName(name),
       isSetVariableNaming.forName(name), id, constructorOrder));
   }
 
   private FieldType getOrBuildFieldType(
-    final TypeMirror valueType, final boolean provided, final boolean optional,
-    final Optional<String> providerName, final Optional<Integer> id, final TypeName valueTypeName,
-    final TypeName serializerType, final FieldTypeId identifier
+    final TypeMirror valueType, final TypeName valueTypeName, final boolean optional,
+    final Optional<Integer> id, final TypeName serializerType, final FieldTypeId identifier
   ) {
-    final Optional<FieldType> found = typeById(identifier);
-
-    if (found.isPresent()) {
-      return found.get();
-    }
-
-    final String typeFieldName = fieldNaming.forType(valueTypeName, provided);
+    final String typeFieldName =
+      fieldNaming.forType(identifier.getFieldType(), identifier.isProvided());
 
     final com.squareup.javapoet.FieldSpec fieldSpec = com.squareup.javapoet.FieldSpec
       .builder(serializerType, typeFieldName)
@@ -134,13 +129,13 @@ public class FieldSetBuilder {
 
     final Optional<ParameterSpec> providedParameterSpec;
 
-    if (provided) {
+    if (identifier.isProvided()) {
       final String uniqueProviderName;
 
-      if (providerName.isPresent()) {
-        uniqueProviderName = providerNaming.forName(providerName.get());
+      if (identifier.getProviderName().isPresent()) {
+        uniqueProviderName = providerNaming.forName(identifier.getProviderName().get());
       } else {
-        uniqueProviderName = providerNaming.forType(valueTypeName, false);
+        uniqueProviderName = providerNaming.forType(identifier.getFieldType(), false);
       }
 
       providedParameterSpec = Optional.of(
@@ -149,17 +144,8 @@ public class FieldSetBuilder {
       providedParameterSpec = Optional.empty();
     }
 
-    final FieldType fieldType =
-      new FieldType(identifier, valueType, valueTypeName, fieldSpec, providedParameterSpec, id,
-        optional);
-
-    fieldTypes.add(fieldType);
-
-    return fieldType;
-  }
-
-  private Optional<FieldType> typeById(final FieldTypeId identifier) {
-    return fieldTypes.stream().filter(t -> t.getIdentifier().equals(identifier)).findFirst();
+    return new FieldType(identifier, valueType, valueTypeName, fieldSpec, providedParameterSpec, id,
+      optional);
   }
 
   private boolean isSerializableField(final Element element) {
@@ -232,7 +218,8 @@ public class FieldSetBuilder {
   }
 
   public FieldSet build(boolean isOrdereById, boolean isOrderConstructorById) {
-    return new FieldSet(isOrdereById, isOrderConstructorById, ImmutableList.copyOf(fieldTypes),
-      ImmutableList.copyOf(fields), ImmutableList.copyOf(ignored));
+    return new FieldSet(isOrdereById, isOrderConstructorById,
+      ImmutableList.copyOf(fieldTypes.values()), ImmutableList.copyOf(fields),
+      ImmutableList.copyOf(ignored));
   }
 }
