@@ -2,15 +2,9 @@ package eu.toolchain.serializer.processor.field;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
-import eu.toolchain.serializer.processor.AutoSerializeUtils;
-import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.TypeElement;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -45,20 +39,6 @@ public class FieldSet {
   private final List<FieldType> types;
   private final List<Field> fields;
   private final List<Field> ignored;
-
-  public static FieldSet build(
-    final AutoSerializeUtils utils, final TypeElement parent, final Set<ElementKind> kinds,
-    final AutoSerializeMirror autoSerialize
-  ) {
-    final FieldSetBuilder fieldSet =
-      new FieldSetBuilder(utils, parent, kinds, autoSerialize.isUseGetter());
-
-    for (final Element element : parent.getEnclosedElements()) {
-      fieldSet.add(element);
-    }
-
-    return fieldSet.build(autoSerialize.isOrderById(), autoSerialize.isOrderConstructorById());
-  }
 
   public Iterable<FieldType> getOrderedTypes() {
     if (orderById) {

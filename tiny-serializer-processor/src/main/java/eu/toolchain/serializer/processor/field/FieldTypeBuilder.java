@@ -6,12 +6,8 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
-import eu.toolchain.serializer.processor.AutoSerializeUtils;
-import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.BuilderMirror;
 import java.util.List;
-import java.util.Optional;
-import javax.lang.model.element.TypeElement;
 import lombok.Data;
 
 /**
@@ -39,26 +35,6 @@ public class FieldTypeBuilder {
    * Contains the name of the method to use, unless {@link #useConstructor} is {@code true}.
    */
   final String method;
-
-  public static Optional<FieldTypeBuilder> build(
-    final AutoSerializeUtils utils, final TypeElement element,
-    final AutoSerializeMirror autoSerialize
-  ) {
-    return utils
-      .builder(element)
-      .map(direct -> Optional.of(build(direct, element, utils)))
-      .orElseGet(() -> autoSerialize.getBuilder().map(nested -> {
-        return build(nested, element, utils);
-      }));
-  }
-
-  static FieldTypeBuilder build(
-    final BuilderMirror builder, final TypeElement element, final AutoSerializeUtils utils
-  ) {
-    final boolean useConstructor = builder.shouldUseConstructor();
-    return new FieldTypeBuilder(builder, useConstructor, builder.isUseSetter(),
-      builder.getMethodName());
-  }
 
   public void writeTo(ClassName returnType, MethodSpec.Builder b, List<Field> variables) {
     final ImmutableList.Builder<String> builders = ImmutableList.builder();

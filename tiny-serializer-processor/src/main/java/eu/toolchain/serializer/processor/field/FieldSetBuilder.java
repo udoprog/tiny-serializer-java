@@ -144,8 +144,8 @@ public class FieldSetBuilder {
       providedParameterSpec = Optional.empty();
     }
 
-    return new FieldType(identifier, valueType, valueTypeName, fieldSpec, providedParameterSpec, id,
-      optional);
+    return new FieldType(identifier, valueType, valueTypeName, fieldSpec, providedParameterSpec,
+      optional, id);
   }
 
   private boolean isSerializableField(final Element element) {

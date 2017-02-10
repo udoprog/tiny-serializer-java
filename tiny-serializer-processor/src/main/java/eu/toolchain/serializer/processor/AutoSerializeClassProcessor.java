@@ -14,12 +14,14 @@ import com.squareup.javapoet.TypeSpec;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.field.Field;
 import eu.toolchain.serializer.processor.field.FieldSet;
+import eu.toolchain.serializer.processor.field.FieldSetBuilder;
 import eu.toolchain.serializer.processor.field.FieldType;
 import eu.toolchain.serializer.processor.field.FieldTypeBuilder;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Generated;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -42,9 +44,15 @@ public class AutoSerializeClassProcessor {
     final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
     final Set<ElementKind> kinds = getKinds(element);
 
-    final Optional<FieldTypeBuilder> builder =
-      FieldTypeBuilder.build(utils, element, autoSerialize);
-    final FieldSet values = FieldSet.build(utils, element, kinds, autoSerialize);
+    final FieldSetBuilder fieldSetBuilder =
+      new FieldSetBuilder(utils, element, kinds, autoSerialize.isUseGetter());
+
+    for (final Element child : element.getEnclosedElements()) {
+      fieldSetBuilder.add(child);
+    }
+
+    final FieldSet values =
+      fieldSetBuilder.build(autoSerialize.isOrderById(), autoSerialize.isOrderConstructorById());
 
     final ClassName elementType = (ClassName) TypeName.get(element.asType());
     final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
@@ -85,15 +93,21 @@ public class AutoSerializeClassProcessor {
     generated.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
     generated.addSuperinterface(supertype);
 
+    final Optional<FieldTypeBuilder> fieldTypeBuilder =
+      utils.builder(element).map(Optional::of).orElseGet(autoSerialize::getBuilder).map(method -> {
+        return new FieldTypeBuilder(method, method.shouldUseConstructor(), method.isUseSetter(),
+          method.getMethodName());
+      });
+
     if (fieldBased) {
       generated.addMethod(fieldConstructor(values, count, name));
       generated.addMethod(fieldSerializeMethod(elementType, values, count, name));
       generated.addMethod(
-        fieldDeserializeMethod(elementType, values, builder, count, name, failOnMissing));
+        fieldDeserializeMethod(elementType, values, fieldTypeBuilder, count, name, failOnMissing));
     } else {
       generated.addMethod(serialConstructor(values));
       generated.addMethod(serialSerializeMethod(elementType, values));
-      generated.addMethod(serialDeserializeMethod(elementType, values, builder));
+      generated.addMethod(serialDeserializeMethod(elementType, values, fieldTypeBuilder));
     }
 
     return JavaFile

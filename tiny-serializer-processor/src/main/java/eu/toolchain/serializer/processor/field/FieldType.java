@@ -14,6 +14,6 @@ public class FieldType {
   private final TypeName typeName;
   private final FieldSpec fieldSpec;
   private final Optional<ParameterSpec> providedParameterSpec;
-  private final Optional<Integer> id;
   private final boolean optional;
+  private final Optional<Integer> id;
 }
