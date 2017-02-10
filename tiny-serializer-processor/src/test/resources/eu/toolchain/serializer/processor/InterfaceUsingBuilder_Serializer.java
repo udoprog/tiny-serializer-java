@@ -12,7 +12,7 @@ public final class InterfaceUsingBuilder_Serializer implements Serializer<Interf
   final Serializer<String> s_String;
 
   public InterfaceUsingBuilder_Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
+    this.s_String = framework.string();
   }
 
   @Override

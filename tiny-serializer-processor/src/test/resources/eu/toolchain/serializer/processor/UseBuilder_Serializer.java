@@ -12,7 +12,7 @@ public final class UseBuilder_Serializer implements Serializer<UseBuilder> {
   final Serializer<String> s_String;
 
   public UseBuilder_Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
+    this.s_String = framework.string();
   }
 
   @Override

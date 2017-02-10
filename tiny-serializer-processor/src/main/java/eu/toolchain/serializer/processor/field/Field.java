@@ -12,4 +12,5 @@ public class Field {
   private final String isSetVariableName;
   private final Optional<Integer> id;
   private final Optional<Integer> constructorOrder;
+  private final boolean valueProvided;
 }

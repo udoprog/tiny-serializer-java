@@ -12,7 +12,7 @@ public final class ImplicitConstructor_Serializer implements Serializer<Implicit
   final Serializer<String> s_String;
 
   public ImplicitConstructor$Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
+    this.s_String = framework.string();
   }
 
   @Override

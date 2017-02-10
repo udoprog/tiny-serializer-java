@@ -38,7 +38,6 @@ public class FieldSet {
   private final boolean orderConstructorById;
   private final List<FieldType> types;
   private final List<Field> fields;
-  private final List<Field> ignored;
 
   public Iterable<FieldType> getOrderedTypes() {
     if (orderById) {

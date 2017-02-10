@@ -9,4 +9,5 @@ class FieldTypeId {
   private final TypeName fieldType;
   private final boolean provided;
   private final Optional<String> providerName;
+  private final Optional<Integer> valueProvided;
 }

@@ -13,7 +13,7 @@ public final class OptionalTest_Serializer implements Serializer<OptionalTest> {
   final Serializer<Optional<Interface>> s_OptionalInterface;
 
   public OptionalTest_Serializer(final SerializerFramework framework) {
-    s_OptionalInterface = framework.optional(new Interface_Serializer(framework));
+    this.s_OptionalInterface = framework.optional(new Interface_Serializer(framework));
   }
 
   @Override

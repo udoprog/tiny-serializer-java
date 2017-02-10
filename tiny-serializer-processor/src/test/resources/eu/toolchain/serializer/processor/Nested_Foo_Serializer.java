@@ -12,7 +12,7 @@ public final class Nested_Foo_Serializer implements Serializer<Nested.Foo> {
   final Serializer<String> s_String;
 
   public Nested_Foo_Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
+    this.s_String = framework.string();
   }
 
   @Override

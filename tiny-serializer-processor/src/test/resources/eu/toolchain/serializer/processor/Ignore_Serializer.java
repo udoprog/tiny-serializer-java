@@ -12,7 +12,7 @@ public final class Ignore_Serializer implements Serializer<Ignore> {
   final Serializer<String> s_String;
 
   public Ignore_Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
+    this.s_String = framework.string();
   }
 
   @Override

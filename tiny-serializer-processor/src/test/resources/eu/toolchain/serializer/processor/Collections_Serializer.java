@@ -25,14 +25,14 @@ public final class Collections_Serializer implements Serializer<Collections> {
   final Serializer<NavigableSet<Interface>> s_NavigableSet;
 
   public Collections_Serializer(final SerializerFramework framework) {
-    s_List = framework.list(new Interface_Serializer(framework));
-    s_Map = framework.map(framework.string(), new Interface_Serializer(framework));
-    s_SortedMap = framework.sortedMap(framework.string(), new Interface_Serializer(framework));
-    s_NavigableMap =
+    this.s_List = framework.list(new Interface_Serializer(framework));
+    this.s_Map = framework.map(framework.string(), new Interface_Serializer(framework));
+    this.s_SortedMap = framework.sortedMap(framework.string(), new Interface_Serializer(framework));
+    this.s_NavigableMap =
       framework.navigableMap(framework.string(), new Interface_Serializer(framework));
-    s_Set = framework.set(new Interface_Serializer(framework));
-    s_SortedSet = framework.sortedSet(new Interface_Serializer(framework));
-    s_NavigableSet = framework.navigableSet(new Interface_Serializer(framework));
+    this.s_Set = framework.set(new Interface_Serializer(framework));
+    this.s_SortedSet = framework.sortedSet(new Interface_Serializer(framework));
+    this.s_NavigableSet = framework.navigableSet(new Interface_Serializer(framework));
   }
 
   @Override

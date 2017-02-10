@@ -12,7 +12,7 @@ public final class Ordering_Serializer implements Serializer<Ordering> {
   final Serializer<String> s_String;
 
   public Ordering_Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
+    this.s_String = framework.string();
   }
 
   @Override

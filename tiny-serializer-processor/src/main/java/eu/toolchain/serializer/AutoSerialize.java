@@ -184,4 +184,12 @@ public @interface AutoSerialize {
   @Retention(RetentionPolicy.SOURCE)
   @interface Ignore {
   }
+
+  /**
+   * Indicates that the annotated field should be provided by the serializer.
+   */
+  @Target({ElementType.FIELD, ElementType.METHOD})
+  @Retention(RetentionPolicy.SOURCE)
+  @interface Provided {
+  }
 }

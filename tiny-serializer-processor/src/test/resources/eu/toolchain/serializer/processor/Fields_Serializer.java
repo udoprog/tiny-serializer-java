@@ -26,20 +26,20 @@ public final class Fields_Serializer implements Serializer<Fields> {
   final Serializer<Fields.Values> s_Values;
 
   public Fields_Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
-    s_Interface = new Interface_Serializer(framework);
-    s_Boolean = framework.fixedBoolean();
-    s_Byte = framework.fixedByte();
-    s_Short = framework.fixedShort();
-    s_Integer = framework.fixedInteger();
-    s_Long = framework.fixedLong();
-    s_Float = framework.fixedFloat();
-    s_Double = framework.fixedDouble();
-    s_Character = framework.fixedCharacter();
-    s_UUID = framework.uuid();
-    s_ByteArray = framework.byteArray();
-    s_CharacterArray = framework.charArray();
-    s_Values = framework.forEnum(Fields.Values.values());
+    this.s_String = framework.string();
+    this.s_Interface = new Interface_Serializer(framework);
+    this.s_Boolean = framework.fixedBoolean();
+    this.s_Byte = framework.fixedByte();
+    this.s_Short = framework.fixedShort();
+    this.s_Integer = framework.fixedInteger();
+    this.s_Long = framework.fixedLong();
+    this.s_Float = framework.fixedFloat();
+    this.s_Double = framework.fixedDouble();
+    this.s_Character = framework.fixedCharacter();
+    this.s_UUID = framework.uuid();
+    this.s_ByteArray = framework.byteArray();
+    this.s_CharacterArray = framework.charArray();
+    this.s_Values = framework.forEnum(Fields.Values.values());
   }
 
   @Override

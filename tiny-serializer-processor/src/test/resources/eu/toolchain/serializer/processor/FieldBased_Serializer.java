@@ -19,12 +19,12 @@ public final class FieldBased_Serializer implements Serializer<FieldBased> {
   final Serializer<Optional<String>> s_OptionalString;
 
   public FieldBased_Serializer(final SerializerFramework framework) {
-    count = framework.variableInteger();
-    name = framework.string();
+    this.count = framework.variableInteger();
+    this.name = framework.string();
 
-    s_String = framework.string();
-    s_Boolean = framework.fixedBoolean();
-    s_OptionalString = framework.optional(framework.string());
+    this.s_String = framework.string();
+    this.s_Boolean = framework.fixedBoolean();
+    this.s_OptionalString = framework.optional(framework.string());
   }
 
   @Override

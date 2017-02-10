@@ -12,7 +12,7 @@ public final class CustomAccessor_Serializer implements Serializer<CustomAccesso
   final Serializer<String> s_String;
 
   public CustomAccessor_Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
+    this.s_String = framework.string();
   }
 
   @Override

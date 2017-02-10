@@ -14,7 +14,6 @@ import eu.toolchain.serializer.processor.field.Field;
 import eu.toolchain.serializer.processor.field.FieldSet;
 import eu.toolchain.serializer.processor.field.FieldType;
 import eu.toolchain.serializer.processor.field.FieldTypeBuilder;
-import java.util.List;
 import java.util.Optional;
 import javax.annotation.Generated;
 import javax.lang.model.element.Modifier;
@@ -108,22 +107,19 @@ public class ConcreteClassSpec implements ClassSpec {
 
     for (final FieldType fieldType : fields.getOrderedTypes()) {
       if (fieldType.getProvidedParameterSpec().isPresent()) {
-        b.addStatement("$N = $N", fieldType.getFieldSpec(),
+        b.addStatement("this.$N = $N", fieldType.getFieldSpec(),
           fieldType.getProvidedParameterSpec().get());
         continue;
       }
 
-      final FrameworkMethodBuilder builder = new FrameworkMethodBuilder() {
-        @Override
-        public void assign(final String statement, final List<Object> arguments) {
-          b.addStatement(String.format("$N = %s", statement), ImmutableList
+      final FrameworkMethodBuilder builder =
+        (statement, arguments) -> b.addStatement(String.format("this.$N = %s", statement),
+          ImmutableList
             .builder()
             .add(fieldType.getFieldSpec())
             .addAll(arguments)
             .build()
             .toArray());
-        }
-      };
 
       statements
         .resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework)
@@ -143,8 +139,8 @@ public class ConcreteClassSpec implements ClassSpec {
     b.addModifiers(Modifier.PUBLIC);
     b.addParameter(framework);
 
-    b.addStatement("$N = $N.variableInteger()", count, framework);
-    b.addStatement("$N = $N.string()", name, framework);
+    b.addStatement("this.$N = $N.variableInteger()", count, framework);
+    b.addStatement("this.$N = $N.string()", name, framework);
 
     for (final FieldType t : fields.getOrderedTypes()) {
       if (t.getProvidedParameterSpec().isPresent()) {
@@ -154,22 +150,19 @@ public class ConcreteClassSpec implements ClassSpec {
 
     for (final FieldType fieldType : fields.getOrderedTypes()) {
       if (fieldType.getProvidedParameterSpec().isPresent()) {
-        b.addStatement("$N = $N", fieldType.getFieldSpec(),
+        b.addStatement("this.$N = $N", fieldType.getFieldSpec(),
           fieldType.getProvidedParameterSpec().get());
         continue;
       }
 
-      final FrameworkMethodBuilder builder = new FrameworkMethodBuilder() {
-        @Override
-        public void assign(final String statement, final List<Object> arguments) {
-          b.addStatement(String.format("$N = %s", statement), ImmutableList
+      final FrameworkMethodBuilder builder =
+        (statement, arguments) -> b.addStatement(String.format("this.$N = %s", statement),
+          ImmutableList
             .builder()
             .add(fieldType.getFieldSpec())
             .addAll(arguments)
             .build()
             .toArray());
-        }
-      };
 
       statements
         .resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework)
@@ -187,6 +180,10 @@ public class ConcreteClassSpec implements ClassSpec {
     b.addStatement("$N.serialize($N, $L)", count, buffer, fields.getFields().size());
 
     for (final Field field : fields.getOrderedValues()) {
+      if (field.isValueProvided()) {
+        continue;
+      }
+
       if (field.getType().isOptional()) {
         b.addStatement("final $T $N = $N.$L()", field.getType().getTypeName(),
           field.getVariableName(), value, field.getAccessor());
@@ -240,6 +237,10 @@ public class ConcreteClassSpec implements ClassSpec {
     b.beginControlFlow("switch (fieldName)");
 
     for (final Field field : fields.getOrderedValues()) {
+      if (field.isValueProvided()) {
+        continue;
+      }
+
       b.addCode("case $S:\n", field.getName());
       b.addCode("$>");
 
@@ -298,6 +299,10 @@ public class ConcreteClassSpec implements ClassSpec {
     final MethodSpec.Builder b = utils.serializeMethod(buffer, value);
 
     for (final Field field : fields.getOrderedValues()) {
+      if (field.isValueProvided()) {
+        continue;
+      }
+
       b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer, value,
         field.getAccessor());
     }
@@ -310,6 +315,10 @@ public class ConcreteClassSpec implements ClassSpec {
     final MethodSpec.Builder b = utils.deserializeMethod(elementType, buffer);
 
     for (final Field field : fields.getOrderedValues()) {
+      if (field.isValueProvided()) {
+        continue;
+      }
+
       final TypeName fieldType = field.getType().getTypeName();
       final FieldSpec fieldSpec = field.getType().getFieldSpec();
       b.addStatement("final $T $L = $N.deserialize($N)", fieldType, field.getVariableName(),

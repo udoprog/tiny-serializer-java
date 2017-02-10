@@ -17,9 +17,9 @@ public final class Provided_Serializer implements Serializer<Provided> {
     final SerializerFramework framework, final Serializer<String> p_String,
     final Serializer<String> p_otherProvided
   ) {
-    s_ProvidedString = p_String;
-    s_ProvidedString1 = p_otherProvided;
-    s_String = framework.string();
+    this.s_ProvidedString = p_String;
+    this.s_ProvidedString1 = p_otherProvided;
+    this.s_String = framework.string();
   }
 
   @Override

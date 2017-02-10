@@ -12,7 +12,7 @@ public final class Getter_Serializer implements Serializer<Getter> {
   final Serializer<String> s_String;
 
   public Getter_Serializer(final SerializerFramework framework) {
-    s_String = framework.string();
+    this.s_String = framework.string();
   }
 
   @Override

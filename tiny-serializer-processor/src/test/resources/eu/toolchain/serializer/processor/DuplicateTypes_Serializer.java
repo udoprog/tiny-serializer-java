@@ -15,8 +15,8 @@ public final class DuplicateTypes_Serializer implements Serializer<DuplicateType
   public DuplicateTypes_Serializer(
     final SerializerFramework framework, final Serializer<String> p_String
   ) {
-    s_String = framework.string();
-    s_ProvidedString = p_String;
+    this.s_String = framework.string();
+    this.s_ProvidedString = p_String;
   }
 
   @Override
