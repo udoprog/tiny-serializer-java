@@ -33,8 +33,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
   private Messager messager;
   private AutoSerializeUtils utils;
   private FrameworkStatements statements;
-  private AutoSerializeAbstractProcessor abstractProcessor;
-  private AutoSerializeClassProcessor classProcessor;
+  private ClassProcessor classProcessor;
 
   private final List<DeferredProcessing> deferred = new ArrayList<>();
 
@@ -50,8 +49,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
 
     utils = new AutoSerializeUtils(types, elements);
     statements = new FrameworkStatements(utils);
-    abstractProcessor = new AutoSerializeAbstractProcessor(elements, statements, utils);
-    classProcessor = new AutoSerializeClassProcessor(types, elements, statements, utils);
+    classProcessor = new ClassProcessor(types, elements, statements, utils);
 
     if (env.getClass().getPackage().getName().startsWith("org.eclipse.jdt.")) {
       warnAboutBugEclipse300408();
@@ -136,32 +134,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
   }
 
   JavaFile processElement(TypeElement element) {
-    final Optional<AutoSerializeMirror> annotation = utils.autoSerialize(element);
-
-    if (!annotation.isPresent()) {
-      throw brokenElement("@AutoSerialize annotation not present", element);
-    }
-
-    final AutoSerializeMirror autoSerialize = annotation.get();
-
-    if (element.getKind() == ElementKind.INTERFACE) {
-      if (autoSerialize.getBuilder().isPresent()) {
-        return classProcessor.process(element, autoSerialize);
-      } else {
-        return abstractProcessor.process(element, autoSerialize);
-      }
-    }
-
-    if (element.getKind() == ElementKind.CLASS) {
-      if (element.getModifiers().contains(Modifier.ABSTRACT) &&
-        !autoSerialize.getBuilder().isPresent()) {
-        return abstractProcessor.process(element, autoSerialize);
-      }
-
-      return classProcessor.process(element, autoSerialize);
-    }
-
-    throw brokenElement("Unsupported type, expected class or interface", element);
+    return classProcessor.process(element);
   }
 
   @Data
