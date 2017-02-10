@@ -11,24 +11,25 @@ import javax.annotation.Generated;
 
 @Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class Abstract_Serializer implements Serializer<Abstract> {
-    final Serializer<Abstract> serializer;
+  final Serializer<Abstract> serializer;
 
-    public Abstract_Serializer(final SerializerFramework framework) {
-        final List<SerializerFramework.TypeMapping<? extends Abstract, Abstract>> mappings = new ArrayList<>();
+  public Abstract_Serializer(final SerializerFramework framework) {
+    final List<SerializerFramework.TypeMapping<? extends Abstract, Abstract>> mappings =
+      new ArrayList<>();
 
-        mappings.add(framework.<ImplA, Abstract> type(0, ImplA.class, new ImplA_Serializer(framework)));
-        mappings.add(framework.<ImplB, Abstract> type(1, ImplB.class, new ImplB_Serializer(framework)));
+    mappings.add(framework.<ImplA, Abstract>type(0, ImplA.class, new ImplA_Serializer(framework)));
+    mappings.add(framework.<ImplB, Abstract>type(1, ImplB.class, new ImplB_Serializer(framework)));
 
-        serializer = framework.subtypes(mappings);
-    }
+    serializer = framework.subtypes(mappings);
+  }
 
-    @Override
-    public void serialize(final SerialWriter buffer, final Abstract value) throws IOException {
-        serializer.serialize(buffer, value);
-    }
+  @Override
+  public void serialize(final SerialWriter buffer, final Abstract value) throws IOException {
+    serializer.serialize(buffer, value);
+  }
 
-    @Override
-    public Abstract deserialize(final SerialReader buffer) throws IOException {
-        return serializer.deserialize(buffer);
-    }
+  @Override
+  public Abstract deserialize(final SerialReader buffer) throws IOException {
+    return serializer.deserialize(buffer);
+  }
 }

@@ -10,50 +10,49 @@ import eu.toolchain.serializer.perftests.AutoMatterSerializedObject;
 import eu.toolchain.serializer.perftests.AutoMatterSerializedObject_Serializer;
 import eu.toolchain.serializer.perftests.ObjectHelper;
 import eu.toolchain.serializer.perftests.OutputStreamHelper;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.function.Supplier;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.function.Supplier;
-
 @State(Scope.Benchmark)
 public class TinyAutoMatterPerformance {
-    final AutoMatterSerializedObject object = ObjectHelper.newAutoMatterSerializedObject();
-    ;
-    final OutputStream nullStream = OutputStreamHelper.newNullStream();
+  final AutoMatterSerializedObject object = ObjectHelper.newAutoMatterSerializedObject();
+  ;
+  final OutputStream nullStream = OutputStreamHelper.newNullStream();
 
-    final TinySerializer tiny = TinySerializer.builder().build();
-    final Serializer<AutoMatterSerializedObject> serializer =
-        new AutoMatterSerializedObject_Serializer(tiny);
-    final SerialWriter writer = new CoreOutputStreamSerialWriter(nullStream);
+  final TinySerializer tiny = TinySerializer.builder().build();
+  final Serializer<AutoMatterSerializedObject> serializer =
+    new AutoMatterSerializedObject_Serializer(tiny);
+  final SerialWriter writer = new CoreOutputStreamSerialWriter(nullStream);
 
-    final Supplier<InputStream> inputObject = ObjectHelper.supplyInputStreamFrom(() -> {
-        try (final BytesSerialWriter writer = tiny.writeBytes()) {
-            serializer.serialize(writer, object);
-            return writer.toByteArray();
-        }
-    });
-
-    @Benchmark
-    public void testSerializeToNull() throws Exception {
-        serializer.serialize(writer, object);
+  final Supplier<InputStream> inputObject = ObjectHelper.supplyInputStreamFrom(() -> {
+    try (final BytesSerialWriter writer = tiny.writeBytes()) {
+      serializer.serialize(writer, object);
+      return writer.toByteArray();
     }
+  });
 
-    @Benchmark
-    public void testSerializeToMemory(Blackhole bh) throws Exception {
-        try (final BytesSerialWriter writer = tiny.writeBytes()) {
-            serializer.serialize(writer, object);
-            bh.consume(writer.toByteArray());
-        }
-    }
+  @Benchmark
+  public void testSerializeToNull() throws Exception {
+    serializer.serialize(writer, object);
+  }
 
-    @Benchmark
-    public void testDeserializeFromMemory(Blackhole bh) throws Exception {
-        try (final SerialReader reader = tiny.readStream(inputObject.get())) {
-            bh.consume(serializer.deserialize(reader));
-        }
+  @Benchmark
+  public void testSerializeToMemory(Blackhole bh) throws Exception {
+    try (final BytesSerialWriter writer = tiny.writeBytes()) {
+      serializer.serialize(writer, object);
+      bh.consume(writer.toByteArray());
     }
+  }
+
+  @Benchmark
+  public void testDeserializeFromMemory(Blackhole bh) throws Exception {
+    try (final SerialReader reader = tiny.readStream(inputObject.get())) {
+      bh.consume(serializer.deserialize(reader));
+    }
+  }
 }

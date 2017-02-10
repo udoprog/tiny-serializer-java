@@ -9,36 +9,36 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FakeReadableByteChannel implements ReadableByteChannel {
-    private final byte[] bytes;
+  private final byte[] bytes;
 
-    private boolean open = true;
-    private long position = 0L;
+  private boolean open = true;
+  private long position = 0L;
 
-    @Override
-    public int read(final ByteBuffer dst) throws IOException {
-        final int length = dst.remaining();
-        final long target = position + length;
+  @Override
+  public int read(final ByteBuffer dst) throws IOException {
+    final int length = dst.remaining();
+    final long target = position + length;
 
-        if (target >= bytes.length) {
-            throw new EOFException();
-        }
-
-        dst.put(bytes, (int) position, length);
-        position += length;
-        return length;
+    if (target >= bytes.length) {
+      throw new EOFException();
     }
 
-    @Override
-    public boolean isOpen() {
-        return open;
+    dst.put(bytes, (int) position, length);
+    position += length;
+    return length;
+  }
+
+  @Override
+  public boolean isOpen() {
+    return open;
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (!open) {
+      throw new ClosedChannelException();
     }
 
-    @Override
-    public void close() throws IOException {
-        if (!open) {
-            throw new ClosedChannelException();
-        }
-
-        open = false;
-    }
+    open = false;
+  }
 }

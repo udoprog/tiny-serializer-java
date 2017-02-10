@@ -9,20 +9,20 @@ import javax.annotation.Generated;
 
 @Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class UseBuilder_Serializer implements Serializer<UseBuilder> {
-    final Serializer<String> s_String;
+  final Serializer<String> s_String;
 
-    public UseBuilder_Serializer(final SerializerFramework framework) {
-        s_String = framework.string();
-    }
+  public UseBuilder_Serializer(final SerializerFramework framework) {
+    s_String = framework.string();
+  }
 
-    @Override
-    public void serialize(final SerialWriter buffer, final UseBuilder value) throws IOException {
-        s_String.serialize(buffer, value.getString());
-    }
+  @Override
+  public void serialize(final SerialWriter buffer, final UseBuilder value) throws IOException {
+    s_String.serialize(buffer, value.getString());
+  }
 
-    @Override
-    public UseBuilder deserialize(final SerialReader buffer) throws IOException {
-        final String v_string = s_String.deserialize(buffer);
-        return UseBuilder.builder().setString(v_string).build();
-    }
+  @Override
+  public UseBuilder deserialize(final SerialReader buffer) throws IOException {
+    final String v_string = s_String.deserialize(buffer);
+    return UseBuilder.builder().setString(v_string).build();
+  }
 }

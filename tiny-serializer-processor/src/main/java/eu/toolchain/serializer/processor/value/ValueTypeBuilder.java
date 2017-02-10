@@ -19,89 +19,90 @@ import lombok.Data;
  */
 @Data
 public class ValueTypeBuilder {
-    static final Joiner emptyJoiner = Joiner.on("");
+  static final Joiner emptyJoiner = Joiner.on("");
 
-    final BuilderMirror builder;
+  final BuilderMirror builder;
 
-    /**
-     * If {@code true}, indicates that the constructor of the builder should be used when
-     * instantiating it.
-     */
-    final boolean useConstructor;
+  /**
+   * If {@code true}, indicates that the constructor of the builder should be used when
+   * instantiating it.
+   */
+  final boolean useConstructor;
 
-    /**
-     * If {@code true}, indicates that builder methods are setters instead of using a one-to-one
-     * mapping of field names.
-     */
-    final boolean useSetter;
+  /**
+   * If {@code true}, indicates that builder methods are setters instead of using a one-to-one
+   * mapping of field names.
+   */
+  final boolean useSetter;
 
-    /**
-     * Contains the name of the method to use, unless {@link #useConstructor} is {@code true}.
-     */
-    final String method;
+  /**
+   * Contains the name of the method to use, unless {@link #useConstructor} is {@code true}.
+   */
+  final String method;
 
-    public static Optional<ValueTypeBuilder> build(
-        final AutoSerializeUtils utils, final TypeElement element,
-        final AutoSerializeMirror autoSerialize
-    ) {
-        return utils
-            .builder(element)
-            .map(direct -> Optional.of(build(direct, element, utils)))
-            .orElseGet(() -> autoSerialize.getBuilder().map(nested -> {
-                return build(nested, element, utils);
-            }));
+  public static Optional<ValueTypeBuilder> build(
+    final AutoSerializeUtils utils, final TypeElement element,
+    final AutoSerializeMirror autoSerialize
+  ) {
+    return utils
+      .builder(element)
+      .map(direct -> Optional.of(build(direct, element, utils)))
+      .orElseGet(() -> autoSerialize.getBuilder().map(nested -> {
+        return build(nested, element, utils);
+      }));
+  }
+
+  static ValueTypeBuilder build(
+    final BuilderMirror builder, final TypeElement element, final AutoSerializeUtils utils
+  ) {
+    final boolean useConstructor = builder.shouldUseConstructor();
+    return new ValueTypeBuilder(builder, useConstructor, builder.isUseSetter(),
+      builder.getMethodName());
+  }
+
+  public void writeTo(ClassName returnType, MethodSpec.Builder b, List<Value> variables) {
+    final ImmutableList.Builder<String> builders = ImmutableList.builder();
+    final ImmutableList.Builder<Object> parameters = ImmutableList.builder();
+
+    final TypeName builderType;
+    final String builderStatement;
+
+    if (useConstructor) {
+      builderType = getBuilderTypeForConstructor(returnType);
+      builderStatement = "new $T()";
+    } else {
+      builderType = getBuilderTypeForMethod(returnType);
+      builderStatement = String.format("$T.%s()", method);
     }
 
-    static ValueTypeBuilder build(
-        final BuilderMirror builder, final TypeElement element, final AutoSerializeUtils utils
-    ) {
-        final boolean useConstructor = builder.shouldUseConstructor();
-        return new ValueTypeBuilder(builder, useConstructor, builder.isUseSetter(),
-            builder.getMethodName());
+    parameters.add(builderType);
+
+    for (final Value f : variables) {
+      builders.add(String.format(".%s($L)", builderSetter(f)));
+      parameters.add(f.getVariableName());
     }
 
-    public void writeTo(ClassName returnType, MethodSpec.Builder b, List<Value> variables) {
-        final ImmutableList.Builder<String> builders = ImmutableList.builder();
-        final ImmutableList.Builder<Object> parameters = ImmutableList.builder();
+    b.addStatement(
+      String.format("return %s%s.build()", builderStatement, emptyJoiner.join(builders.build())),
+      parameters.build().toArray());
+  }
 
-        final TypeName builderType;
-        final String builderStatement;
+  TypeName getBuilderTypeForConstructor(ClassName returnType) {
+    return builder
+      .getType()
+      .map((t) -> TypeName.get(t.get()))
+      .orElse(returnType.nestedClass("Builder"));
+  }
 
-        if (useConstructor) {
-            builderType = getBuilderTypeForConstructor(returnType);
-            builderStatement = "new $T()";
-        } else {
-            builderType = getBuilderTypeForMethod(returnType);
-            builderStatement = String.format("$T.%s()", method);
-        }
+  TypeName getBuilderTypeForMethod(ClassName returnType) {
+    return builder.getType().map((t) -> TypeName.get(t.get())).orElse(returnType);
+  }
 
-        parameters.add(builderType);
-
-        for (final Value f : variables) {
-            builders.add(String.format(".%s($L)", builderSetter(f)));
-            parameters.add(f.getVariableName());
-        }
-
-        b.addStatement(String.format("return %s%s.build()", builderStatement,
-            emptyJoiner.join(builders.build())), parameters.build().toArray());
+  String builderSetter(final Value f) {
+    if (useSetter) {
+      return "set" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, f.getName());
     }
 
-    TypeName getBuilderTypeForConstructor(ClassName returnType) {
-        return builder
-            .getType()
-            .map((t) -> TypeName.get(t.get()))
-            .orElse(returnType.nestedClass("Builder"));
-    }
-
-    TypeName getBuilderTypeForMethod(ClassName returnType) {
-        return builder.getType().map((t) -> TypeName.get(t.get())).orElse(returnType);
-    }
-
-    String builderSetter(final Value f) {
-        if (useSetter) {
-            return "set" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, f.getName());
-        }
-
-        return f.getName();
-    }
+    return f.getName();
+  }
 }

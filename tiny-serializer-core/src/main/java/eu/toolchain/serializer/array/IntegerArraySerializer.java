@@ -4,42 +4,41 @@ import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.primitive.IntegerSerializer;
-import lombok.RequiredArgsConstructor;
-
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class IntegerArraySerializer implements Serializer<int[]> {
-    private static final int BYTES = 4;
+  private static final int BYTES = 4;
 
-    private final Serializer<Integer> size;
+  private final Serializer<Integer> size;
 
-    @Override
-    public void serialize(SerialWriter buffer, int[] value) throws IOException {
-        final int size = value.length * BYTES;
-        final byte[] bytes = new byte[size];
+  @Override
+  public void serialize(SerialWriter buffer, int[] value) throws IOException {
+    final int size = value.length * BYTES;
+    final byte[] bytes = new byte[size];
 
-        for (int i = 0; i < value.length; i++) {
-            IntegerSerializer.toBytes(value[i], bytes, i * BYTES);
-        }
-
-        this.size.serialize(buffer, value.length);
-        buffer.write(bytes);
+    for (int i = 0; i < value.length; i++) {
+      IntegerSerializer.toBytes(value[i], bytes, i * BYTES);
     }
 
-    @Override
-    public int[] deserialize(SerialReader buffer) throws IOException {
-        final int length = size.deserialize(buffer);
+    this.size.serialize(buffer, value.length);
+    buffer.write(bytes);
+  }
 
-        final byte[] bytes = new byte[length * BYTES];
-        final int[] value = new int[length];
+  @Override
+  public int[] deserialize(SerialReader buffer) throws IOException {
+    final int length = size.deserialize(buffer);
 
-        buffer.read(bytes);
+    final byte[] bytes = new byte[length * BYTES];
+    final int[] value = new int[length];
 
-        for (int i = 0; i < value.length; i++) {
-            value[i] = IntegerSerializer.fromBytes(bytes, i * BYTES);
-        }
+    buffer.read(bytes);
 
-        return value;
+    for (int i = 0; i < value.length; i++) {
+      value[i] = IntegerSerializer.fromBytes(bytes, i * BYTES);
     }
+
+    return value;
+  }
 }

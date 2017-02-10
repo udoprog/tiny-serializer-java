@@ -10,20 +10,20 @@ import javax.annotation.Generated;
 
 @Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class OptionalTest_Serializer implements Serializer<OptionalTest> {
-    final Serializer<Optional<Interface>> s_OptionalInterface;
+  final Serializer<Optional<Interface>> s_OptionalInterface;
 
-    public OptionalTest_Serializer(final SerializerFramework framework) {
-        s_OptionalInterface = framework.optional(new Interface_Serializer(framework));
-    }
+  public OptionalTest_Serializer(final SerializerFramework framework) {
+    s_OptionalInterface = framework.optional(new Interface_Serializer(framework));
+  }
 
-    @Override
-    public void serialize(final SerialWriter buffer, final OptionalTest value) throws IOException {
-        s_OptionalInterface.serialize(buffer, value.getOptional());
-    }
+  @Override
+  public void serialize(final SerialWriter buffer, final OptionalTest value) throws IOException {
+    s_OptionalInterface.serialize(buffer, value.getOptional());
+  }
 
-    @Override
-    public OptionalTest deserialize(final SerialReader buffer) throws IOException {
-        final Optional<Interface> v_optional = s_OptionalInterface.deserialize(buffer);
-        return new OptionalTest(v_optional);
-    }
+  @Override
+  public OptionalTest deserialize(final SerialReader buffer) throws IOException {
+    final Optional<Interface> v_optional = s_OptionalInterface.deserialize(buffer);
+    return new OptionalTest(v_optional);
+  }
 }

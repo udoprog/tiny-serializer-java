@@ -29,145 +29,144 @@ import lombok.Data;
 
 @AutoService(Processor.class)
 public class AutoSerializeProcessor extends AbstractProcessor {
-    private Filer filer;
-    private Messager messager;
-    private AutoSerializeUtils utils;
-    private FrameworkStatements statements;
-    private AutoSerializeAbstractProcessor abstractProcessor;
-    private AutoSerializeClassProcessor classProcessor;
+  private Filer filer;
+  private Messager messager;
+  private AutoSerializeUtils utils;
+  private FrameworkStatements statements;
+  private AutoSerializeAbstractProcessor abstractProcessor;
+  private AutoSerializeClassProcessor classProcessor;
 
-    private final List<DeferredProcessing> deferred = new ArrayList<>();
+  private final List<DeferredProcessing> deferred = new ArrayList<>();
 
-    @Override
-    public void init(final ProcessingEnvironment env) {
-        super.init(env);
+  @Override
+  public void init(final ProcessingEnvironment env) {
+    super.init(env);
 
-        filer = env.getFiler();
-        messager = new PrefixingMessager("@AutoSerialize", env.getMessager());
+    filer = env.getFiler();
+    messager = new PrefixingMessager("@AutoSerialize", env.getMessager());
 
-        final Elements elements = env.getElementUtils();
-        final Types types = env.getTypeUtils();
+    final Elements elements = env.getElementUtils();
+    final Types types = env.getTypeUtils();
 
-        utils = new AutoSerializeUtils(types, elements);
-        statements = new FrameworkStatements(utils);
-        abstractProcessor = new AutoSerializeAbstractProcessor(elements, statements, utils);
-        classProcessor = new AutoSerializeClassProcessor(types, elements, statements, utils);
+    utils = new AutoSerializeUtils(types, elements);
+    statements = new FrameworkStatements(utils);
+    abstractProcessor = new AutoSerializeAbstractProcessor(elements, statements, utils);
+    classProcessor = new AutoSerializeClassProcessor(types, elements, statements, utils);
 
-        if (env.getClass().getPackage().getName().startsWith("org.eclipse.jdt.")) {
-            warnAboutBugEclipse300408();
-        }
+    if (env.getClass().getPackage().getName().startsWith("org.eclipse.jdt.")) {
+      warnAboutBugEclipse300408();
+    }
+  }
+
+  /**
+   * Eclipse JDT does not preserve the original order of type fields, causing some Processor
+   * assumptions to fail.
+   */
+  void warnAboutBugEclipse300408() {
+    messager.printMessage(Diagnostic.Kind.WARNING,
+      "@AutoSerialize processor might not work properly in Eclipse < 3.5, see https://bugs" +
+        ".eclipse.org/bugs/show_bug.cgi?id=300408");
+  }
+
+  @Override
+  public boolean process(Set<? extends TypeElement> typeElements, RoundEnvironment env) {
+    final ImmutableSet.Builder<DeferredProcessing> elementsToProcess = ImmutableSet.builder();
+
+    if (env.processingOver()) {
+      for (final DeferredProcessing d : deferred) {
+        d.getBroken().accept(messager);
+      }
+
+      return false;
     }
 
-    /**
-     * Eclipse JDT does not preserve the original order of type fields, causing some Processor
-     * assumptions to fail.
-     */
-    void warnAboutBugEclipse300408() {
+    // failing TypeElement's from last round
+    if (!deferred.isEmpty()) {
+      elementsToProcess.addAll(deferred.stream().map(DeferredProcessing.refresh(utils)).iterator());
+      deferred.clear();
+    }
+
+    for (final Element e : env.getElementsAnnotatedWith(utils.autoSerializeType())) {
+      if (!(e instanceof TypeElement)) {
         messager.printMessage(Diagnostic.Kind.WARNING,
-            "@AutoSerialize processor might not work properly in Eclipse < 3.5, see https://bugs" +
-                ".eclipse.org/bugs/show_bug.cgi?id=300408");
+          String.format("Skipping non-type element %s", e));
+        continue;
+      }
+
+      elementsToProcess.add(new DeferredProcessing((TypeElement) e, messager -> {
+      }));
     }
 
-    @Override
-    public boolean process(Set<? extends TypeElement> typeElements, RoundEnvironment env) {
-        final ImmutableSet.Builder<DeferredProcessing> elementsToProcess = ImmutableSet.builder();
+    final List<Processed> results = new ArrayList<>();
 
-        if (env.processingOver()) {
-            for (final DeferredProcessing d : deferred) {
-                d.getBroken().accept(messager);
-            }
-
-            return false;
-        }
-
-        // failing TypeElement's from last round
-        if (!deferred.isEmpty()) {
-            elementsToProcess.addAll(
-                deferred.stream().map(DeferredProcessing.refresh(utils)).iterator());
-            deferred.clear();
-        }
-
-        for (final Element e : env.getElementsAnnotatedWith(utils.autoSerializeType())) {
-            if (!(e instanceof TypeElement)) {
-                messager.printMessage(Diagnostic.Kind.WARNING,
-                    String.format("Skipping non-type element %s", e));
-                continue;
-            }
-
-            elementsToProcess.add(new DeferredProcessing((TypeElement) e, messager -> {
-            }));
-        }
-
-        final List<Processed> results = new ArrayList<>();
-
-        for (final DeferredProcessing p : elementsToProcess.build()) {
-            try {
-                final JavaFile file = processElement(p.getElement());
-                results.add(new Processed(file, p.getElement()));
-            } catch (final BrokenException broken) {
-                deferred.add(p.withBroken(broken.getWriter()));
-            } catch (final Exception e) {
-                messager.printMessage(Diagnostic.Kind.ERROR,
-                    "Failed to process:\n" + Throwables.getStackTraceAsString(e), p.getElement());
-            }
-        }
-
-        for (final Processed p : results) {
-            final JavaFile file = p.getFile();
-
-            try {
-                file.writeTo(filer);
-            } catch (final Exception e) {
-                messager.printMessage(Diagnostic.Kind.ERROR,
-                    "Failed to write:\n" + Throwables.getStackTraceAsString(e), p.getElement());
-            }
-        }
-
-        return false;
+    for (final DeferredProcessing p : elementsToProcess.build()) {
+      try {
+        final JavaFile file = processElement(p.getElement());
+        results.add(new Processed(file, p.getElement()));
+      } catch (final BrokenException broken) {
+        deferred.add(p.withBroken(broken.getWriter()));
+      } catch (final Exception e) {
+        messager.printMessage(Diagnostic.Kind.ERROR,
+          "Failed to process:\n" + Throwables.getStackTraceAsString(e), p.getElement());
+      }
     }
 
-    @Override
-    public Set<String> getSupportedAnnotationTypes() {
-        return ImmutableSet.of(AutoSerializeUtils.AUTOSERIALIZE);
+    for (final Processed p : results) {
+      final JavaFile file = p.getFile();
+
+      try {
+        file.writeTo(filer);
+      } catch (final Exception e) {
+        messager.printMessage(Diagnostic.Kind.ERROR,
+          "Failed to write:\n" + Throwables.getStackTraceAsString(e), p.getElement());
+      }
     }
 
-    @Override
-    public SourceVersion getSupportedSourceVersion() {
-        return SourceVersion.latestSupported();
+    return false;
+  }
+
+  @Override
+  public Set<String> getSupportedAnnotationTypes() {
+    return ImmutableSet.of(AutoSerializeUtils.AUTOSERIALIZE);
+  }
+
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
+    return SourceVersion.latestSupported();
+  }
+
+  JavaFile processElement(TypeElement element) {
+    final Optional<AutoSerializeMirror> annotation = utils.autoSerialize(element);
+
+    if (!annotation.isPresent()) {
+      throw brokenElement("@AutoSerialize annotation not present", element);
     }
 
-    JavaFile processElement(TypeElement element) {
-        final Optional<AutoSerializeMirror> annotation = utils.autoSerialize(element);
+    final AutoSerializeMirror autoSerialize = annotation.get();
 
-        if (!annotation.isPresent()) {
-            throw brokenElement("@AutoSerialize annotation not present", element);
-        }
-
-        final AutoSerializeMirror autoSerialize = annotation.get();
-
-        if (element.getKind() == ElementKind.INTERFACE) {
-            if (autoSerialize.getBuilder().isPresent()) {
-                return classProcessor.process(element, autoSerialize);
-            } else {
-                return abstractProcessor.process(element, autoSerialize);
-            }
-        }
-
-        if (element.getKind() == ElementKind.CLASS) {
-            if (element.getModifiers().contains(Modifier.ABSTRACT) &&
-                !autoSerialize.getBuilder().isPresent()) {
-                return abstractProcessor.process(element, autoSerialize);
-            }
-
-            return classProcessor.process(element, autoSerialize);
-        }
-
-        throw brokenElement("Unsupported type, expected class or interface", element);
+    if (element.getKind() == ElementKind.INTERFACE) {
+      if (autoSerialize.getBuilder().isPresent()) {
+        return classProcessor.process(element, autoSerialize);
+      } else {
+        return abstractProcessor.process(element, autoSerialize);
+      }
     }
 
-    @Data
-    public static class Processed {
-        private final JavaFile file;
-        private final Element element;
+    if (element.getKind() == ElementKind.CLASS) {
+      if (element.getModifiers().contains(Modifier.ABSTRACT) &&
+        !autoSerialize.getBuilder().isPresent()) {
+        return abstractProcessor.process(element, autoSerialize);
+      }
+
+      return classProcessor.process(element, autoSerialize);
     }
+
+    throw brokenElement("Unsupported type, expected class or interface", element);
+  }
+
+  @Data
+  public static class Processed {
+    private final JavaFile file;
+    private final Element element;
+  }
 }

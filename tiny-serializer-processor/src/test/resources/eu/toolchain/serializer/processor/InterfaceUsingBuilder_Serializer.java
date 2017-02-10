@@ -9,20 +9,21 @@ import javax.annotation.Generated;
 
 @Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class InterfaceUsingBuilder_Serializer implements Serializer<InterfaceUsingBuilder> {
-    final Serializer<String> s_String;
+  final Serializer<String> s_String;
 
-    public InterfaceUsingBuilder_Serializer(final SerializerFramework framework) {
-        s_String = framework.string();
-    }
+  public InterfaceUsingBuilder_Serializer(final SerializerFramework framework) {
+    s_String = framework.string();
+  }
 
-    @Override
-    public void serialize(final SerialWriter buffer, final InterfaceUsingBuilder value) throws IOException {
-        s_String.serialize(buffer, value.name());
-    }
+  @Override
+  public void serialize(final SerialWriter buffer, final InterfaceUsingBuilder value)
+    throws IOException {
+    s_String.serialize(buffer, value.name());
+  }
 
-    @Override
-    public InterfaceUsingBuilder deserialize(final SerialReader buffer) throws IOException {
-        final String v_name = s_String.deserialize(buffer);
-        return new InterfaceUsingBuilder.Builder().name(v_name).build();
-    }
+  @Override
+  public InterfaceUsingBuilder deserialize(final SerialReader buffer) throws IOException {
+    final String v_name = s_String.deserialize(buffer);
+    return new InterfaceUsingBuilder.Builder().name(v_name).build();
+  }
 }

@@ -5,11 +5,11 @@ import javax.annotation.processing.Messager;
 import lombok.Getter;
 
 public class BrokenException extends RuntimeException {
-    @Getter
-    private final Consumer<Messager> writer;
+  @Getter
+  private final Consumer<Messager> writer;
 
-    public BrokenException(final String message, final Consumer<Messager> writer) {
-        super(message);
-        this.writer = writer;
-    }
+  public BrokenException(final String message, final Consumer<Messager> writer) {
+    super(message);
+    this.writer = writer;
+  }
 }

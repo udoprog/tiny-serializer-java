@@ -4,13 +4,13 @@ import eu.toolchain.serializer.AutoSerialize;
 
 @AutoSerialize
 public class ImplicitConstructor {
-    final String string;
+  final String string;
 
-    public ImplicitConstructor(String string) {
-        this.string = string;
-    }
+  public ImplicitConstructor(String string) {
+    this.string = string;
+  }
 
-    public String getString() {
-        return string;
-    }
+  public String getString() {
+    return string;
+  }
 }

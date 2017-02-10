@@ -9,15 +9,15 @@ import javax.annotation.Generated;
 
 @Generated("eu.toolchain.serializer.processor.AutoSerializeProcessor")
 public final class ImplA_Serializer implements Serializer<ImplA> {
-    public ImplA_Serializer(final SerializerFramework framework) {
-    }
+  public ImplA_Serializer(final SerializerFramework framework) {
+  }
 
-    @Override
-    public void serialize(final SerialWriter buffer, final ImplA value) throws IOException {
-    }
+  @Override
+  public void serialize(final SerialWriter buffer, final ImplA value) throws IOException {
+  }
 
-    @Override
-    public ImplA deserialize(final SerialReader buffer) throws IOException {
-        return new ImplA();
-    }
+  @Override
+  public ImplA deserialize(final SerialReader buffer) throws IOException {
+    return new ImplA();
+  }
 }

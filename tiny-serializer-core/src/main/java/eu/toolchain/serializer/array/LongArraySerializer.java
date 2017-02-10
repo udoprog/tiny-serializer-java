@@ -4,42 +4,41 @@ import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.primitive.LongSerializer;
-import lombok.RequiredArgsConstructor;
-
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class LongArraySerializer implements Serializer<long[]> {
-    private static final int BYTES = 8;
+  private static final int BYTES = 8;
 
-    private final Serializer<Integer> size;
+  private final Serializer<Integer> size;
 
-    @Override
-    public void serialize(SerialWriter buffer, long[] value) throws IOException {
-        final int size = value.length * BYTES;
-        final byte[] bytes = new byte[size];
+  @Override
+  public void serialize(SerialWriter buffer, long[] value) throws IOException {
+    final int size = value.length * BYTES;
+    final byte[] bytes = new byte[size];
 
-        for (int i = 0; i < value.length; i++) {
-            LongSerializer.toBytes(value[i], bytes, i * BYTES);
-        }
-
-        this.size.serialize(buffer, value.length);
-        buffer.write(bytes);
+    for (int i = 0; i < value.length; i++) {
+      LongSerializer.toBytes(value[i], bytes, i * BYTES);
     }
 
-    @Override
-    public long[] deserialize(SerialReader buffer) throws IOException {
-        final int length = size.deserialize(buffer);
+    this.size.serialize(buffer, value.length);
+    buffer.write(bytes);
+  }
 
-        final byte[] bytes = new byte[length * BYTES];
-        final long[] value = new long[length];
+  @Override
+  public long[] deserialize(SerialReader buffer) throws IOException {
+    final int length = size.deserialize(buffer);
 
-        buffer.read(bytes);
+    final byte[] bytes = new byte[length * BYTES];
+    final long[] value = new long[length];
 
-        for (int i = 0; i < value.length; i++) {
-            value[i] = LongSerializer.fromBytes(bytes, i * BYTES);
-        }
+    buffer.read(bytes);
 
-        return value;
+    for (int i = 0; i < value.length; i++) {
+      value[i] = LongSerializer.fromBytes(bytes, i * BYTES);
     }
+
+    return value;
+  }
 }

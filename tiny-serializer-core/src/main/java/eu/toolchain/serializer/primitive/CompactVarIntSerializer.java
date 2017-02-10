@@ -4,7 +4,6 @@ import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
 import eu.toolchain.serializer.SharedPool;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -39,56 +38,56 @@ import java.nio.ByteBuffer;
  * @author udoprog
  */
 public class CompactVarIntSerializer implements Serializer<Integer> {
-    public static final int MAX_SIZE = 5;
+  public static final int MAX_SIZE = 5;
 
-    private static final int CONT = 0x80;
-    private static final int MASK = (CONT ^ 0xff);
+  private static final int CONT = 0x80;
+  private static final int MASK = (CONT ^ 0xff);
 
-    @Override
-    public void serialize(SerialWriter buffer, Integer value) throws IOException {
-        final SharedPool pool = buffer.pool();
+  @Override
+  public void serialize(SerialWriter buffer, Integer value) throws IOException {
+    final SharedPool pool = buffer.pool();
 
-        final ByteBuffer bytes = pool.allocate(MAX_SIZE);
+    final ByteBuffer bytes = pool.allocate(MAX_SIZE);
 
-        try {
-            int v = value;
+    try {
+      int v = value;
 
-            int temp;
+      int temp;
 
-            while ((temp = (v >>> 7)) > 0) {
-                bytes.put((byte) ((v & MASK) | CONT));
-                v = temp - 1;
-            }
+      while ((temp = (v >>> 7)) > 0) {
+        bytes.put((byte) ((v & MASK) | CONT));
+        v = temp - 1;
+      }
 
-            bytes.put((byte) v);
-            bytes.flip();
+      bytes.put((byte) v);
+      bytes.flip();
 
-            buffer.write(bytes);
-        } finally {
-            pool.release(MAX_SIZE);
-        }
+      buffer.write(bytes);
+    } finally {
+      pool.release(MAX_SIZE);
+    }
+  }
+
+  @Override
+  public Integer deserialize(SerialReader buffer) throws IOException {
+    int v = 0;
+    long shift = 1;
+
+    int position = 0;
+
+    while (position++ < MAX_SIZE) {
+      final byte b = buffer.read();
+
+      v += (b & MASK) * shift;
+
+      if ((b & CONT) == 0) {
+        return v;
+      }
+
+      shift <<= 7;
+      v += shift;
     }
 
-    @Override
-    public Integer deserialize(SerialReader buffer) throws IOException {
-        int v = 0;
-        long shift = 1;
-
-        int position = 0;
-
-        while (position++ < MAX_SIZE) {
-            final byte b = buffer.read();
-
-            v += (b & MASK) * shift;
-
-            if ((b & CONT) == 0) {
-                return v;
-            }
-
-            shift <<= 7;
-            v += shift;
-        }
-
-        throw new IOException("Too many continuation bytes");
-    }
+    throw new IOException("Too many continuation bytes");
+  }
 }
