@@ -1,11 +1,11 @@
-package eu.toolchain.serializer.processor.value;
+package eu.toolchain.serializer.processor.field;
 
 import java.util.Optional;
 import lombok.Data;
 
 @Data
-public class Value {
-  private final ValueType type;
+public class Field {
+  private final FieldType type;
   private final String name;
   private final String accessor;
   private final String variableName;

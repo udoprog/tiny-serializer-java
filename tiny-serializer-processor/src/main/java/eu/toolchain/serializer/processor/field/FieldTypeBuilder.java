@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.processor.value;
+package eu.toolchain.serializer.processor.field;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
@@ -18,7 +18,7 @@ import lombok.Data;
  * @author udoprog
  */
 @Data
-public class ValueTypeBuilder {
+public class FieldTypeBuilder {
   static final Joiner emptyJoiner = Joiner.on("");
 
   final BuilderMirror builder;
@@ -40,7 +40,7 @@ public class ValueTypeBuilder {
    */
   final String method;
 
-  public static Optional<ValueTypeBuilder> build(
+  public static Optional<FieldTypeBuilder> build(
     final AutoSerializeUtils utils, final TypeElement element,
     final AutoSerializeMirror autoSerialize
   ) {
@@ -52,15 +52,15 @@ public class ValueTypeBuilder {
       }));
   }
 
-  static ValueTypeBuilder build(
+  static FieldTypeBuilder build(
     final BuilderMirror builder, final TypeElement element, final AutoSerializeUtils utils
   ) {
     final boolean useConstructor = builder.shouldUseConstructor();
-    return new ValueTypeBuilder(builder, useConstructor, builder.isUseSetter(),
+    return new FieldTypeBuilder(builder, useConstructor, builder.isUseSetter(),
       builder.getMethodName());
   }
 
-  public void writeTo(ClassName returnType, MethodSpec.Builder b, List<Value> variables) {
+  public void writeTo(ClassName returnType, MethodSpec.Builder b, List<Field> variables) {
     final ImmutableList.Builder<String> builders = ImmutableList.builder();
     final ImmutableList.Builder<Object> parameters = ImmutableList.builder();
 
@@ -77,7 +77,7 @@ public class ValueTypeBuilder {
 
     parameters.add(builderType);
 
-    for (final Value f : variables) {
+    for (final Field f : variables) {
       builders.add(String.format(".%s($L)", builderSetter(f)));
       parameters.add(f.getVariableName());
     }
@@ -98,7 +98,7 @@ public class ValueTypeBuilder {
     return builder.getType().map((t) -> TypeName.get(t.get())).orElse(returnType);
   }
 
-  String builderSetter(final Value f) {
+  String builderSetter(final Field f) {
     if (useSetter) {
       return "set" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, f.getName());
     }

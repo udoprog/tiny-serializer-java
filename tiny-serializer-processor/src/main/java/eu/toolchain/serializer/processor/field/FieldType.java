@@ -1,4 +1,4 @@
-package eu.toolchain.serializer.processor.value;
+package eu.toolchain.serializer.processor.field;
 
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -8,8 +8,8 @@ import javax.lang.model.type.TypeMirror;
 import lombok.Data;
 
 @Data
-public class ValueType {
-  private final ValueTypeIdentifier identifier;
+public class FieldType {
+  private final FieldTypeId identifier;
   private final TypeMirror typeMirror;
   private final TypeName typeName;
   private final FieldSpec fieldSpec;

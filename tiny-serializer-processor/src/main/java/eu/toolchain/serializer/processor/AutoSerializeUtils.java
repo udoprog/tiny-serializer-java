@@ -8,7 +8,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.AutoSerialize;
-import eu.toolchain.serializer.DefaultBuilderType;
 import eu.toolchain.serializer.SerialReader;
 import eu.toolchain.serializer.SerialWriter;
 import eu.toolchain.serializer.Serializer;
@@ -61,7 +60,7 @@ public class AutoSerializeUtils {
   public static final String SERIAL_READER = SerialReader.class.getCanonicalName();
   public static final String SERIAL_WRITER = SerialWriter.class.getCanonicalName();
   public static final String TYPE_MAPPING = TypeMapping.class.getCanonicalName();
-  public static final String DEFAULT_BUILDER_TYPE = DefaultBuilderType.class.getCanonicalName();
+  public static final String DEFAULT_BUILDER_TYPE = Void.class.getCanonicalName();
 
   public static final String OPTIONAL = Optional.class.getCanonicalName();
 

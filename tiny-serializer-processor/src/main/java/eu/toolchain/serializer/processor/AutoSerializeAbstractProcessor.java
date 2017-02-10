@@ -13,7 +13,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
-import eu.toolchain.serializer.processor.value.ValueSubType;
+import eu.toolchain.serializer.processor.field.SubType;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,7 +41,7 @@ public class AutoSerializeAbstractProcessor {
     final TypeName elementType = TypeName.get(element.asType());
     final TypeName supertype = TypeName.get(utils.serializerFor(element.asType()));
 
-    final List<ValueSubType> subTypes = subTypes(element, packageName);
+    final List<SubType> subTypes = subTypes(element, packageName);
 
     final TypeSpec.Builder generated = TypeSpec.classBuilder(serializerName);
 
@@ -71,7 +71,7 @@ public class AutoSerializeAbstractProcessor {
   }
 
   MethodSpec constructor(
-    final TypeName elementType, final FieldSpec serializer, final List<ValueSubType> subtypes
+    final TypeName elementType, final FieldSpec serializer, final List<SubType> subtypes
   ) {
     final ClassName list = ClassName.get(List.class);
     final ClassName typeMapping = utils.typeMapping();
@@ -90,7 +90,7 @@ public class AutoSerializeAbstractProcessor {
     b.addStatement("final $T<$T<? extends $T, $T>> mappings = new $T<>()", list, typeMapping,
       elementType, elementType, arrayList);
 
-    for (final ValueSubType subtype : subtypes) {
+    for (final SubType subtype : subtypes) {
       final ClassName serializerType = utils.serializerClassFor(subtype.getType());
 
       b.addStatement("mappings.add($N.<$T, $T>type($L, $T.class, new $T($N)))", framework,
@@ -119,14 +119,14 @@ public class AutoSerializeAbstractProcessor {
       .build();
   }
 
-  List<ValueSubType> subTypes(Element element, final String defaultPackageName) {
+  List<SubType> subTypes(Element element, final String defaultPackageName) {
     return utils.subTypes(element).map(subTypes -> {
       final Set<Short> seenIds = new HashSet<>();
 
       int offset = 0;
       final ShortIterator index = new ShortIterator();
 
-      final ImmutableList.Builder<ValueSubType> results = ImmutableList.builder();
+      final ImmutableList.Builder<SubType> results = ImmutableList.builder();
 
       for (final SubTypeMirror s : subTypes.getSubTypes()) {
         final DeclaredType type = (DeclaredType) s.getValue().get();
@@ -138,7 +138,7 @@ public class AutoSerializeAbstractProcessor {
             element);
         }
 
-        results.add(new ValueSubType(type, id));
+        results.add(new SubType(type, id));
         offset++;
       }
 

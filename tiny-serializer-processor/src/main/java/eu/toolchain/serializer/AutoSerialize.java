@@ -55,9 +55,9 @@ public @interface AutoSerialize {
     /**
      * Use the specified builder class instead of assuming the serialized type has a builder.
      *
-     * @return Builder type to use, or {@link DefaultBuilderType} if none is specified.
+     * @return Builder type to use, or {@link Void} if none is specified.
      */
-    Class<?> type() default DefaultBuilderType.class;
+    Class<?> type() default Void.class;
 
     /**
      * Use setters when assigning values to a builder.
