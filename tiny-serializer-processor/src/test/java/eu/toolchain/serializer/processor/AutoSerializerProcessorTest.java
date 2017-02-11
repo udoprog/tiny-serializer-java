@@ -79,11 +79,6 @@ public class AutoSerializerProcessorTest {
   }
 
   @Test
-  public void testOrdering() {
-    verifySerializer("Ordering");
-  }
-
-  @Test
   public void testArray() {
     verifySerializer("Array");
   }

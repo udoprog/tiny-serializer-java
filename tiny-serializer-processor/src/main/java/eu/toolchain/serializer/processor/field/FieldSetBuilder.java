@@ -163,8 +163,6 @@ public class FieldSetBuilder {
           FieldSpec.builder(serializerType, typeFieldName).addModifiers(Modifier.FINAL).build();
       }
 
-      final List<ProvidedField> providedFields = new ArrayList<>();
-
       final Optional<FieldSet> subFields;
 
       if (statements.resolveStatement(valueType).isCustom()) {
@@ -254,8 +252,7 @@ public class FieldSetBuilder {
     };
   }
 
-  public FieldSet build(boolean isOrdereById, boolean isOrderConstructorById) {
-    return new FieldSet(isOrdereById, isOrderConstructorById,
-      ImmutableList.copyOf(fieldTypes.values()), ImmutableList.copyOf(fields));
+  public FieldSet build() {
+    return new FieldSet(ImmutableList.copyOf(fieldTypes.values()), ImmutableList.copyOf(fields));
   }
 }

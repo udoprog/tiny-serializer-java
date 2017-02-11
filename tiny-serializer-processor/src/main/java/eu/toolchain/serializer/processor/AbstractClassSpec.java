@@ -58,7 +58,7 @@ public class AbstractClassSpec implements ClassSpec {
 
   @Override
   public FieldSet getFieldSet() {
-    return new FieldSet(false, false, ImmutableList.of(), ImmutableList.of());
+    return new FieldSet(ImmutableList.of(), ImmutableList.of());
   }
 
   MethodSpec constructor(

@@ -3,7 +3,6 @@ package eu.toolchain.serializer.processor;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.field.FieldSet;
 import eu.toolchain.serializer.processor.field.FieldType;
@@ -210,7 +209,7 @@ public class FrameworkStatements {
       public Instance build(final Optional<FieldSet> fields, final Object framework) {
         return builder -> {
           final List<FieldType> fieldTypes =
-            fields.map(FieldSet::getAllOrderedTypes).orElseGet(ImmutableList::of);
+            fields.map(FieldSet::getTypes).orElseGet(ImmutableList::of);
 
           final List<String> parameterFormat = new ArrayList<>();
           parameterFormat.add("$N");

@@ -41,12 +41,13 @@ public @interface AutoSerialize {
   Builder[] builder() default {};
 
   /**
-   * Order field serialization by id.
-   *
-   * @return {@code true} if serialization should be ordered by id, {@code false} othwerwise.
+   * @deprecated ordering is always determined by field declaration order.
    */
   boolean orderById() default true;
 
+  /**
+   * @deprecated ordering is always determined by field declaration order.
+   */
   boolean orderConstructorById() default false;
 
   @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
@@ -72,7 +73,7 @@ public @interface AutoSerialize {
      * Use builder constructor when constructing builder.
      * <p>
      * The default method would otherwise be to create a builder instance using {@link
-     * #useBuilderMethod()}.
+     * #builder()}.
      *
      * @return {@code true} if constructor should be used for builder type, {@code false} otherwise.
      */
@@ -91,7 +92,7 @@ public @interface AutoSerialize {
     boolean useMethod() default false;
 
     /**
-     * Builder method to use unless {@link #useBuilderConstructor()} is true.
+     * Builder method to use unless {@link #useConstructor} is true.
      *
      * @return Builder method to use, or empty string if not specified;
      */

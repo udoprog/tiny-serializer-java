@@ -105,10 +105,10 @@ public class ConcreteClassSpec implements ClassSpec {
     b.addModifiers(Modifier.PUBLIC);
     b.addParameter(framework);
 
-    List<FieldType> orderedTypes = fields.getOrderedTypes();
+    List<FieldType> orderedTypes = fields.getTypes();
     buildConstructorParameters(b, orderedTypes);
 
-    for (final FieldType fieldType : fields.getOrderedTypes()) {
+    for (final FieldType fieldType : fields.getTypes()) {
       if (fieldType.getProvidedParameterSpec().isPresent()) {
         b.addStatement("this.$N = $N", fieldType.getFieldSpec(),
           fieldType.getProvidedParameterSpec().get());
@@ -141,7 +141,7 @@ public class ConcreteClassSpec implements ClassSpec {
       }
 
       t.getSubFields().ifPresent(subFields -> {
-        buildConstructorParameters(b, subFields.getOrderedTypes());
+        buildConstructorParameters(b, subFields.getTypes());
       });
     }
   }
@@ -159,9 +159,9 @@ public class ConcreteClassSpec implements ClassSpec {
     b.addStatement("this.$N = $N.variableInteger()", count, framework);
     b.addStatement("this.$N = $N.string()", name, framework);
 
-    buildConstructorParameters(b, fields.getOrderedTypes());
+    buildConstructorParameters(b, fields.getTypes());
 
-    for (final FieldType fieldType : fields.getOrderedTypes()) {
+    for (final FieldType fieldType : fields.getTypes()) {
       if (fieldType.getProvidedParameterSpec().isPresent()) {
         b.addStatement("this.$N = $N", fieldType.getFieldSpec(),
           fieldType.getProvidedParameterSpec().get());
@@ -193,7 +193,7 @@ public class ConcreteClassSpec implements ClassSpec {
 
     b.addStatement("$N.serialize($N, $L)", count, buffer, fields.getFields().size());
 
-    for (final Field field : fields.getOrderedValues()) {
+    for (final Field field : fields.getFields()) {
       if (field.isValueProvided()) {
         continue;
       }
@@ -228,7 +228,7 @@ public class ConcreteClassSpec implements ClassSpec {
     final ParameterSpec buffer = utils.parameter(utils.serialReader(), "buffer");
     final MethodSpec.Builder b = utils.deserializeMethod(elementType, buffer);
 
-    for (final Field field : fields.getOrderedValues()) {
+    for (final Field field : fields.getFields()) {
       final TypeName fieldType = field.getType().getTypeName();
 
       if (field.getType().isOptional()) {
@@ -250,7 +250,7 @@ public class ConcreteClassSpec implements ClassSpec {
 
     b.beginControlFlow("switch (fieldName)");
 
-    for (final Field field : fields.getOrderedValues()) {
+    for (final Field field : fields.getFields()) {
       if (field.isValueProvided()) {
         continue;
       }
@@ -288,7 +288,7 @@ public class ConcreteClassSpec implements ClassSpec {
 
     b.endControlFlow();
 
-    for (final Field field : fields.getOrderedValues()) {
+    for (final Field field : fields.getFields()) {
       if (!field.getType().isOptional()) {
         b.beginControlFlow("if (!$N)", field.getIsSetVariableName());
         b.addStatement("throw new $T($S)", utils.ioException(),
@@ -298,10 +298,10 @@ public class ConcreteClassSpec implements ClassSpec {
     }
 
     if (fieldTypeBuilder.isPresent()) {
-      fieldTypeBuilder.get().writeTo(elementType, b, fields.getOrderedValues());
+      fieldTypeBuilder.get().writeTo(elementType, b, fields.getFields());
     } else {
       b.addStatement("return new $T($L)", elementType,
-        PARAMETER_JOINER.join(fields.getConstructorVariables()));
+        PARAMETER_JOINER.join(fields.getVariableNames()));
     }
 
     return b.build();
@@ -312,7 +312,7 @@ public class ConcreteClassSpec implements ClassSpec {
     final ParameterSpec value = utils.parameter(elementType, "value");
     final MethodSpec.Builder b = utils.serializeMethod(buffer, value);
 
-    for (final Field field : fields.getOrderedValues()) {
+    for (final Field field : fields.getFields()) {
       if (field.isValueProvided()) {
         continue;
       }
@@ -328,7 +328,7 @@ public class ConcreteClassSpec implements ClassSpec {
     final ParameterSpec buffer = utils.parameter(utils.serialReader(), "buffer");
     final MethodSpec.Builder b = utils.deserializeMethod(elementType, buffer);
 
-    for (final Field field : fields.getOrderedValues()) {
+    for (final Field field : fields.getFields()) {
       if (field.isValueProvided()) {
         continue;
       }
@@ -340,10 +340,10 @@ public class ConcreteClassSpec implements ClassSpec {
     }
 
     if (fieldTypeBuilder.isPresent()) {
-      fieldTypeBuilder.get().writeTo(elementType, b, fields.getOrderedValues());
+      fieldTypeBuilder.get().writeTo(elementType, b, fields.getFields());
     } else {
       b.addStatement("return new $T($L)", elementType,
-        PARAMETER_JOINER.join(fields.getConstructorVariables()));
+        PARAMETER_JOINER.join(fields.getVariableNames()));
     }
 
     return b.build();

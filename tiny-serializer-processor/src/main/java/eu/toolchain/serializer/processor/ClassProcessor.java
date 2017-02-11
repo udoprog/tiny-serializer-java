@@ -100,8 +100,7 @@ public class ClassProcessor {
       fieldSetBuilder.add(child);
     }
 
-    final FieldSet fields =
-      fieldSetBuilder.build(autoSerialize.isOrderById(), autoSerialize.isOrderConstructorById());
+    final FieldSet fields = fieldSetBuilder.build();
 
     final ClassName elementType = (ClassName) TypeName.get(element.asType());
     final TypeName superType = TypeName.get(utils.serializerFor(element.asType()));
