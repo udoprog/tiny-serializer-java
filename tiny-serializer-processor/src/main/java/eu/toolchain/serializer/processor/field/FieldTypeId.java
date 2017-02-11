@@ -6,8 +6,8 @@ import lombok.Data;
 
 @Data
 class FieldTypeId {
-  private final TypeName fieldType;
+  private final TypeName valueType;
   private final boolean provided;
   private final Optional<String> providerName;
-  private final Optional<Integer> valueProvided;
+  private final Optional<Integer> external;
 }

@@ -12,10 +12,9 @@ public class FieldMirror {
   private final String name;
   private final String fieldName;
   private final String accessor;
-  private final int id;
-  private final int constructorOrder;
   private final boolean useGetter;
   private final boolean provided;
+  private final boolean external;
   private final String providerName;
 
   public static FieldMirror getFor(
@@ -26,13 +25,12 @@ public class FieldMirror {
     final String name = values.getString("name").get();
     final String fieldName = values.getString("fieldName").get();
     final String accessor = values.getString("accessor").get();
-    final int id = values.getInteger("id").get();
-    final int constructorOrder = values.getInteger("constructorOrder").get();
     final boolean useGetter = values.getBoolean("useGetter").get();
     final boolean provided = values.getBoolean("provided").get();
+    final boolean external = values.getBoolean("external").get();
     final String providerName = values.getString("providerName").get();
 
-    return new FieldMirror(a, name, fieldName, accessor, id, constructorOrder, useGetter, provided,
+    return new FieldMirror(a, name, fieldName, accessor, useGetter, provided, external,
       providerName);
   }
 }

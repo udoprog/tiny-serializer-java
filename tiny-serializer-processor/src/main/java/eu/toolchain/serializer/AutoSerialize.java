@@ -165,10 +165,16 @@ public @interface AutoSerialize {
     boolean useGetter() default true;
 
     /**
-     * Indicate that the annotated field should be provided in the construction of the
-     * serializer.
+     * Indicate that the serializer of the annotated field should be provided in the construction of
+     * the serializer.
      */
     boolean provided() default false;
+
+    /**
+     * Indicate that the value of the annotated field is external and should be provided by the
+     * serializer.
+     */
+    boolean external() default false;
 
     /**
      * Specify a specific provider name.
@@ -184,13 +190,5 @@ public @interface AutoSerialize {
   @Target({ElementType.FIELD, ElementType.METHOD})
   @Retention(RetentionPolicy.SOURCE)
   @interface Ignore {
-  }
-
-  /**
-   * Indicates that the annotated field should be provided by the serializer.
-   */
-  @Target({ElementType.FIELD, ElementType.METHOD})
-  @Retention(RetentionPolicy.SOURCE)
-  @interface Provided {
   }
 }

@@ -14,7 +14,7 @@ import lombok.Data;
  * @author udoprog
  */
 @Data
-public class FieldTypeBuilder {
+public class FieldBuilder {
   static final Joiner emptyJoiner = Joiner.on("");
 
   final BuilderMirror builder;
@@ -36,7 +36,7 @@ public class FieldTypeBuilder {
    */
   final String method;
 
-  public void writeTo(ClassName returnType, MethodSpec.Builder b, List<Field> variables) {
+  public void writeTo(ClassName returnType, MethodSpec.Builder b, List<Value> variables) {
     final ImmutableList.Builder<String> builders = ImmutableList.builder();
     final ImmutableList.Builder<Object> parameters = ImmutableList.builder();
 
@@ -53,7 +53,7 @@ public class FieldTypeBuilder {
 
     parameters.add(builderType);
 
-    for (final Field f : variables) {
+    for (final Value f : variables) {
       builders.add(String.format(".%s($L)", builderSetter(f)));
       parameters.add(f.getVariableName());
     }
@@ -74,7 +74,7 @@ public class FieldTypeBuilder {
     return builder.getType().map((t) -> TypeName.get(t.get())).orElse(returnType);
   }
 
-  String builderSetter(final Field f) {
+  String builderSetter(final Value f) {
     if (useSetter) {
       return "set" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, f.getName());
     }

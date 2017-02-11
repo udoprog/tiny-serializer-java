@@ -3,13 +3,13 @@ package eu.toolchain.serializer.processor;
 import eu.toolchain.serializer.AutoSerialize;
 
 @AutoSerialize
-public class ValueProvided {
+public class External {
   final String visible;
-  @AutoSerialize.Provided
+  @AutoSerialize.Field(external = true)
   final String hidden;
   final String visibleAgain;
 
-  public ValueProvided(final String visible, final String hidden, final String visibleAgain) {
+  public External(final String visible, final String hidden, final String visibleAgain) {
     this.visible = visible;
     this.hidden = hidden;
     this.visibleAgain = visibleAgain;

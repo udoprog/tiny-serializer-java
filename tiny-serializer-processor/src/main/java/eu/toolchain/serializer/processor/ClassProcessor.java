@@ -9,10 +9,11 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
+import eu.toolchain.serializer.processor.field.Field;
 import eu.toolchain.serializer.processor.field.FieldSet;
-import eu.toolchain.serializer.processor.field.FieldSetBuilder;
-import eu.toolchain.serializer.processor.field.FieldTypeBuilder;
+import eu.toolchain.serializer.processor.field.FieldBuilder;
 import eu.toolchain.serializer.processor.field.SubType;
+import eu.toolchain.serializer.processor.field.Value;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -93,14 +94,12 @@ public class ClassProcessor {
     final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
     final Set<ElementKind> kinds = getKinds(element);
 
-    final FieldSetBuilder fieldSetBuilder =
-      new FieldSetBuilder(this, utils, statements, element, kinds, autoSerialize.isUseGetter());
+    final FieldSet fieldSet =
+      new FieldSet(this, utils, statements, element, kinds, autoSerialize.isUseGetter());
 
     for (final Element child : element.getEnclosedElements()) {
-      fieldSetBuilder.add(child);
+      fieldSet.add(child);
     }
-
-    final FieldSet fields = fieldSetBuilder.build();
 
     final ClassName elementType = (ClassName) TypeName.get(element.asType());
     final TypeName superType = TypeName.get(utils.serializerFor(element.asType()));
@@ -109,14 +108,17 @@ public class ClassProcessor {
     final boolean fieldBased = autoSerialize.isFieldBased();
     final boolean failOnMissing = autoSerialize.isFailOnMissing();
 
-    final Optional<FieldTypeBuilder> fieldTypeBuilder =
+    final Optional<FieldBuilder> fieldTypeBuilder =
       utils.builder(element).map(Optional::of).orElseGet(autoSerialize::getBuilder).map(method -> {
-        return new FieldTypeBuilder(method, method.shouldUseConstructor(), method.isUseSetter(),
+        return new FieldBuilder(method, method.shouldUseConstructor(), method.isUseSetter(),
           method.getMethodName());
       });
 
-    return new ConcreteClassSpec(utils, elements, statements, packageName, fields, elementType,
-      superType, serializerName, fieldBased, failOnMissing, fieldTypeBuilder);
+    final List<Field> fields = ImmutableList.copyOf(fieldSet.getFields().values());
+    final List<Value> values = ImmutableList.copyOf(fieldSet.getValues());
+
+    return new ConcreteClassSpec(utils, elements, statements, packageName, fields, values,
+      elementType, superType, serializerName, fieldBased, failOnMissing, fieldTypeBuilder);
   }
 
   /**

@@ -18,7 +18,6 @@ import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.BuilderMirror;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
 import eu.toolchain.serializer.processor.annotation.IgnoreMirror;
-import eu.toolchain.serializer.processor.annotation.ProvidedMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypesMirror;
 import java.io.IOException;
@@ -51,8 +50,6 @@ public class AutoSerializeUtils {
   public static final String SERIALIZER = Serializer.class.getCanonicalName();
   public static final String AUTOSERIALIZE = AutoSerialize.class.getCanonicalName();
   public static final String AUTOSERIALIZE_IGNORE = AutoSerialize.Ignore.class.getCanonicalName();
-  public static final String AUTOSERIALIZE_PROVIDED =
-    AutoSerialize.Provided.class.getCanonicalName();
   public static final String AUTOSERIALIZE_BUILDER = AutoSerialize.Builder.class.getCanonicalName();
   public static final String AUTOSERIALIZE_SUBTYPE = AutoSerialize.SubType.class.getCanonicalName();
   public static final String AUTOSERIALIZE_SUBTYPES =
@@ -228,11 +225,6 @@ public class AutoSerializeUtils {
   public Optional<IgnoreMirror> ignore(Element element) {
     return annotation(element, AUTOSERIALIZE_IGNORE).map(
       (a) -> IgnoreMirror.getFor(this, element, a));
-  }
-
-  public Optional<ProvidedMirror> provided(Element element) {
-    return annotation(element, AUTOSERIALIZE_PROVIDED).map(
-      (a) -> ProvidedMirror.getFor(this, element, a));
   }
 
   public TypeElement autoSerializeType() {

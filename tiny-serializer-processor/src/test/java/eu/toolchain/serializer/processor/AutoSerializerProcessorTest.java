@@ -104,13 +104,13 @@ public class AutoSerializerProcessorTest {
   }
 
   @Test
-  public void testValueProvided() {
-    verifySerializer("ValueProvided");
+  public void testExternal() {
+    verifySerializer("External");
   }
 
   @Test
-  public void testOtherProvided() {
-    verifySerializer("OtherProvided");
+  public void testOtherExternal() {
+    verifySerializer("OtherExternal");
   }
 
   static void verifySerializer(String name) {

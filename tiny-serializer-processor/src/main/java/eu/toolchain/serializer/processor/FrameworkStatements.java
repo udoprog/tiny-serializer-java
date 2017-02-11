@@ -4,8 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
-import eu.toolchain.serializer.processor.field.FieldSet;
-import eu.toolchain.serializer.processor.field.FieldType;
+import eu.toolchain.serializer.processor.field.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -206,11 +205,8 @@ public class FrameworkStatements {
   FrameworkStatement resolveCustomSerializer(final DeclaredType type) {
     return new FrameworkStatement() {
       @Override
-      public Instance build(final Optional<FieldSet> fields, final Object framework) {
+      public Instance build(final List<Field> fields, final Object framework) {
         return builder -> {
-          final List<FieldType> fieldTypes =
-            fields.map(FieldSet::getTypes).orElseGet(ImmutableList::of);
-
           final List<String> parameterFormat = new ArrayList<>();
           parameterFormat.add("$N");
 
@@ -218,8 +214,8 @@ public class FrameworkStatements {
           arguments.add(utils.serializerClassFor(type));
           arguments.add(framework);
 
-          fieldTypes.forEach(p -> {
-            p.getProvidedParameterSpec().ifPresent(s -> {
+          fields.forEach(p -> {
+            p.getProvidedParameter().ifPresent(s -> {
               parameterFormat.add("$N");
               arguments.add(s);
             });

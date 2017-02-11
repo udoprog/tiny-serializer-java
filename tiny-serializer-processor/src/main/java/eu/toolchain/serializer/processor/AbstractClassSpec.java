@@ -9,8 +9,9 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import eu.toolchain.serializer.processor.field.FieldSet;
+import eu.toolchain.serializer.processor.field.Field;
 import eu.toolchain.serializer.processor.field.SubType;
+import eu.toolchain.serializer.processor.field.Value;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Generated;
@@ -57,8 +58,14 @@ public class AbstractClassSpec implements ClassSpec {
   }
 
   @Override
-  public FieldSet getFieldSet() {
-    return new FieldSet(ImmutableList.of(), ImmutableList.of());
+  public List<Value> getValues() {
+    return ImmutableList.of();
+  }
+
+  @Override
+  public List<Field> getFields() {
+    // TODO: support abstract propagation
+    return ImmutableList.of();
   }
 
   MethodSpec constructor(

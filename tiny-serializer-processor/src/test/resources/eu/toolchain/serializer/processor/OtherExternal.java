@@ -3,15 +3,18 @@ package eu.toolchain.serializer.processor;
 import eu.toolchain.serializer.AutoSerialize;
 
 @AutoSerialize
-public class OtherProvided {
+public class OtherExternal {
   final String string;
   final Provided provided;
-  final ValueProvided valueProvided;
+  @AutoSerialize.Field(external = true)
+  final String hidden;
+  final External external;
 
-  public OtherProvided(String string, Provided provided, ValueProvided valueProvided) {
+  public OtherExternal(String string, Provided provided, String hidden, External external) {
     this.string = string;
     this.provided = provided;
-    this.valueProvided = valueProvided;
+    this.hidden = hidden;
+    this.external = external;
   }
 
   public String getString() {
@@ -22,7 +25,7 @@ public class OtherProvided {
     return provided;
   }
 
-  public ValueProvided getValueProvided() {
-    return valueProvided;
+  public External getExternal() {
+    return external;
   }
 }

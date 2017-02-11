@@ -1,11 +1,11 @@
 package eu.toolchain.serializer.processor;
 
-import eu.toolchain.serializer.processor.field.FieldSet;
-import java.util.Optional;
+import eu.toolchain.serializer.processor.field.Field;
+import java.util.List;
 
 @FunctionalInterface
 public interface FrameworkStatement {
-  Instance build(Optional<FieldSet> fields, Object framework);
+  Instance build(List<Field> fields, Object framework);
 
   default boolean isCustom() {
     return false;
