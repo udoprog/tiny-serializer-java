@@ -121,9 +121,7 @@ public class ConcreteClassSpec implements ClassSpec {
             .build()
             .toArray());
 
-      statements
-        .resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework)
-        .writeTo(builder);
+      statements.resolveStatement(fieldType.getTypeMirror()).build(framework).writeTo(builder);
     }
 
     return b.build();
@@ -164,9 +162,7 @@ public class ConcreteClassSpec implements ClassSpec {
             .build()
             .toArray());
 
-      statements
-        .resolveStatement(utils.boxedIfNeeded(fieldType.getTypeMirror()), framework)
-        .writeTo(builder);
+      statements.resolveStatement(fieldType.getTypeMirror()).build(framework).writeTo(builder);
     }
 
     return b.build();
@@ -218,7 +214,8 @@ public class ConcreteClassSpec implements ClassSpec {
       final TypeName fieldType = field.getType().getTypeName();
 
       if (field.getType().isOptional()) {
-        b.addStatement("$T $L = $T.empty()", fieldType, field.getVariableName(), utils.optional());
+        b.addStatement("$T $L = $T.empty()", fieldType, field.getVariableName(),
+          utils.optional());
       } else {
         b.addStatement("$T $L = $L", fieldType, field.getVariableName(),
           utils.initLiteral(field.getType().getTypeMirror()));
@@ -284,7 +281,7 @@ public class ConcreteClassSpec implements ClassSpec {
     }
 
     if (fieldTypeBuilder.isPresent()) {
-      fieldTypeBuilder.get().writeTo(elementType, b, fields.getFields());
+      fieldTypeBuilder.get().writeTo(elementType, b, fields.getOrderedValues());
     } else {
       b.addStatement("return new $T($L)", elementType,
         PARAMETER_JOINER.join(fields.getConstructorVariables()));
@@ -303,8 +300,8 @@ public class ConcreteClassSpec implements ClassSpec {
         continue;
       }
 
-      b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer, value,
-        field.getAccessor());
+      b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer,
+        value, field.getAccessor());
     }
 
     return b.build();
@@ -326,7 +323,7 @@ public class ConcreteClassSpec implements ClassSpec {
     }
 
     if (fieldTypeBuilder.isPresent()) {
-      fieldTypeBuilder.get().writeTo(elementType, b, fields.getFields());
+      fieldTypeBuilder.get().writeTo(elementType, b, fields.getOrderedValues());
     } else {
       b.addStatement("return new $T($L)", elementType,
         PARAMETER_JOINER.join(fields.getConstructorVariables()));

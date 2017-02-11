@@ -30,56 +30,59 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FrameworkStatements {
-  static final Map<TypeName, String> direct = new HashMap<>();
+  private static final Joiner ARGUMENT_JOINER = Joiner.on(", ");
+  private static final Map<TypeName, String> DIRECT = new HashMap<>();
 
   static {
-    direct.put(ClassName.get(String.class), "$N.string()");
-    direct.put(ClassName.get(Byte.class), "$N.fixedByte()");
-    direct.put(ClassName.get(Short.class), "$N.fixedShort()");
-    direct.put(ClassName.get(Integer.class), "$N.fixedInteger()");
-    direct.put(ClassName.get(Long.class), "$N.fixedLong()");
-    direct.put(ClassName.get(Float.class), "$N.fixedFloat()");
-    direct.put(ClassName.get(Double.class), "$N.fixedDouble()");
-    direct.put(ClassName.get(Character.class), "$N.fixedCharacter()");
-    direct.put(ClassName.get(Boolean.class), "$N.fixedBoolean()");
-    direct.put(ClassName.get(UUID.class), "$N.uuid()");
-    direct.put(TypeName.get(boolean[].class), "$N.booleanArray()");
-    direct.put(TypeName.get(byte[].class), "$N.byteArray()");
-    direct.put(TypeName.get(short[].class), "$N.shortArray()");
-    direct.put(TypeName.get(int[].class), "$N.intArray()");
-    direct.put(TypeName.get(long[].class), "$N.longArray()");
-    direct.put(TypeName.get(float[].class), "$N.floatArray()");
-    direct.put(TypeName.get(double[].class), "$N.doubleArray()");
-    direct.put(TypeName.get(char[].class), "$N.charArray()");
+    DIRECT.put(ClassName.get(String.class), "$N.string()");
+    DIRECT.put(ClassName.get(Byte.class), "$N.fixedByte()");
+    DIRECT.put(ClassName.get(Short.class), "$N.fixedShort()");
+    DIRECT.put(ClassName.get(Integer.class), "$N.fixedInteger()");
+    DIRECT.put(ClassName.get(Long.class), "$N.fixedLong()");
+    DIRECT.put(ClassName.get(Float.class), "$N.fixedFloat()");
+    DIRECT.put(ClassName.get(Double.class), "$N.fixedDouble()");
+    DIRECT.put(ClassName.get(Character.class), "$N.fixedCharacter()");
+    DIRECT.put(ClassName.get(Boolean.class), "$N.fixedBoolean()");
+    DIRECT.put(ClassName.get(UUID.class), "$N.uuid()");
+    DIRECT.put(TypeName.get(boolean[].class), "$N.booleanArray()");
+    DIRECT.put(TypeName.get(byte[].class), "$N.byteArray()");
+    DIRECT.put(TypeName.get(short[].class), "$N.shortArray()");
+    DIRECT.put(TypeName.get(int[].class), "$N.intArray()");
+    DIRECT.put(TypeName.get(long[].class), "$N.longArray()");
+    DIRECT.put(TypeName.get(float[].class), "$N.floatArray()");
+    DIRECT.put(TypeName.get(double[].class), "$N.doubleArray()");
+    DIRECT.put(TypeName.get(char[].class), "$N.charArray()");
   }
 
-  static final Map<TypeName, Parameterized> parameterized = new HashMap<>();
+  static final Map<TypeName, Parameterized> PARAMETERIZED = new HashMap<>();
 
   static {
-    parameterized.put(ClassName.get(List.class), new Parameterized("$N.list", 1));
-    parameterized.put(ClassName.get(Map.class), new Parameterized("$N.map", 2));
-    parameterized.put(ClassName.get(SortedMap.class), new Parameterized("$N.sortedMap", 2, 2));
-    parameterized.put(ClassName.get(NavigableMap.class),
+    PARAMETERIZED.put(ClassName.get(List.class), new Parameterized("$N.list", 1));
+    PARAMETERIZED.put(ClassName.get(Map.class), new Parameterized("$N.map", 2));
+    PARAMETERIZED.put(ClassName.get(SortedMap.class), new Parameterized("$N.sortedMap", 2, 2));
+    PARAMETERIZED.put(ClassName.get(NavigableMap.class),
       new Parameterized("$N.navigableMap", 2, 2));
-    parameterized.put(ClassName.get(Set.class), new Parameterized("$N.set", 1));
-    parameterized.put(ClassName.get(SortedSet.class), new Parameterized("$N.sortedSet", 1, 2));
-    parameterized.put(ClassName.get(NavigableSet.class),
+    PARAMETERIZED.put(ClassName.get(Set.class), new Parameterized("$N.set", 1));
+    PARAMETERIZED.put(ClassName.get(SortedSet.class), new Parameterized("$N.sortedSet", 1, 2));
+    PARAMETERIZED.put(ClassName.get(NavigableSet.class),
       new Parameterized("$N.navigableSet", 1, 2));
-    parameterized.put(ClassName.get(Optional.class), new Parameterized("$N.optional", 1));
+    PARAMETERIZED.put(ClassName.get(Optional.class), new Parameterized("$N.optional", 1));
   }
 
   private final AutoSerializeUtils utils;
 
-  public FrameworkStatement resolveStatement(TypeMirror type, final Object framework) {
-    final String statement = direct.get(TypeName.get(type));
+  public FrameworkStatement resolveStatement(TypeMirror type) {
+    type = utils.boxedIfNeeded(type);
+
+    final String statement = DIRECT.get(TypeName.get(type));
 
     if (statement != null) {
-      return builder -> builder.assign(statement, ImmutableList.of(framework));
+      return framework -> builder -> builder.assign(statement, ImmutableList.of(framework));
     }
 
     if (type instanceof ArrayType) {
       final ArrayType a = (ArrayType) type;
-      return resolveArrayType(a, framework);
+      return resolveArrayType(a);
     }
 
     if (type.getKind() != TypeKind.DECLARED) {
@@ -89,17 +92,17 @@ public class FrameworkStatements {
     final DeclaredType d = (DeclaredType) type;
 
     if (d.asElement().getKind() == ElementKind.ENUM) {
-      return resolveEnum((TypeElement) d.asElement(), framework);
+      return resolveEnum((TypeElement) d.asElement());
     }
 
     if (d.getTypeArguments().isEmpty()) {
-      return resolveCustomSerializer(d, framework);
+      return resolveCustomSerializer(d);
     }
 
-    return resolveParameterizedType(d, framework);
+    return resolveParameterizedType(d);
   }
 
-  private FrameworkStatement resolveArrayType(final ArrayType a, final Object framework) {
+  private FrameworkStatement resolveArrayType(final ArrayType a) {
     final TypeMirror componentType = a.getComponentType();
 
     if (utils.isPrimitive(componentType)) {
@@ -107,23 +110,29 @@ public class FrameworkStatements {
         "Cannot serialize array with a primitive component type: " + a);
     }
 
-    final FrameworkStatement component =
-      resolveStatement(utils.boxedIfNeeded(componentType), framework);
+    final FrameworkStatement component = resolveStatement(utils.boxedIfNeeded(componentType));
 
     final TypeName innerMost = TypeName.get(arrayInnerMost(componentType));
     // Get parenthesis combination after the size parameter.
     final String parens = arrayParensAfterSize(componentType);
 
-    return builder -> component.writeTo((cs, ca) -> {
-      final List<Object> arguments = new ArrayList<>();
+    return framework -> {
+      final FrameworkStatement.Instance c = component.build(framework);
 
-      arguments.add(framework);
-      arguments.add(componentType);
-      arguments.addAll(ca);
-      arguments.add(innerMost);
+      return builder -> {
+        c.writeTo((cs, ca) -> {
+          final List<Object> arguments = new ArrayList<>();
 
-      builder.assign(String.format("$N.<$T>array(%s, (s) -> new $T[s]%s)", cs, parens), arguments);
-    });
+          arguments.add(framework);
+          arguments.add(componentType);
+          arguments.addAll(ca);
+          arguments.add(innerMost);
+
+          builder.assign(String.format("$N.<$T>array(%s, (s) -> new $T[s]%s)", cs, parens),
+            arguments);
+        });
+      };
+    };
   }
 
   private String arrayParensAfterSize(TypeMirror t) {
@@ -154,45 +163,59 @@ public class FrameworkStatements {
     }, null);
   }
 
-  private FrameworkStatement resolveEnum(final TypeElement element, final Object framework) {
+  private FrameworkStatement resolveEnum(final TypeElement element) {
     final ClassName enumType = ClassName.get(element);
 
-    return builder -> builder.assign("$N.forEnum($T.values())",
-      ImmutableList.of(framework, enumType));
+    return framework -> {
+      return builder -> {
+        builder.assign("$N.forEnum($T.values())", ImmutableList.of(framework, enumType));
+      };
+    };
   }
-
-  static Joiner argumentJoiner = Joiner.on(", ");
 
   FrameworkStatement resolveGeneric(
     final String statementBase, final List<Object> argumentsBase,
-    final List<FrameworkStatement> statements
+    final List<FrameworkStatement.Instance> statements
   ) {
-    final List<String> typeStatements = new ArrayList<>();
+    return framework -> {
+      final List<String> typeStatements = new ArrayList<>();
 
-    final ImmutableList.Builder<Object> outerArguments = ImmutableList.builder();
+      final ImmutableList.Builder<Object> outerArguments = ImmutableList.builder();
 
-    outerArguments.addAll(argumentsBase);
+      outerArguments.addAll(argumentsBase);
 
-    for (final FrameworkStatement a : statements) {
-      a.writeTo((statement, arguments) -> {
-        typeStatements.add(statement);
-        outerArguments.addAll(arguments);
+      statements.forEach(instance -> {
+        instance.writeTo((statement, arguments) -> {
+          typeStatements.add(statement);
+          outerArguments.addAll(arguments);
+        });
       });
-    }
 
-    final String statement =
-      String.format("%s(%s)", statementBase, argumentJoiner.join(typeStatements));
-    final List<Object> arguments = outerArguments.build();
+      final String statement =
+        String.format("%s(%s)", statementBase, ARGUMENT_JOINER.join(typeStatements));
+      final List<Object> arguments = outerArguments.build();
 
-    return builder -> builder.assign(statement, arguments);
+      return builder -> builder.assign(statement, arguments);
+    };
   }
 
-  FrameworkStatement resolveCustomSerializer(final DeclaredType type, final Object framework) {
-    final String statement = "new $T($N)";
+  FrameworkStatement resolveCustomSerializer(final DeclaredType type) {
+    return new FrameworkStatement() {
+      @Override
+      public Instance build(final Object framework) {
+        final String statement = "new $T($N)";
+        final List<Object> arguments = ImmutableList.of(utils.serializerClassFor(type), framework);
 
-    final List<Object> arguments = ImmutableList.of(utils.serializerClassFor(type), framework);
+        return builder -> {
+          builder.assign(statement, arguments);
+        };
+      }
 
-    return builder -> builder.assign(statement, arguments);
+      @Override
+      public boolean isCustom() {
+        return true;
+      }
+    };
   }
 
   private ParameterizedMatch findBestMatch(DeclaredType type) {
@@ -208,7 +231,7 @@ public class FrameworkStatements {
       final TypeElement e = (TypeElement) t.asElement();
       final ClassName c = ClassName.get(e);
 
-      final Parameterized p = parameterized.get(c);
+      final Parameterized p = PARAMETERIZED.get(c);
 
       if (p == null) {
         break;
@@ -224,18 +247,20 @@ public class FrameworkStatements {
     return matches.last();
   }
 
-  private FrameworkStatement resolveParameterizedType(DeclaredType type, Object framework) {
-    final ParameterizedMatch p = findBestMatch(type);
+  private FrameworkStatement resolveParameterizedType(DeclaredType type) {
+    return framework -> {
+      final ParameterizedMatch p = findBestMatch(type);
 
-    final Iterator<? extends TypeMirror> typeArguments = p.type.getTypeArguments().iterator();
-    final ImmutableList.Builder<FrameworkStatement> statements = ImmutableList.builder();
+      final Iterator<? extends TypeMirror> typeArguments = p.type.getTypeArguments().iterator();
+      final ImmutableList.Builder<FrameworkStatement.Instance> statements = ImmutableList.builder();
 
-    for (int i = 0; i < p.parameterized.parameterCount; i++) {
-      statements.add(resolveStatement(typeArguments.next(), framework));
-    }
+      for (int i = 0; i < p.parameterized.parameterCount; i++) {
+        statements.add(resolveStatement(typeArguments.next()).build(framework));
+      }
 
-    return resolveGeneric(p.parameterized.statement, ImmutableList.of(framework),
-      statements.build());
+      return resolveGeneric(p.parameterized.statement, ImmutableList.of(framework),
+        statements.build()).build(framework);
+    };
   }
 
   static class Parameterized implements Comparable<Parameterized> {

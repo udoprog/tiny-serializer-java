@@ -1,5 +1,15 @@
 package eu.toolchain.serializer.processor;
 
-interface FrameworkStatement {
-  void writeTo(FrameworkMethodBuilder builder);
+@FunctionalInterface
+public interface FrameworkStatement {
+  Instance build(Object framework);
+
+  default boolean isCustom() {
+    return false;
+  }
+
+  @FunctionalInterface
+  interface Instance {
+    void writeTo(FrameworkMethodBuilder builder);
+  }
 }

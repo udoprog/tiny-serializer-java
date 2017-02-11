@@ -39,7 +39,7 @@ public class FieldSet {
   private final List<FieldType> types;
   private final List<Field> fields;
 
-  public Iterable<FieldType> getOrderedTypes() {
+  public List<FieldType> getOrderedTypes() {
     if (orderById) {
       return orderingTypesById.sortedCopy(types);
     }
@@ -47,7 +47,7 @@ public class FieldSet {
     return types;
   }
 
-  public Iterable<Field> getOrderedValues() {
+  public List<Field> getOrderedValues() {
     if (orderById) {
       return orderingById.sortedCopy(fields);
     }
@@ -55,7 +55,7 @@ public class FieldSet {
     return fields;
   }
 
-  public Iterable<String> getConstructorVariables() {
+  public List<String> getConstructorVariables() {
     final Ordering<Field> ordering;
 
     if (orderById) {

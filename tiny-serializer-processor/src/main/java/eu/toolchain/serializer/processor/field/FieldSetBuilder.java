@@ -9,6 +9,8 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
+import eu.toolchain.serializer.processor.ClassProcessor;
+import eu.toolchain.serializer.processor.FrameworkStatements;
 import eu.toolchain.serializer.processor.Naming;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
 import java.util.ArrayList;
@@ -37,10 +39,12 @@ public class FieldSetBuilder {
   private final List<Field> fields = new ArrayList<>();
   private int valueProvidedCount = 0;
 
-  final AutoSerializeUtils utils;
-  final Element parent;
-  final Set<ElementKind> kinds;
-  final boolean defaultUseGetter;
+  private final ClassProcessor processor;
+  private final AutoSerializeUtils utils;
+  private final FrameworkStatements statements;
+  private final Element parent;
+  private final Set<ElementKind> fieldKinds;
+  private final boolean defaultUseGetter;
 
   public void add(final Element element) {
     if (!isSerializableField(element)) {
@@ -167,7 +171,7 @@ public class FieldSetBuilder {
   }
 
   private boolean isSerializableField(final Element element) {
-    if (!kinds.contains(element.getKind())) {
+    if (!fieldKinds.contains(element.getKind())) {
       return false;
     }
 

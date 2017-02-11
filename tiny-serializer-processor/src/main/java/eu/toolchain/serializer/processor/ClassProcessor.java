@@ -34,35 +34,41 @@ public class ClassProcessor {
   final AutoSerializeUtils utils;
 
   public JavaFile process(final TypeElement element) {
+    return buildSpec(element)
+      .orElseThrow(() -> brokenElement("@AutoSerialize expected on class or interface", element))
+      .toSerializer();
+  }
+
+  public Optional<ClassSpec> buildSpec(final Element element) {
     final Optional<AutoSerializeMirror> annotation = utils.autoSerialize(element);
 
     if (!annotation.isPresent()) {
-      throw brokenElement("@AutoSerialize annotation not present", element);
+      return Optional.empty();
     }
 
     final AutoSerializeMirror autoSerialize = annotation.get();
 
     if (element.getKind() == ElementKind.INTERFACE) {
       if (autoSerialize.getBuilder().isPresent()) {
-        return conreteClass(element).toSerializer();
+        return Optional.of(conreteClass(element));
       } else {
-        return abstractClass(element).toSerializer();
+        return Optional.of(abstractClass(element));
       }
     }
 
     if (element.getKind() == ElementKind.CLASS) {
       if (element.getModifiers().contains(Modifier.ABSTRACT) &&
         !autoSerialize.getBuilder().isPresent()) {
-        return abstractClass(element).toSerializer();
+        return Optional.of(abstractClass(element));
       }
 
-      return conreteClass(element).toSerializer();
+      return Optional.of(conreteClass(element));
     }
 
-    throw brokenElement("Unsupported type, expected class or interface", element);
+    return Optional.empty();
   }
 
-  public AbstractClassSpec abstractClass(final TypeElement element) {
+  public AbstractClassSpec abstractClass(final Element element) {
     final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
     final String serializerName = utils.serializerName(element);
 
@@ -75,7 +81,7 @@ public class ClassProcessor {
       subTypes);
   }
 
-  private ConcreteClassSpec conreteClass(final TypeElement element) {
+  private ConcreteClassSpec conreteClass(final Element element) {
     final Optional<AutoSerializeMirror> annotation = utils.autoSerialize(element);
 
     if (!annotation.isPresent()) {
@@ -88,7 +94,7 @@ public class ClassProcessor {
     final Set<ElementKind> kinds = getKinds(element);
 
     final FieldSetBuilder fieldSetBuilder =
-      new FieldSetBuilder(utils, element, kinds, autoSerialize.isUseGetter());
+      new FieldSetBuilder(this, utils, statements, element, kinds, autoSerialize.isUseGetter());
 
     for (final Element child : element.getEnclosedElements()) {
       fieldSetBuilder.add(child);
@@ -120,7 +126,7 @@ public class ClassProcessor {
    * @param element
    * @return
    */
-  Set<ElementKind> getKinds(TypeElement element) {
+  Set<ElementKind> getKinds(Element element) {
     final ImmutableSet.Builder<ElementKind> kinds = ImmutableSet.builder();
 
     if (element.getKind() == ElementKind.INTERFACE) {
