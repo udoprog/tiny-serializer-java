@@ -7,10 +7,10 @@ public class DuplicateTypes {
   final String a;
   final String b;
 
-  @AutoSerialize.Field(provided = true)
+  @AutoSerialize.Field(provided = true, providerName = "common")
   final String c;
 
-  @AutoSerialize.Field(provided = true)
+  @AutoSerialize.Field(provided = true, providerName = "common")
   final String d;
 
   public DuplicateTypes(String a, String b, String c, String d) {

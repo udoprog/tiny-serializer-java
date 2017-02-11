@@ -10,8 +10,8 @@ import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
 import eu.toolchain.serializer.processor.field.Field;
-import eu.toolchain.serializer.processor.field.FieldSet;
 import eu.toolchain.serializer.processor.field.FieldBuilder;
+import eu.toolchain.serializer.processor.field.FieldSet;
 import eu.toolchain.serializer.processor.field.SubType;
 import eu.toolchain.serializer.processor.field.Value;
 import java.util.HashSet;
@@ -114,7 +114,7 @@ public class ClassProcessor {
           method.getMethodName());
       });
 
-    final List<Field> fields = ImmutableList.copyOf(fieldSet.getFields().values());
+    final List<Field> fields = ImmutableList.copyOf(fieldSet.getFields());
     final List<Value> values = ImmutableList.copyOf(fieldSet.getValues());
 
     return new ConcreteClassSpec(utils, elements, statements, packageName, fields, values,

@@ -105,6 +105,10 @@ public class FrameworkStatements {
     return resolveParameterizedType(d);
   }
 
+  public boolean isCustom(final TypeMirror typeMirror) {
+    return resolveStatement(typeMirror).isCustom();
+  }
+
   private FrameworkStatement resolveArrayType(final ArrayType a) {
     final TypeMirror componentType = a.getComponentType();
 
