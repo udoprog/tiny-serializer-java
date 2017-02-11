@@ -23,4 +23,9 @@ public class UUIDSerializer implements Serializer<UUID> {
     final long least = longS.deserialize(buffer);
     return new UUID(most, least);
   }
+
+  @Override
+  public int size() {
+    return longS.size();
+  }
 }

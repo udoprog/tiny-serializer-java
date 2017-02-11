@@ -32,4 +32,10 @@ public class PrefixSerializer<T> implements Serializer<T> {
 
     return serializer.deserialize(buffer);
   }
+
+  @Override
+  public int size() {
+    final int b = serializer.size();
+    return b < 0 ? b : b + prefix.length;
+  }
 }

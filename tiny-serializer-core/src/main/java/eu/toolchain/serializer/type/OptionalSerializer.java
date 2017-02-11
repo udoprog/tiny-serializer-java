@@ -30,4 +30,10 @@ public class OptionalSerializer<T> implements Serializer<Optional<T>> {
 
     return Optional.empty();
   }
+
+  @Override
+  public int size() {
+    final int b = bool.size();
+    return b < 0 ? b : b + element.size();
+  }
 }

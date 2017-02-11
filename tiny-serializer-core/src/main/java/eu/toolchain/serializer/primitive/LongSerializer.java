@@ -23,7 +23,7 @@ public class LongSerializer implements Serializer<Long> {
   }
 
   public static void toBytes(long v, byte[] b, int o) {
-    b[o + 0] = (byte) (v >> 56);
+    b[o] = (byte) (v >> 56);
     b[o + 1] = (byte) (v >>> 48);
     b[o + 2] = (byte) (v >>> 40);
     b[o + 3] = (byte) (v >>> 32);
@@ -36,7 +36,7 @@ public class LongSerializer implements Serializer<Long> {
   public static long fromBytes(final byte[] b, int o) {
     long v = 0;
 
-    v += ((long) (b[o + 0] & 0xff) << 56);
+    v += ((long) (b[o] & 0xff) << 56);
     v += ((long) (b[o + 1] & 0xff) << 48);
     v += ((long) (b[o + 2] & 0xff) << 40);
     v += ((long) (b[o + 3] & 0xff) << 32);
@@ -46,5 +46,10 @@ public class LongSerializer implements Serializer<Long> {
     v += ((long) (b[o + 7] & 0xff));
 
     return v;
+  }
+
+  @Override
+  public int size() {
+    return Long.BYTES;
   }
 }

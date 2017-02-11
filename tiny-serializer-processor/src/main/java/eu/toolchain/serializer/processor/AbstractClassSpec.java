@@ -9,6 +9,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import eu.toolchain.serializer.AutoSerialize;
 import eu.toolchain.serializer.processor.field.Field;
 import eu.toolchain.serializer.processor.field.SubType;
 import eu.toolchain.serializer.processor.field.Value;
@@ -59,13 +60,24 @@ public class AbstractClassSpec implements ClassSpec {
 
   @Override
   public List<Value> getValues() {
-    return ImmutableList.of();
+    final ImmutableList.Builder<Value> values = ImmutableList.builder();
+
+    for (final SubType subType : subTypes) {
+      values.addAll(subType.getValues());
+    }
+
+    return values.build();
   }
 
   @Override
   public List<Field> getFields() {
-    // TODO: support abstract propagation
-    return ImmutableList.of();
+    final ImmutableList.Builder<Field> fields = ImmutableList.builder();
+
+    for (final SubType subType : subTypes) {
+      fields.addAll(subType.getFields());
+    }
+
+    return fields.build();
   }
 
   MethodSpec constructor(

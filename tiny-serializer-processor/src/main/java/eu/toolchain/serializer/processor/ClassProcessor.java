@@ -21,7 +21,6 @@ import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -34,7 +33,7 @@ public class ClassProcessor {
   final FrameworkStatements statements;
   final AutoSerializeUtils utils;
 
-  public JavaFile process(final TypeElement element) {
+  public JavaFile process(final Element element) {
     return buildSpec(element)
       .orElseThrow(() -> brokenElement("@AutoSerialize expected on class or interface", element))
       .toSerializer();
@@ -164,7 +163,11 @@ public class ClassProcessor {
             element);
         }
 
-        results.add(new SubType(type, id));
+        final Optional<ClassSpec> maybeSpec = buildSpec(type.asElement());
+        final List<Field> fields = maybeSpec.map(ClassSpec::getFields).orElseGet(ImmutableList::of);
+        final List<Value> values = maybeSpec.map(ClassSpec::getValues).orElseGet(ImmutableList::of);
+
+        results.add(new SubType(type, id, fields, values));
         offset++;
       }
 

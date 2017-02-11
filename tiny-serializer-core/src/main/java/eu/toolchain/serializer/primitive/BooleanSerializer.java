@@ -18,4 +18,9 @@ public class BooleanSerializer implements Serializer<Boolean> {
   public Boolean deserialize(SerialReader buffer) throws IOException {
     return buffer.read() == 0x1;
   }
+
+  @Override
+  public int size() {
+    return 1;
+  }
 }

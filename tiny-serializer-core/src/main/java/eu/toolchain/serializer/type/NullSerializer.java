@@ -53,4 +53,9 @@ public class NullSerializer<T> implements Serializer<T> {
 
     return serializer.deserialize(buffer);
   }
+
+  @Override
+  public int size() {
+    return 1;
+  }
 }

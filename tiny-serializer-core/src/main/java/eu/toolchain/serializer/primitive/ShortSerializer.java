@@ -6,18 +6,16 @@ import eu.toolchain.serializer.Serializer;
 import java.io.IOException;
 
 public class ShortSerializer implements Serializer<Short> {
-  public static final int BYTES = 2;
-
   @Override
   public void serialize(SerialWriter buffer, Short value) throws IOException {
-    final byte[] bytes = new byte[BYTES];
+    final byte[] bytes = new byte[Short.BYTES];
     toBytes(value, bytes, 0);
     buffer.write(bytes);
   }
 
   @Override
   public Short deserialize(SerialReader buffer) throws IOException {
-    final byte[] b = new byte[BYTES];
+    final byte[] b = new byte[Short.BYTES];
     buffer.read(b);
     return fromBytes(b, 0);
   }
@@ -34,5 +32,10 @@ public class ShortSerializer implements Serializer<Short> {
     v = v + ((b[o + 1] & 0xff));
 
     return (short) v;
+  }
+
+  @Override
+  public int size() {
+    return Short.BYTES;
   }
 }

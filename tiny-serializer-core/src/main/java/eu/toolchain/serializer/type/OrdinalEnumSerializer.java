@@ -27,4 +27,9 @@ public class OrdinalEnumSerializer<T extends Enum<T>> implements Serializer<T> {
 
     return values[ordinal];
   }
+
+  @Override
+  public int size() {
+    return ordinal.size();
+  }
 }

@@ -15,4 +15,9 @@ public class ByteSerializer implements Serializer<Byte> {
   public Byte deserialize(SerialReader buffer) throws IOException {
     return buffer.read();
   }
+
+  @Override
+  public int size() {
+    return 1;
+  }
 }
