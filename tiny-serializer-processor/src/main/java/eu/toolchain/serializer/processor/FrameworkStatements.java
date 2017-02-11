@@ -3,7 +3,10 @@ package eu.toolchain.serializer.processor;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
+import eu.toolchain.serializer.processor.field.FieldSet;
+import eu.toolchain.serializer.processor.field.FieldType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,7 +80,9 @@ public class FrameworkStatements {
     final String statement = DIRECT.get(TypeName.get(type));
 
     if (statement != null) {
-      return framework -> builder -> builder.assign(statement, ImmutableList.of(framework));
+      return (fields, framework) -> {
+        return builder -> builder.assign(statement, ImmutableList.of(framework));
+      };
     }
 
     if (type instanceof ArrayType) {
@@ -116,8 +121,8 @@ public class FrameworkStatements {
     // Get parenthesis combination after the size parameter.
     final String parens = arrayParensAfterSize(componentType);
 
-    return framework -> {
-      final FrameworkStatement.Instance c = component.build(framework);
+    return (fields, framework) -> {
+      final FrameworkStatement.Instance c = component.build(fields, framework);
 
       return builder -> {
         c.writeTo((cs, ca) -> {
@@ -166,7 +171,7 @@ public class FrameworkStatements {
   private FrameworkStatement resolveEnum(final TypeElement element) {
     final ClassName enumType = ClassName.get(element);
 
-    return framework -> {
+    return (fields, framework) -> {
       return builder -> {
         builder.assign("$N.forEnum($T.values())", ImmutableList.of(framework, enumType));
       };
@@ -177,7 +182,7 @@ public class FrameworkStatements {
     final String statementBase, final List<Object> argumentsBase,
     final List<FrameworkStatement.Instance> statements
   ) {
-    return framework -> {
+    return (fields, framework) -> {
       final List<String> typeStatements = new ArrayList<>();
 
       final ImmutableList.Builder<Object> outerArguments = ImmutableList.builder();
@@ -202,12 +207,29 @@ public class FrameworkStatements {
   FrameworkStatement resolveCustomSerializer(final DeclaredType type) {
     return new FrameworkStatement() {
       @Override
-      public Instance build(final Object framework) {
-        final String statement = "new $T($N)";
-        final List<Object> arguments = ImmutableList.of(utils.serializerClassFor(type), framework);
-
+      public Instance build(final Optional<FieldSet> fields, final Object framework) {
         return builder -> {
-          builder.assign(statement, arguments);
+          final List<FieldType> fieldTypes =
+            fields.map(FieldSet::getAllOrderedTypes).orElseGet(ImmutableList::of);
+
+          final List<String> parameterFormat = new ArrayList<>();
+          parameterFormat.add("$N");
+
+          final ImmutableList.Builder<Object> arguments = ImmutableList.builder();
+          arguments.add(utils.serializerClassFor(type));
+          arguments.add(framework);
+
+          fieldTypes.forEach(p -> {
+            p.getProvidedParameterSpec().ifPresent(s -> {
+              parameterFormat.add("$N");
+              arguments.add(s);
+            });
+          });
+
+          final String statement =
+            String.format("new $T(%s)", ARGUMENT_JOINER.join(parameterFormat));
+
+          builder.assign(statement, arguments.build());
         };
       }
 
@@ -248,18 +270,18 @@ public class FrameworkStatements {
   }
 
   private FrameworkStatement resolveParameterizedType(DeclaredType type) {
-    return framework -> {
+    return (fields, framework) -> {
       final ParameterizedMatch p = findBestMatch(type);
 
       final Iterator<? extends TypeMirror> typeArguments = p.type.getTypeArguments().iterator();
       final ImmutableList.Builder<FrameworkStatement.Instance> statements = ImmutableList.builder();
 
       for (int i = 0; i < p.parameterized.parameterCount; i++) {
-        statements.add(resolveStatement(typeArguments.next()).build(framework));
+        statements.add(resolveStatement(typeArguments.next()).build(fields, framework));
       }
 
       return resolveGeneric(p.parameterized.statement, ImmutableList.of(framework),
-        statements.build()).build(framework);
+        statements.build()).build(fields, framework);
     };
   }
 

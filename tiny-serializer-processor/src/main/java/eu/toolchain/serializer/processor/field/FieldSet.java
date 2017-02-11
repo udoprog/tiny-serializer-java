@@ -2,8 +2,10 @@ package eu.toolchain.serializer.processor.field;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class FieldSet {
   private final boolean orderConstructorById;
   private final List<FieldType> types;
   private final List<Field> fields;
+  private Object allOrderedTypes;
 
   public List<FieldType> getOrderedTypes() {
     if (orderById) {
@@ -69,5 +72,18 @@ public class FieldSet {
       .stream()
       .map(Field::getVariableName)
       .collect(Collectors.toList()));
+  }
+
+  public List<FieldType> getAllOrderedTypes() {
+    final ImmutableList.Builder<FieldType> types = ImmutableList.builder();
+
+    final Queue<List<FieldType>> queue = new LinkedList<>();
+    queue.add(getOrderedTypes());
+
+    while (!queue.isEmpty()) {
+      types.addAll(queue.poll());
+    }
+
+    return types.build();
   }
 }

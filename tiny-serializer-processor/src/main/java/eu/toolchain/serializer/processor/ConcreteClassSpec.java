@@ -14,6 +14,7 @@ import eu.toolchain.serializer.processor.field.Field;
 import eu.toolchain.serializer.processor.field.FieldSet;
 import eu.toolchain.serializer.processor.field.FieldType;
 import eu.toolchain.serializer.processor.field.FieldTypeBuilder;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Generated;
 import javax.lang.model.element.Modifier;
@@ -104,11 +105,8 @@ public class ConcreteClassSpec implements ClassSpec {
     b.addModifiers(Modifier.PUBLIC);
     b.addParameter(framework);
 
-    for (final FieldType t : fields.getOrderedTypes()) {
-      if (t.getProvidedParameterSpec().isPresent()) {
-        b.addParameter(t.getProvidedParameterSpec().get());
-      }
-    }
+    List<FieldType> orderedTypes = fields.getOrderedTypes();
+    buildConstructorParameters(b, orderedTypes);
 
     for (final FieldType fieldType : fields.getOrderedTypes()) {
       if (fieldType.getProvidedParameterSpec().isPresent()) {
@@ -117,19 +115,35 @@ public class ConcreteClassSpec implements ClassSpec {
         continue;
       }
 
-      final FrameworkMethodBuilder builder =
-        (statement, arguments) -> b.addStatement(String.format("this.$N = %s", statement),
-          ImmutableList
-            .builder()
-            .add(fieldType.getFieldSpec())
-            .addAll(arguments)
-            .build()
-            .toArray());
+      final FrameworkMethodBuilder builder = (statement, arguments) -> {
+        final ImmutableList.Builder<Object> argumentBuilders =
+          ImmutableList.builder().add(fieldType.getFieldSpec()).addAll(arguments);
 
-      statements.resolveStatement(fieldType.getTypeMirror()).build(framework).writeTo(builder);
+        b.addStatement(String.format("this.$N = %s", statement),
+          argumentBuilders.build().toArray());
+      };
+
+      statements
+        .resolveStatement(fieldType.getTypeMirror())
+        .build(fieldType.getSubFields(), framework)
+        .writeTo(builder);
     }
 
     return b.build();
+  }
+
+  private void buildConstructorParameters(
+    final MethodSpec.Builder b, final List<FieldType> orderedTypes
+  ) {
+    for (final FieldType t : orderedTypes) {
+      if (t.getProvidedParameterSpec().isPresent()) {
+        b.addParameter(t.getProvidedParameterSpec().get());
+      }
+
+      t.getSubFields().ifPresent(subFields -> {
+        buildConstructorParameters(b, subFields.getOrderedTypes());
+      });
+    }
   }
 
   MethodSpec fieldConstructor(final FieldSpec count, final FieldSpec name) {
@@ -145,11 +159,7 @@ public class ConcreteClassSpec implements ClassSpec {
     b.addStatement("this.$N = $N.variableInteger()", count, framework);
     b.addStatement("this.$N = $N.string()", name, framework);
 
-    for (final FieldType t : fields.getOrderedTypes()) {
-      if (t.getProvidedParameterSpec().isPresent()) {
-        b.addParameter(t.getProvidedParameterSpec().get());
-      }
-    }
+    buildConstructorParameters(b, fields.getOrderedTypes());
 
     for (final FieldType fieldType : fields.getOrderedTypes()) {
       if (fieldType.getProvidedParameterSpec().isPresent()) {
@@ -167,7 +177,10 @@ public class ConcreteClassSpec implements ClassSpec {
             .build()
             .toArray());
 
-      statements.resolveStatement(fieldType.getTypeMirror()).build(framework).writeTo(builder);
+      statements
+        .resolveStatement(fieldType.getTypeMirror())
+        .build(fieldType.getSubFields(), framework)
+        .writeTo(builder);
     }
 
     return b.build();

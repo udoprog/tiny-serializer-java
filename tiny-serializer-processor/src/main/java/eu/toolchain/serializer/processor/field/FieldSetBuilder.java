@@ -163,17 +163,19 @@ public class FieldSetBuilder {
           FieldSpec.builder(serializerType, typeFieldName).addModifiers(Modifier.FINAL).build();
       }
 
-      final Optional<FieldSet> childFields;
+      final List<ProvidedField> providedFields = new ArrayList<>();
 
-      if (custom) {
-        childFields =
+      final Optional<FieldSet> subFields;
+
+      if (statements.resolveStatement(valueType).isCustom()) {
+        subFields =
           processor.buildSpec(((DeclaredType) valueType).asElement()).map(ClassSpec::getFieldSet);
       } else {
-        childFields = Optional.empty();
+        subFields = Optional.empty();
       }
 
       return new FieldType(key, valueType, valueTypeName, fieldSpec, providedParameterSpec,
-        optional, id, childFields);
+        optional, id, subFields);
     });
 
     final String isSetVariableName = isSetVariableNaming.forName(name);

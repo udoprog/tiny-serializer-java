@@ -16,5 +16,5 @@ public class FieldType {
   private final Optional<ParameterSpec> providedParameterSpec;
   private final boolean optional;
   private final Optional<Integer> id;
-  private final Optional<FieldSet> childFields;
+  private final Optional<FieldSet> subFields;
 }

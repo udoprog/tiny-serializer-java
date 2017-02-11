@@ -113,6 +113,11 @@ public class AutoSerializerProcessorTest {
     verifySerializer("ValueProvided");
   }
 
+  @Test
+  public void testOtherProvided() {
+    verifySerializer("OtherProvided");
+  }
+
   static void verifySerializer(String name) {
     verifySerializer(name, String.format(AutoSerializeUtils.SERIALIZER_NAME_FORMAT, name));
   }
