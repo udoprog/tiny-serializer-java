@@ -89,6 +89,11 @@ public class ConcreteClassSpec implements ClassSpec {
       .build();
   }
 
+  @Override
+  public FieldSet getFieldSet() {
+    return fields;
+  }
+
   MethodSpec serialConstructor() {
     final ParameterSpec framework = ParameterSpec
       .builder(utils.serializerFramework(), "framework")
@@ -214,8 +219,7 @@ public class ConcreteClassSpec implements ClassSpec {
       final TypeName fieldType = field.getType().getTypeName();
 
       if (field.getType().isOptional()) {
-        b.addStatement("$T $L = $T.empty()", fieldType, field.getVariableName(),
-          utils.optional());
+        b.addStatement("$T $L = $T.empty()", fieldType, field.getVariableName(), utils.optional());
       } else {
         b.addStatement("$T $L = $L", fieldType, field.getVariableName(),
           utils.initLiteral(field.getType().getTypeMirror()));
@@ -300,8 +304,8 @@ public class ConcreteClassSpec implements ClassSpec {
         continue;
       }
 
-      b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer,
-        value, field.getAccessor());
+      b.addStatement("$N.serialize($N, $N.$L())", field.getType().getFieldSpec(), buffer, value,
+        field.getAccessor());
     }
 
     return b.build();

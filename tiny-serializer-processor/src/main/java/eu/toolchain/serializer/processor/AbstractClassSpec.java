@@ -1,5 +1,6 @@
 package eu.toolchain.serializer.processor;
 
+import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -8,6 +9,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import eu.toolchain.serializer.processor.field.FieldSet;
 import eu.toolchain.serializer.processor.field.SubType;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +54,11 @@ public class AbstractClassSpec implements ClassSpec {
       .skipJavaLangImports(true)
       .indent("    ")
       .build();
+  }
+
+  @Override
+  public FieldSet getFieldSet() {
+    return new FieldSet(false, false, ImmutableList.of(), ImmutableList.of());
   }
 
   MethodSpec constructor(

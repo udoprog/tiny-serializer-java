@@ -10,6 +10,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.ClassProcessor;
+import eu.toolchain.serializer.processor.ClassSpec;
 import eu.toolchain.serializer.processor.FrameworkStatements;
 import eu.toolchain.serializer.processor.Naming;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
@@ -24,6 +25,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import lombok.RequiredArgsConstructor;
@@ -112,9 +114,11 @@ public class FieldSetBuilder {
     final TypeName valueTypeName = TypeName.get(valueType);
     final TypeName serializerType = TypeName.get(utils.serializerFor(valueType));
 
+    final boolean custom = statements.resolveStatement(valueType).isCustom();
+
     final FieldTypeId fieldTypeId;
 
-    if (valueProvided) {
+    if (valueProvided || custom) {
       fieldTypeId =
         new FieldTypeId(valueTypeName, provided, providerName, Optional.of(valueProvidedCount++));
     } else {
@@ -159,8 +163,17 @@ public class FieldSetBuilder {
           FieldSpec.builder(serializerType, typeFieldName).addModifiers(Modifier.FINAL).build();
       }
 
+      final Optional<FieldSet> childFields;
+
+      if (custom) {
+        childFields =
+          processor.buildSpec(((DeclaredType) valueType).asElement()).map(ClassSpec::getFieldSet);
+      } else {
+        childFields = Optional.empty();
+      }
+
       return new FieldType(key, valueType, valueTypeName, fieldSpec, providedParameterSpec,
-        optional, id);
+        optional, id, childFields);
     });
 
     final String isSetVariableName = isSetVariableNaming.forName(name);
