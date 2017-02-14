@@ -13,22 +13,81 @@ import com.squareup.javapoet.TypeSpec;
 import eu.toolchain.serializer.processor.field.Field;
 import eu.toolchain.serializer.processor.field.FieldBuilder;
 import eu.toolchain.serializer.processor.field.Value;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Generated;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.SimpleTypeVisitor6;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
 public class ConcreteClassSpec implements ClassSpec {
-  private static final Joiner PARAMETER_JOINER = Joiner.on(", ");
+  private static final Joiner ARGUMENT_JOINER = Joiner.on(", ");
+  private static final Map<TypeName, String> DIRECT = new HashMap<>();
 
+  static {
+    DIRECT.put(ClassName.get(String.class), "$N.string()");
+    DIRECT.put(ClassName.get(Byte.class), "$N.fixedByte()");
+    DIRECT.put(ClassName.get(Short.class), "$N.fixedShort()");
+    DIRECT.put(ClassName.get(Integer.class), "$N.fixedInteger()");
+    DIRECT.put(ClassName.get(Long.class), "$N.fixedLong()");
+    DIRECT.put(ClassName.get(Float.class), "$N.fixedFloat()");
+    DIRECT.put(ClassName.get(Double.class), "$N.fixedDouble()");
+    DIRECT.put(ClassName.get(Character.class), "$N.fixedCharacter()");
+    DIRECT.put(ClassName.get(Boolean.class), "$N.fixedBoolean()");
+    DIRECT.put(ClassName.get(UUID.class), "$N.uuid()");
+    DIRECT.put(TypeName.get(boolean[].class), "$N.booleanArray()");
+    DIRECT.put(TypeName.get(byte[].class), "$N.byteArray()");
+    DIRECT.put(TypeName.get(short[].class), "$N.shortArray()");
+    DIRECT.put(TypeName.get(int[].class), "$N.intArray()");
+    DIRECT.put(TypeName.get(long[].class), "$N.longArray()");
+    DIRECT.put(TypeName.get(float[].class), "$N.floatArray()");
+    DIRECT.put(TypeName.get(double[].class), "$N.doubleArray()");
+    DIRECT.put(TypeName.get(char[].class), "$N.charArray()");
+  }
+
+  static final Map<TypeName, Parameterized> PARAMETERIZED = new HashMap<>();
+
+  static {
+    PARAMETERIZED.put(ClassName.get(List.class), new Parameterized("$N.list({0})", 1));
+    PARAMETERIZED.put(ClassName.get(Map.class), new Parameterized("$N.map({0}, {1})", 2));
+    PARAMETERIZED.put(ClassName.get(SortedMap.class),
+      new Parameterized("$N.sortedMap({0}, {1})", 2, 2));
+    PARAMETERIZED.put(ClassName.get(NavigableMap.class),
+      new Parameterized("$N.navigableMap({0}, {1})", 2, 2));
+    PARAMETERIZED.put(ClassName.get(Set.class), new Parameterized("$N.set({0})", 1));
+    PARAMETERIZED.put(ClassName.get(SortedSet.class), new Parameterized("$N.sortedSet({0})", 1, 2));
+    PARAMETERIZED.put(ClassName.get(NavigableSet.class),
+      new Parameterized("$N.navigableSet({0})", 1, 2));
+    PARAMETERIZED.put(ClassName.get(Optional.class), new Parameterized("$N.optional({0})", 1));
+  }
+
+  private final ClassProcessor processor;
   private final AutoSerializeUtils utils;
   private final Elements elements;
-  private final FrameworkStatements statements;
 
   private final String packageName;
   private final List<Field> fields;
@@ -39,6 +98,8 @@ public class ConcreteClassSpec implements ClassSpec {
   private final boolean fieldBased;
   private final boolean failOnMissing;
   private final Optional<FieldBuilder> fieldTypeBuilder;
+
+  private final Naming providedParameter = new Naming("p_");
 
   @Override
   public JavaFile toSerializer() {
@@ -110,18 +171,11 @@ public class ConcreteClassSpec implements ClassSpec {
         continue;
       }
 
-      final FrameworkMethodBuilder builder = (statement, arguments) -> {
-        final ImmutableList.Builder<Object> argumentBuilders =
-          ImmutableList.builder().add(field.getField()).addAll(arguments);
+      final FrameworkStatement statement = FrameworkStatement.create("this.$N = {0}",
+        ImmutableList.of(field.getField(), resolveStatement(field.getType(), framework)));
+      b.addStatement(statement.getFormat(), statement.getArguments().toArray());
 
-        b.addStatement(String.format("this.$N = %s", statement),
-          argumentBuilders.build().toArray());
-      };
-
-      statements
-        .resolveStatement(field.getType())
-        .build(field.getSubFields(), framework)
-        .writeTo(builder);
+      statement.getProvidedFields().forEach(b::addParameter);
     }
 
     return b.build();
@@ -134,8 +188,6 @@ public class ConcreteClassSpec implements ClassSpec {
       if (t.getProvidedParameter().isPresent()) {
         b.addParameter(t.getProvidedParameter().get());
       }
-
-      buildConstructorParameters(b, t.getSubFields());
     }
   }
 
@@ -160,14 +212,11 @@ public class ConcreteClassSpec implements ClassSpec {
         continue;
       }
 
-      final FrameworkMethodBuilder builder =
-        (statement, arguments) -> b.addStatement(String.format("this.$N = %s", statement),
-          ImmutableList.builder().add(field.getField()).addAll(arguments).build().toArray());
+      final FrameworkStatement statement = FrameworkStatement.create("this.$N = {0}",
+        ImmutableList.of(field.getField(), resolveStatement(field.getType(), framework)));
+      b.addStatement(statement.getFormat(), statement.getArguments().toArray());
 
-      statements
-        .resolveStatement(field.getType())
-        .build(field.getSubFields(), framework)
-        .writeTo(builder);
+      statement.getProvidedFields().forEach(b::addParameter);
     }
 
     return b.build();
@@ -284,7 +333,7 @@ public class ConcreteClassSpec implements ClassSpec {
     if (fieldTypeBuilder.isPresent()) {
       fieldTypeBuilder.get().writeTo(elementType, b, values);
     } else {
-      b.addStatement("return new $T($L)", elementType, PARAMETER_JOINER.join(getVariableNames()));
+      b.addStatement("return new $T($L)", elementType, ARGUMENT_JOINER.join(getVariableNames()));
     }
 
     return b.build();
@@ -324,7 +373,7 @@ public class ConcreteClassSpec implements ClassSpec {
     if (fieldTypeBuilder.isPresent()) {
       fieldTypeBuilder.get().writeTo(elementType, b, values);
     } else {
-      b.addStatement("return new $T($L)", elementType, PARAMETER_JOINER.join(getVariableNames()));
+      b.addStatement("return new $T($L)", elementType, ARGUMENT_JOINER.join(getVariableNames()));
     }
 
     return b.build();
@@ -332,5 +381,206 @@ public class ConcreteClassSpec implements ClassSpec {
 
   public List<String> getVariableNames() {
     return values.stream().map(Value::getVariableName).collect(Collectors.toList());
+  }
+
+  public FrameworkStatement resolveStatement(TypeMirror type, final Object framework) {
+    type = utils.boxedIfNeeded(type);
+
+    final String statement = DIRECT.get(TypeName.get(type));
+
+    if (statement != null) {
+      return FrameworkStatement.create(statement, ImmutableList.of(framework));
+    }
+
+    if (type instanceof ArrayType) {
+      final ArrayType a = (ArrayType) type;
+      return resolveArrayType(a, framework);
+    }
+
+    if (type.getKind() != TypeKind.DECLARED) {
+      throw new IllegalArgumentException("Cannot handle type: " + type);
+    }
+
+    final DeclaredType d = (DeclaredType) type;
+
+    if (d.asElement().getKind() == ElementKind.ENUM) {
+      return resolveEnum((TypeElement) d.asElement(), framework);
+    }
+
+    if (!d.getTypeArguments().isEmpty()) {
+      return resolveParameterizedType(d, framework);
+    }
+
+    return resolveCustomSerializer(d, framework);
+  }
+
+  private FrameworkStatement resolveArrayType(final ArrayType a, final Object framework) {
+    final TypeMirror componentType = a.getComponentType();
+
+    if (utils.isPrimitive(componentType)) {
+      throw new IllegalArgumentException(
+        "Cannot serialize array with a primitive component type: " + a);
+    }
+
+    final FrameworkStatement component =
+      resolveStatement(utils.boxedIfNeeded(componentType), framework);
+
+    final TypeName innerMost = TypeName.get(arrayInnerMost(componentType));
+    // Get parenthesis combination after the size parameter.
+    final String parens = arrayParensAfterSize(componentType);
+
+    final List<Object> arguments = new ArrayList<>();
+
+    arguments.add(framework);
+    arguments.add(componentType);
+    arguments.add(component);
+    arguments.add(innerMost);
+    arguments.add(FrameworkStatement.create(parens));
+
+    return FrameworkStatement.create("$N.<$T>array({0}, (s) -> new $T[s]{1})", arguments);
+  }
+
+  private String arrayParensAfterSize(TypeMirror t) {
+    return t.accept(new SimpleTypeVisitor6<String, Void>() {
+      @Override
+      public String visitArray(ArrayType t, Void p) {
+        return "[]" + arrayParensAfterSize(t.getComponentType());
+      }
+
+      @Override
+      protected String defaultAction(TypeMirror e, Void p) {
+        return "";
+      }
+    }, null);
+  }
+
+  private TypeMirror arrayInnerMost(TypeMirror t) {
+    return t.accept(new SimpleTypeVisitor6<TypeMirror, Void>() {
+      @Override
+      public TypeMirror visitArray(ArrayType t, Void p) {
+        return arrayInnerMost(t.getComponentType());
+      }
+
+      @Override
+      protected TypeMirror defaultAction(TypeMirror e, Void p) {
+        return e;
+      }
+    }, null);
+  }
+
+  private FrameworkStatement resolveEnum(final TypeElement element, final Object framework) {
+    final ClassName enumType = ClassName.get(element);
+    return FrameworkStatement.create("$N.forEnum($T.values())",
+      ImmutableList.of(framework, enumType));
+  }
+
+  FrameworkStatement resolveCustomSerializer(final DeclaredType type, final Object framework) {
+    final List<String> parameterFormat = new ArrayList<>();
+    parameterFormat.add("$N");
+
+    final List<Object> arguments = new ArrayList<>();
+    arguments.add(utils.serializerClassFor(type));
+    arguments.add(framework);
+
+    final List<ParameterSpec> providedFields = new ArrayList<>();
+
+    processor.buildSpec(type.asElement()).ifPresent(spec -> {
+      spec.getFields().forEach(p -> {
+        p.getProvidedParameter().ifPresent(s -> {
+          final ParameterSpec parameter = ParameterSpec
+            .builder(s.type, providedParameter.forName(p.getOriginalName()))
+            .addModifiers(Modifier.FINAL)
+            .build();
+
+          providedFields.add(parameter);
+          parameterFormat.add("$N");
+          arguments.add(parameter);
+        });
+      });
+    });
+
+    final String format =
+      MessageFormat.format("new $T({0})", ARGUMENT_JOINER.join(parameterFormat));
+
+    return FrameworkStatement.create(format, arguments, providedFields);
+  }
+
+  private ParameterizedMatch findBestMatch(DeclaredType type) {
+    final Queue<TypeMirror> types = new LinkedList<>();
+
+    types.add(type);
+
+    final SortedSet<ParameterizedMatch> matches = new TreeSet<>();
+
+    while (!types.isEmpty()) {
+      final DeclaredType t = (DeclaredType) types.poll();
+
+      final TypeElement e = (TypeElement) t.asElement();
+      final ClassName c = ClassName.get(e);
+
+      final Parameterized p = PARAMETERIZED.get(c);
+
+      if (p == null) {
+        break;
+      }
+
+      matches.add(new ParameterizedMatch(p, t));
+    }
+
+    if (matches.isEmpty()) {
+      throw new IllegalArgumentException("Type not supported: " + type);
+    }
+
+    return matches.last();
+  }
+
+  private FrameworkStatement resolveParameterizedType(
+    final DeclaredType type, final Object framework
+  ) {
+    final ParameterizedMatch p = findBestMatch(type);
+
+    final Iterator<? extends TypeMirror> typeArguments = p.type.getTypeArguments().iterator();
+
+    final List<Object> arguments = new ArrayList<>();
+
+    arguments.add(framework);
+
+    for (int i = 0; i < p.parameterized.parameterCount; i++) {
+      arguments.add(resolveStatement(typeArguments.next(), framework));
+    }
+
+    return FrameworkStatement.create(p.parameterized.statement, arguments);
+  }
+
+  static class Parameterized implements Comparable<Parameterized> {
+    final String statement;
+    final int parameterCount;
+    final int priority;
+
+    public Parameterized(String statement, int parameterCount) {
+      this(statement, parameterCount, 0);
+    }
+
+    public Parameterized(String statement, int parameterCount, int priority) {
+      this.statement = statement;
+      this.parameterCount = parameterCount;
+      this.priority = priority;
+    }
+
+    @Override
+    public int compareTo(Parameterized o) {
+      return Integer.compare(priority, o.priority);
+    }
+  }
+
+  @RequiredArgsConstructor
+  static class ParameterizedMatch implements Comparable<ParameterizedMatch> {
+    final Parameterized parameterized;
+    final DeclaredType type;
+
+    @Override
+    public int compareTo(ParameterizedMatch o) {
+      return parameterized.compareTo(o.parameterized);
+    }
   }
 }

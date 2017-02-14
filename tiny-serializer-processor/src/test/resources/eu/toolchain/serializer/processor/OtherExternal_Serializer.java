@@ -15,11 +15,11 @@ public final class OtherExternal_Serializer implements Serializer<OtherExternal>
   final Serializer<External> s_External;
 
   public OtherExternal_Serializer(
-    final SerializerFramework framework, final Serializer<String> p_String,
-    final Serializer<String> p_otherProvided, final String v_hidden, final String p_hidden
+    final SerializerFramework framework, final String v_hidden, final Serializer<String> p_string,
+    final Serializer<String> p_otherProvided, final String p_hidden
   ) {
     this.s_String = framework.string();
-    this.s_Provided = new Provided_Serializer(framework, p_String, p_otherProvided);
+    this.s_Provided = new Provided_Serializer(framework, p_string, p_otherProvided);
     this.v_hidden = v_hidden;
     this.s_External = new External_Serializer(framework, p_hidden);
   }

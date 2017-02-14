@@ -6,7 +6,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.ClassProcessor;
-import eu.toolchain.serializer.processor.FrameworkStatements;
 import eu.toolchain.serializer.processor.Naming;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
 import java.util.ArrayList;
@@ -19,7 +18,6 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import lombok.Data;
@@ -42,7 +40,6 @@ public class FieldSet {
 
   private final ClassProcessor processor;
   private final AutoSerializeUtils utils;
-  private final FrameworkStatements statements;
   private final Element parent;
   private final Set<ElementKind> fieldKinds;
   private final boolean defaultUseGetter;
@@ -99,19 +96,11 @@ public class FieldSet {
     final FieldSpec fieldSpec =
       fieldMirror.buildField(utils, typeMirror, fieldNaming, variableName);
 
-    final List<Field> subFields = new ArrayList<>();
-
-    if (statements.isCustom(typeMirror)) {
-      processor.buildSpec(((DeclaredType) typeMirror).asElement()).ifPresent(spec -> {
-        spec.getFields().stream().map(this::convertSubField).forEach(subFields::add);
-      });
-    }
-
     final Field valueField;
 
     if (external) {
       valueField = new Field(originalName, providerName, provided, external, typeMirror, fieldSpec,
-        providedParameter, utils.isOptional(typeMirror), subFields);
+        providedParameter, utils.isOptional(typeMirror));
 
       fields.add(valueField);
     } else {
@@ -120,7 +109,7 @@ public class FieldSet {
       valueField = commonFields.computeIfAbsent(key, ignore -> {
         final Field newField =
           new Field(originalName, providerName, provided, external, typeMirror, fieldSpec,
-            providedParameter, utils.isOptional(typeMirror), subFields);
+            providedParameter, utils.isOptional(typeMirror));
         fields.add(newField);
         return newField;
       });

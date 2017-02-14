@@ -1,15 +1,11 @@
 package eu.toolchain.serializer.processor;
 
-import static eu.toolchain.serializer.processor.Exceptions.brokenElement;
-
 import com.google.auto.service.AutoService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.JavaFile;
-import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -19,8 +15,6 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -32,7 +26,6 @@ public class AutoSerializeProcessor extends AbstractProcessor {
   private Filer filer;
   private Messager messager;
   private AutoSerializeUtils utils;
-  private FrameworkStatements statements;
   private ClassProcessor classProcessor;
 
   private final List<DeferredProcessing> deferred = new ArrayList<>();
@@ -48,8 +41,7 @@ public class AutoSerializeProcessor extends AbstractProcessor {
     final Types types = env.getTypeUtils();
 
     utils = new AutoSerializeUtils(types, elements);
-    statements = new FrameworkStatements(utils);
-    classProcessor = new ClassProcessor(types, elements, statements, utils);
+    classProcessor = new ClassProcessor(types, elements, utils);
 
     if (env.getClass().getPackage().getName().startsWith("org.eclipse.jdt.")) {
       warnAboutBugEclipse300408();

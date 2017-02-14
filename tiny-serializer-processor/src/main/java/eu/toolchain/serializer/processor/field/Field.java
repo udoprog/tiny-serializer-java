@@ -2,7 +2,6 @@ package eu.toolchain.serializer.processor.field;
 
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterSpec;
-import java.util.List;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 import lombok.Data;
@@ -41,13 +40,9 @@ public class Field {
    * If this field is optional or not.
    */
   private final boolean optional;
-  /**
-   * Fields provided to subtypes.
-   */
-  private final List<Field> subFields;
 
   public Field withProvidedParameter(final Optional<ParameterSpec> providedParameter) {
     return new Field(originalName, providerName, provided, external, type, field, providedParameter,
-      optional, subFields);
+      optional);
   }
 }

@@ -30,7 +30,6 @@ import lombok.RequiredArgsConstructor;
 public class ClassProcessor {
   final Types types;
   final Elements elements;
-  final FrameworkStatements statements;
   final AutoSerializeUtils utils;
 
   public JavaFile process(final Element element) {
@@ -94,7 +93,7 @@ public class ClassProcessor {
     final Set<ElementKind> kinds = getKinds(element);
 
     final FieldSet fieldSet =
-      new FieldSet(this, utils, statements, element, kinds, autoSerialize.isUseGetter());
+      new FieldSet(this, utils, element, kinds, autoSerialize.isUseGetter());
 
     for (final Element child : element.getEnclosedElements()) {
       fieldSet.add(child);
@@ -116,8 +115,8 @@ public class ClassProcessor {
     final List<Field> fields = ImmutableList.copyOf(fieldSet.getFields());
     final List<Value> values = ImmutableList.copyOf(fieldSet.getValues());
 
-    return new ConcreteClassSpec(utils, elements, statements, packageName, fields, values,
-      elementType, superType, serializerName, fieldBased, failOnMissing, fieldTypeBuilder);
+    return new ConcreteClassSpec(this, utils, elements, packageName, fields, values, elementType,
+      superType, serializerName, fieldBased, failOnMissing, fieldTypeBuilder);
   }
 
   /**
