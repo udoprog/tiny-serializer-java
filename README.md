@@ -69,7 +69,7 @@ semantic versioning.
 Stronger guarantees _might_ be possible in the future by providing
 special-purpose serialization implementations of `SerializerFramework`.
 
-As it stands right now, what I've (udoprog) done here is take a pattern I
+As it stands right now, what I've done here is take a pattern I
 implement very frequently by hand, and make it as convenient as possible.
 
 # Basic serialization
