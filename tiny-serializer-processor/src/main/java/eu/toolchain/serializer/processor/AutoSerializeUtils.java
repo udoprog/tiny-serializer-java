@@ -21,21 +21,15 @@ import eu.toolchain.serializer.processor.annotation.IgnoreMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypesMirror;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.List;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ErrorType;
-import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -68,16 +62,6 @@ public class AutoSerializeUtils {
 
   final Types types;
   final Elements elements;
-
-  final TypeElement serializer;
-  final TypeElement autoSerializeType;
-
-  public AutoSerializeUtils(Types types, Elements elements) {
-    this.types = types;
-    this.elements = elements;
-    this.serializer = elements.getTypeElement(SERIALIZER);
-    this.autoSerializeType = elements.getTypeElement(AUTOSERIALIZE);
-  }
 
   public MethodSpec.Builder deserializeMethod(
     final TypeName returnType, final ParameterSpec buffer
@@ -113,7 +97,7 @@ public class AutoSerializeUtils {
   }
 
   public TypeMirror serializerFor(TypeMirror type) {
-    return types.getDeclaredType(serializer, boxedIfNeeded(type));
+    return types.getDeclaredType(elements.getTypeElement(SERIALIZER), boxedIfNeeded(type));
   }
 
   public boolean isPrimitive(TypeMirror type) {
@@ -126,26 +110,6 @@ public class AutoSerializeUtils {
     }
 
     return type;
-  }
-
-  public Optional<ClassName> pullMirroredClass(
-    Supplier<Class<?>> supplier, String defaultPackageName
-  ) {
-    try {
-      return Optional.of(ClassName.get(supplier.get()));
-    } catch (final MirroredTypeException e) {
-      return buildClassName(e, e.getTypeMirror(), defaultPackageName);
-    }
-  }
-
-  private Optional<ClassName> buildClassName(
-    final MirroredTypeException e, final TypeMirror type, final String defaultPackageName
-  ) {
-    if (type instanceof ErrorType) {
-      return Optional.empty();
-    }
-
-    return Optional.of((ClassName) TypeName.get(type));
   }
 
   /**
@@ -161,74 +125,102 @@ public class AutoSerializeUtils {
     return elements.getTypeElement(element.getQualifiedName());
   }
 
-  public List<AnnotationMirror> getAnnotations(Element element, String lookFor) {
-    final ImmutableList.Builder<AnnotationMirror> results = ImmutableList.builder();
-
-    for (final AnnotationMirror annotation : element.getAnnotationMirrors()) {
-      if (!annotation.getAnnotationType().toString().equals(lookFor)) {
-        continue;
+  public Stream<AnnotationMirror> getAnnotations(Element element, String lookFor) {
+    return element.getAnnotationMirrors().stream().flatMap(annotation -> {
+      if (annotation.getAnnotationType().toString().equals(lookFor)) {
+        return Stream.of(annotation);
       }
 
-      results.add(annotation);
-    }
-
-    return results.build();
+      return Stream.empty();
+    });
   }
 
-  public AnnotationValues getElementValuesWithDefaults(Element element, AnnotationMirror a) {
-    final ImmutableMap.Builder<String, AnnotationValue> builder = ImmutableMap.builder();
-
-    for (Entry<? extends ExecutableElement, ? extends AnnotationValue> e : elements
-      .getElementValuesWithDefaults(a)
-      .entrySet()) {
-      builder.put(e.getKey().getSimpleName().toString(), e.getValue());
-    }
-
-    return new AnnotationValues(element, a, builder.build());
+  public Optional<AnnotationMirror> annotation(final Element element, final String annotationType) {
+    return getAnnotations(element, annotationType).findFirst();
   }
 
-  public <T extends Annotation> Optional<AnnotationMirror> annotation(
-    Element element, String annotationType
-  ) {
-    for (final AnnotationMirror a : getAnnotations(element, annotationType)) {
-      return Optional.of(a);
-    }
-
-    return Optional.empty();
-  }
-
-  public Optional<AutoSerializeMirror> autoSerialize(Element element) {
+  public Optional<AutoSerializeMirror> autoSerialize(final Element element) {
     return annotation(element, AUTOSERIALIZE).map(
       (a) -> AutoSerializeMirror.getFor(this, element, a));
   }
 
-  public Optional<SubTypeMirror> subType(Element element) {
-    return annotation(element, AUTOSERIALIZE_SUBTYPE).map(
-      (a) -> SubTypeMirror.getFor(this, element, a));
+  public Optional<SubTypesMirror> subTypes(final Element element) {
+    return annotation(element, AUTOSERIALIZE_SUBTYPES).map(a -> {
+      final AnnotationValues values = annotationValues(element, a);
+
+      final ImmutableList.Builder<SubTypeMirror> subTypes = ImmutableList.builder();
+
+      for (final AnnotationMirror subType : values.getAnnotationValue("value").get()) {
+        subTypes.add(subType(element, subType));
+      }
+
+      return new SubTypesMirror(a, subTypes.build());
+    });
   }
 
-  public Optional<SubTypesMirror> subTypes(Element element) {
-    return annotation(element, AUTOSERIALIZE_SUBTYPES).map(
-      (a) -> SubTypesMirror.getFor(this, element, a));
+  public AnnotationValues annotationValues(final Element element, final AnnotationMirror a) {
+    final ImmutableMap.Builder<String, AnnotationValue> builder = ImmutableMap.builder();
+
+    elements
+      .getElementValuesWithDefaults(a)
+      .forEach((key, value) -> builder.put(key.getSimpleName().toString(), value));
+
+    return new AnnotationValues(element, a, builder.build());
   }
 
-  public Optional<FieldMirror> field(Element element) {
-    return annotation(element, AUTOSERIALIZE_FIELD).map(
-      (a) -> FieldMirror.getFor(this, element, a));
+  public SubTypeMirror subType(final Element element, final AnnotationMirror a) {
+    final AnnotationValues values = annotationValues(element, a);
+
+    final AnnotationValues.Value<TypeMirror> value = values.getTypeMirror("value");
+    final Optional<Short> id = Optional.of(values.getShort("id").get()).filter(i -> i >= 0);
+
+    return new SubTypeMirror(a, value, id);
+  }
+
+  public Optional<FieldMirror> field(final Element element) {
+    return annotation(element, AUTOSERIALIZE_FIELD).map(a -> {
+      final AnnotationValues values = annotationValues(element, a);
+
+      final Optional<String> name = filterEmpty(values.getString("name").get());
+      final Optional<String> fieldName = filterEmpty(values.getString("fieldName").get());
+      final Optional<String> accessor = filterEmpty(values.getString("accessor").get());
+      final boolean useGetter = values.getBoolean("useGetter").get();
+      final boolean provided = values.getBoolean("provided").get();
+      final boolean external = values.getBoolean("external").get();
+      final Optional<String> providerName = filterEmpty(values.getString("providerName").get());
+
+      return new FieldMirror(name, fieldName, accessor, useGetter, provided, external,
+        providerName);
+    });
   }
 
   public Optional<BuilderMirror> builder(Element element) {
-    return annotation(element, AUTOSERIALIZE_BUILDER).map(
-      (a) -> BuilderMirror.getFor(this, element, a));
+    return annotation(element, AUTOSERIALIZE_BUILDER).map(a -> builderAnnotation(element, a));
+  }
+
+  public BuilderMirror builderAnnotation(final Element element, final AnnotationMirror a) {
+    final AnnotationValues values = annotationValues(element, a);
+
+    final boolean useSetter = values.getBoolean("useSetter").get();
+    final boolean useMethod = values.getBoolean("useMethod").get();
+    final boolean useConstructor = values.getBoolean("useConstructor").get();
+    final String methodName = values.getString("methodName").get();
+
+    final AnnotationValues.Value<TypeMirror> type = values.getTypeMirror("type");
+
+    final Optional<AnnotationValues.Value<TypeMirror>> typeMirror = Optional
+      .of(type)
+      .filter((t) -> !t.get().toString().equals(AutoSerializeUtils.DEFAULT_BUILDER_TYPE));
+
+    return new BuilderMirror(a, useSetter, useMethod, useConstructor, typeMirror, methodName);
   }
 
   public Optional<IgnoreMirror> ignore(Element element) {
-    return annotation(element, AUTOSERIALIZE_IGNORE).map(
-      (a) -> IgnoreMirror.getFor(this, element, a));
+    return annotation(element, AUTOSERIALIZE_IGNORE).map(IgnoreMirror::new);
   }
 
   public TypeElement autoSerializeType() {
-    return autoSerializeType;
+    return elements.getTypeElement(AUTOSERIALIZE);
   }
 
   public ClassName serializerFramework() {
@@ -321,5 +313,13 @@ public class AutoSerializeUtils {
     final String pkg = elements.getPackageOf(type.asElement()).getQualifiedName().toString();
     final String name = serializerName(type.asElement());
     return ClassName.get(pkg, name);
+  }
+
+  private static Optional<String> filterEmpty(final String name) {
+    if (name.trim().equals("")) {
+      return Optional.empty();
+    }
+
+    return Optional.of(name);
   }
 }

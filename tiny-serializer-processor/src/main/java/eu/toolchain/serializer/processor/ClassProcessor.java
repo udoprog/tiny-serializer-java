@@ -4,14 +4,12 @@ import static eu.toolchain.serializer.processor.Exceptions.brokenElement;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.SubTypeMirror;
+import eu.toolchain.serializer.processor.field.ConcreteClassSpecBuilder;
 import eu.toolchain.serializer.processor.field.Field;
-import eu.toolchain.serializer.processor.field.FieldBuilder;
-import eu.toolchain.serializer.processor.field.FieldSet;
 import eu.toolchain.serializer.processor.field.SubType;
 import eu.toolchain.serializer.processor.field.Value;
 import java.util.HashSet;
@@ -89,34 +87,17 @@ public class ClassProcessor {
 
     final AutoSerializeMirror autoSerialize = annotation.get();
 
-    final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
     final Set<ElementKind> kinds = getKinds(element);
 
-    final FieldSet fieldSet =
-      new FieldSet(this, utils, element, kinds, autoSerialize.isUseGetter());
+    final ConcreteClassSpecBuilder concreteClassSpecBuilder =
+      new ConcreteClassSpecBuilder(autoSerialize, element, this, utils, elements, kinds,
+        autoSerialize.isUseGetter());
 
     for (final Element child : element.getEnclosedElements()) {
-      fieldSet.add(child);
+      concreteClassSpecBuilder.add(child);
     }
 
-    final ClassName elementType = (ClassName) TypeName.get(element.asType());
-    final TypeName superType = TypeName.get(utils.serializerFor(element.asType()));
-    final String serializerName = utils.serializerName(element);
-
-    final boolean fieldBased = autoSerialize.isFieldBased();
-    final boolean failOnMissing = autoSerialize.isFailOnMissing();
-
-    final Optional<FieldBuilder> fieldTypeBuilder =
-      utils.builder(element).map(Optional::of).orElseGet(autoSerialize::getBuilder).map(method -> {
-        return new FieldBuilder(method, method.shouldUseConstructor(), method.isUseSetter(),
-          method.getMethodName());
-      });
-
-    final List<Field> fields = ImmutableList.copyOf(fieldSet.getFields());
-    final List<Value> values = ImmutableList.copyOf(fieldSet.getValues());
-
-    return new ConcreteClassSpec(this, utils, elements, packageName, fields, values, elementType,
-      superType, serializerName, fieldBased, failOnMissing, fieldTypeBuilder);
+    return concreteClassSpecBuilder.build();
   }
 
   /**

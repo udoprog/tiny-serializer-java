@@ -8,13 +8,10 @@ public interface InterfaceUsingBuilder {
   String name();
 
   public static class Builder {
-    String name;
-
     public Builder() {
     }
 
     public Builder name(final String name) {
-      this.name = name;
       return this;
     }
 
