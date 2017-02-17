@@ -1,9 +1,7 @@
 package eu.toolchain.serializer.processor.annotation;
 
-import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import lombok.Data;
 
@@ -16,25 +14,6 @@ public class BuilderMirror {
   private final boolean useConstructor;
   private final Optional<AnnotationValues.Value<TypeMirror>> type;
   private final String methodName;
-
-  public static BuilderMirror getFor(
-    final AutoSerializeUtils utils, final Element element, final AnnotationMirror a
-  ) {
-    final AnnotationValues values = utils.annotationValues(element, a);
-
-    final boolean useSetter = values.getBoolean("useSetter").get();
-    final boolean useMethod = values.getBoolean("useMethod").get();
-    final boolean useConstructor = values.getBoolean("useConstructor").get();
-    final String methodName = values.getString("methodName").get();
-
-    final AnnotationValues.Value<TypeMirror> type = values.getTypeMirror("type");
-
-    final Optional<AnnotationValues.Value<TypeMirror>> typeMirror = Optional
-      .of(type)
-      .filter((t) -> !t.get().toString().equals(AutoSerializeUtils.DEFAULT_BUILDER_TYPE));
-
-    return new BuilderMirror(a, useSetter, useMethod, useConstructor, typeMirror, methodName);
-  }
 
   public boolean shouldUseConstructor() {
     // use explicitly ask to use method.

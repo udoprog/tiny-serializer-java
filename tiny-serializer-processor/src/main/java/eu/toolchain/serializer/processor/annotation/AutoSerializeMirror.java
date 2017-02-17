@@ -39,12 +39,10 @@ public class AutoSerializeMirror {
   private static Optional<BuilderMirror> makeBuilder(
     final AutoSerializeUtils utils, final Element element, final AnnotationValues values
   ) {
-    return utils.builder(element).map(Optional::of).orElseGet(() -> {
-      for (final AnnotationMirror builderMirror : values.getAnnotationValue("builder").get()) {
-        return Optional.of(BuilderMirror.getFor(utils, element, builderMirror));
-      }
+    for (final AnnotationMirror builderMirror : values.getAnnotationValue("builder").get()) {
+      return Optional.of(utils.builderAnnotation(element, builderMirror));
+    }
 
-      return Optional.empty();
-    });
+    return Optional.empty();
   }
 }

@@ -1,12 +1,16 @@
 package eu.toolchain.serializer.processor.field;
 
 import com.google.common.base.CaseFormat;
+import com.google.common.collect.ImmutableList;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import eu.toolchain.serializer.processor.AutoSerializeUtils;
 import eu.toolchain.serializer.processor.ClassProcessor;
+import eu.toolchain.serializer.processor.ConcreteClassSpec;
 import eu.toolchain.serializer.processor.Naming;
+import eu.toolchain.serializer.processor.annotation.AutoSerializeMirror;
 import eu.toolchain.serializer.processor.annotation.FieldMirror;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -20,12 +24,13 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class FieldSet {
+public class ConcreteClassSpecBuilder {
   private final Naming fieldNaming = new Naming("s_");
   private final Naming providerNaming = new Naming("p_");
   private final Naming variableNaming = new Naming("v_");
@@ -38,9 +43,11 @@ public class FieldSet {
   @Getter
   private final List<Value> values = new ArrayList<>();
 
+  private final AutoSerializeMirror autoSerialize;
+  private final Element element;
   private final ClassProcessor processor;
   private final AutoSerializeUtils utils;
-  private final Element parent;
+  private final Elements elements;
   private final Set<ElementKind> fieldKinds;
   private final boolean defaultUseGetter;
 
@@ -182,6 +189,29 @@ public class FieldSet {
     }
 
     return "get" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, fieldName);
+  }
+
+  public ConcreteClassSpec build() {
+    final ClassName elementType = (ClassName) TypeName.get(element.asType());
+    final TypeName superType = TypeName.get(utils.serializerFor(element.asType()));
+    final String serializerName = utils.serializerName(element);
+
+    final boolean fieldBased = autoSerialize.isFieldBased();
+    final boolean failOnMissing = autoSerialize.isFailOnMissing();
+
+    final Optional<FieldBuilder> fieldTypeBuilder =
+      utils.builder(element).map(Optional::of).orElseGet(autoSerialize::getBuilder).map(method -> {
+        return new FieldBuilder(method, method.shouldUseConstructor(), method.isUseSetter(),
+          method.getMethodName());
+      });
+
+    final List<Field> fields = ImmutableList.copyOf(this.fields);
+    final List<Value> values = ImmutableList.copyOf(this.values);
+
+    final String packageName = elements.getPackageOf(element).getQualifiedName().toString();
+
+    return new ConcreteClassSpec(processor, utils, elements, packageName, fields, values,
+      elementType, superType, serializerName, fieldBased, failOnMissing, fieldTypeBuilder);
   }
 
   @Data
