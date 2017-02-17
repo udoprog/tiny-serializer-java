@@ -21,7 +21,7 @@ public class AutoSerializeMirror {
   public static AutoSerializeMirror getFor(
     final AutoSerializeUtils utils, final Element element, final AnnotationMirror a
   ) {
-    final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
+    final AnnotationValues values = utils.annotationValues(element, a);
 
     final String name = values.getString("name").get();
     final boolean useGetter = values.getBoolean("useGetter").get();

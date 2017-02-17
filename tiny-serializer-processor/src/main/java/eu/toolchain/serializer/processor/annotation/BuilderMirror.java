@@ -20,7 +20,7 @@ public class BuilderMirror {
   public static BuilderMirror getFor(
     final AutoSerializeUtils utils, final Element element, final AnnotationMirror a
   ) {
-    final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
+    final AnnotationValues values = utils.annotationValues(element, a);
 
     final boolean useSetter = values.getBoolean("useSetter").get();
     final boolean useMethod = values.getBoolean("useMethod").get();

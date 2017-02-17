@@ -25,7 +25,7 @@ public class FieldMirror {
   public static FieldMirror getFor(
     final AutoSerializeUtils utils, final Element element, final AnnotationMirror a
   ) {
-    final AnnotationValues values = utils.getElementValuesWithDefaults(element, a);
+    final AnnotationValues values = utils.annotationValues(element, a);
 
     final Optional<String> name = filterEmpty(values.getString("name").get());
     final Optional<String> fieldName = filterEmpty(values.getString("fieldName").get());
