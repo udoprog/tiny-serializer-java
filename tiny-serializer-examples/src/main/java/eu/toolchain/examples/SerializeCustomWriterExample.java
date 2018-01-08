@@ -14,14 +14,23 @@ public class SerializeCustomWriterExample {
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
     final SerialWriter writer = new AbstractSerialWriter() {
+      private long position = 0L;
+
+      @Override
+      public long position() {
+        return position;
+      }
+
       @Override
       public void write(byte b) throws IOException {
         outputStream.write(b & 0xff);
+        position += 1;
       }
 
       @Override
       public void write(byte[] bytes, int offset, int length) throws IOException {
         outputStream.write(bytes, offset, length);
+        position += length;
       }
 
       @Override

@@ -16,6 +16,13 @@ public class SerializeCustomReaderExample {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(source);
 
     final SerialReader reader = new AbstractSerialReader() {
+      private long position = 0L;
+
+      @Override
+      public long position() {
+        return position;
+      }
+
       @Override
       public byte read() throws IOException {
         final int i = inputStream.read();
@@ -24,6 +31,7 @@ public class SerializeCustomReaderExample {
           throw new EOFException();
         }
 
+        position += i;
         return (byte) i;
       }
 

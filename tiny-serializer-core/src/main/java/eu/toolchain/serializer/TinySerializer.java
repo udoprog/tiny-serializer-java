@@ -5,6 +5,7 @@ import static java.util.Optional.ofNullable;
 import eu.toolchain.serializer.array.ArraySerializer;
 import eu.toolchain.serializer.array.BooleanArraySerializer;
 import eu.toolchain.serializer.array.ByteArraySerializer;
+import eu.toolchain.serializer.array.ByteBufferSerializer;
 import eu.toolchain.serializer.array.CharacterArraySerializer;
 import eu.toolchain.serializer.array.DoubleArraySerializer;
 import eu.toolchain.serializer.array.FloatArraySerializer;
@@ -87,6 +88,7 @@ public class TinySerializer extends AbstractSerializerFramework {
   private final Serializer<double[]> doubleArray;
 
   private final Serializer<byte[]> byteArray;
+  private final Serializer<ByteBuffer> byteBuffer;
   private final Serializer<char[]> charArray;
 
   private final Serializer<String> string;
@@ -293,6 +295,11 @@ public class TinySerializer extends AbstractSerializerFramework {
   }
 
   @Override
+  public Serializer<ByteBuffer> byteBuffer() {
+    return byteBuffer;
+  }
+
+  @Override
   public Serializer<char[]> charArray() {
     return charArray;
   }
@@ -438,6 +445,7 @@ public class TinySerializer extends AbstractSerializerFramework {
     private LengthPolicy defaultLengthPolicy;
 
     private Serializer<byte[]> byteArray;
+    private Serializer<ByteBuffer> byteBuffer;
     private Serializer<char[]> charArray;
     private Function<Serializer<Integer>, Serializer<String>> string;
     private Serializer<Integer> stringSize;
@@ -468,8 +476,7 @@ public class TinySerializer extends AbstractSerializerFramework {
      * Whether to use an immediate (non pooled) pool implementation or not.
      *
      * @param immediateSharedPool {@code true} if an immediate pool should be used, {@code
-     * false}
-     * otherwise.
+     * false} otherwise.
      * @return This builder.
      */
     public Builder immediateSharedPool(boolean immediateSharedPool) {
@@ -516,7 +523,8 @@ public class TinySerializer extends AbstractSerializerFramework {
      * case, an {@link IllegalStateException} will be thrown in the {@link #build()} method
      * call.
      *
-     * @param useImmutableCollections {@code true} will cause produced collections to be immutable.
+     * @param useImmutableCollections {@code true} will cause produced collections to be
+     * immutable.
      * @return This builder.
      */
     public Builder useImmutableCollections(boolean useImmutableCollections) {
@@ -627,8 +635,7 @@ public class TinySerializer extends AbstractSerializerFramework {
     }
 
     /**
-     * Set a default length policy for the
-     * {@link SerializerFramework#lengthPrefixed(Serializer)}
+     * Set a default length policy for the {@link SerializerFramework#lengthPrefixed(Serializer)}
      * serialization.
      *
      * @param defaultLengthPolicy New length policy to set.
@@ -664,8 +671,8 @@ public class TinySerializer extends AbstractSerializerFramework {
      * <p>
      * The builder may be modified after an invocation to build.
      *
-     * @throws IllegalStateException If the configuration is invalid, or the environment does not
-     * match the specified configuration.
+     * @throws IllegalStateException If the configuration is invalid, or the environment does
+     * not match the specified configuration.
      * @see #useImmutableCollections
      */
     public TinySerializer build() {
@@ -689,6 +696,8 @@ public class TinySerializer extends AbstractSerializerFramework {
 
       final Serializer<byte[]> byteArray =
         ofNullable(this.byteArray).orElseGet(defaultByteArray(size));
+      final Serializer<ByteBuffer> byteBuffer =
+        ofNullable(this.byteBuffer).orElseGet(defaultByteBuffer(size));
       final Serializer<char[]> charArray =
         ofNullable(this.charArray).orElseGet(defaultCharArray(size));
 
@@ -724,9 +733,9 @@ public class TinySerializer extends AbstractSerializerFramework {
 
       return new TinySerializer(pool, arraySize, scopeSize, subTypeId, enumOrdinal,
         defaultLengthPolicy, booleanArray, shortArray, intArray, longArray, floatArray, doubleArray,
-        byteArray, charArray, string, fixedByte, fixedCharacter, fixedBoolean, fixedShort,
-        fixedInteger, fixedLong, fixedFloat, fixedDouble, variableInteger, variableLong, uuid,
-        bitSet, collections, useStringsForEnums);
+        byteArray, byteBuffer, charArray, string, fixedByte, fixedCharacter, fixedBoolean,
+        fixedShort, fixedInteger, fixedLong, fixedFloat, fixedDouble, variableInteger, variableLong,
+        uuid, bitSet, collections, useStringsForEnums);
     }
 
     private Supplier<SharedPool> buildPool() {
@@ -758,6 +767,10 @@ public class TinySerializer extends AbstractSerializerFramework {
 
     private Supplier<Serializer<byte[]>> defaultByteArray(Serializer<Integer> size) {
       return () -> new ByteArraySerializer(size);
+    }
+
+    private Supplier<Serializer<ByteBuffer>> defaultByteBuffer(Serializer<Integer> size) {
+      return () -> new ByteBufferSerializer(size);
     }
 
     private Supplier<? extends Serializer<char[]>> defaultCharArray(Serializer<Integer> size) {

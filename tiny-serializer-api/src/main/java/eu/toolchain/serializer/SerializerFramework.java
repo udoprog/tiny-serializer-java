@@ -273,6 +273,11 @@ public interface SerializerFramework {
   public Serializer<byte[]> byteArray();
 
   /**
+   * A {@code Serializer} that can serialize a {@link java.nio.ByteBuffer}.
+   */
+  public Serializer<ByteBuffer> byteBuffer();
+
+  /**
    * A {@code Serializer} that can serialize a char array.
    */
   public Serializer<char[]> charArray();

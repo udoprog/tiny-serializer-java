@@ -13,6 +13,7 @@ import com.squareup.javapoet.TypeSpec;
 import eu.toolchain.serializer.processor.field.Field;
 import eu.toolchain.serializer.processor.field.FieldBuilder;
 import eu.toolchain.serializer.processor.field.Value;
+import java.nio.ByteBuffer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,6 +68,7 @@ public class ConcreteClassSpec implements ClassSpec {
     DIRECT.put(TypeName.get(float[].class), "$N.floatArray()");
     DIRECT.put(TypeName.get(double[].class), "$N.doubleArray()");
     DIRECT.put(TypeName.get(char[].class), "$N.charArray()");
+    DIRECT.put(ClassName.get(ByteBuffer.class), "$N.byteBuffer()");
   }
 
   static final Map<TypeName, Parameterized> PARAMETERIZED = new HashMap<>();
